@@ -216,3 +216,118 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# LaTeX
+## Core latex/pdflatex auxiliary files:
+*.aux
+*.lof
+*.log
+*.lot
+*.fls
+*.out
+*.toc
+*.fmt
+*.fot
+*.cb
+*.cb2
+.*.lb
+
+## Intermediate documents:
+*.dvi
+*.xdv
+*-converted-to.*
+# NOTE: Uncomment the next line if you don't want to track generated PDFs
+# *.pdf
+
+## Generated bibliography files:
+*.bbl
+*.bcf
+*.blg
+*-blx.aux
+*-blx.bib
+*.run.xml
+
+## Build tool auxiliary files:
+*.fdb_latexmk
+*.synctex
+*.synctex(busy)
+*.synctex.gz
+*.synctex.gz(busy)
+*.pdfsync
+
+## Auxiliary and intermediate files from other packages:
+# algorithms
+*.alg
+*.loa
+
+# backref
+*.brf
+
+# glossaries
+*.acn
+*.acr
+*.alg
+*.glg
+*.glo
+*.gls
+*.ist
+
+# listings
+*.lol
+
+# makeidx
+*.idx
+*.ilg
+*.ind
+*.ist
+
+# minitoc
+*.maf
+*.mlf
+*.mlt
+*.mtc
+*.mtc[0-9]*
+
+# minted
+_minted*
+*.pyg
+
+# morewrites
+*.mws
+
+# nomencl
+*.nlg
+*.nlo
+*.nls
+
+# pythontex
+*.pytxcode
+pythontex-files-*/
+
+# tcolorbox
+*.tcbtemp
+
+# todonotes
+*.tdo
+
+# easy-todo
+*.lod
+
+# vrb
+*.vrb
+
+# xindy
+*.xdy
+
+# asymptote
+*.asy
+
+# arara
+*.arara.log
+
+# latexindent
+*.bak[0-9]*
+
+# Kpathsea
+*.pk
+.vscode/
