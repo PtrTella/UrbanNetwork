@@ -1,4 +1,4 @@
-### La Topologia della Città: Analisi Small-World e Resilienza Strutturale nella Rete di Trasporto Pubblico
+### *The Topology of the City: Small-World Analysis and Structural Resilience in the Public Transportation Network*
 
 _"The Topology of Urban Resilience: Small-World Analysis, Bottlenecks, and Structural Vulnerability in the Metro Network of [City of Your Choice]"_
 
