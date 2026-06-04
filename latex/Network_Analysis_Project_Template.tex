@@ -13,7 +13,7 @@
 \usepackage{booktabs}
 \usepackage{hyperref}
 
-\author{Pietro Tellarini, Artificial Intelligence, ID number (matricola) \\ Kawsar [Surname], Artificial Intelligence, ID number (matricola)}
+\author{Pietro Tellarini, Artificial Intelligence, ID number (matricola) \\ Kawsar Farooq, Artificial Intelligence, ID number (matricola)}
 \date{\today}
 \title{The Topology of Urban Resilience: Small-World Analysis, Bottlenecks, and Structural Vulnerability in the London Underground}
 
@@ -95,6 +95,7 @@ Table~\ref{tab:centralities} lists the top 5 stations for each centrality measur
 \centering
 \caption{Top 5 London Underground Stations by Centrality Measures}
 \label{tab:centralities}
+\resizebox{\textwidth}{!}{%
 \begin{tabular}{llc|lc|lc}
 \toprule
 \textbf{Rank} & \textbf{Station (Degree)} & \textbf{Degree} & \textbf{Station (Closeness)} & \textbf{Closeness ($\cdot 10^{-5}$)} & \textbf{Station (Betweenness)} & \textbf{Betweenness} \\
@@ -105,10 +106,41 @@ Table~\ref{tab:centralities} lists the top 5 stations for each centrality measur
 4 & Oxford Circus & 6 & Bond Street & 8.85 & Oxford Circus & 0.2329 \\
 5 & Bank & 6 & Holborn & 8.81 & Whitechapel & 0.2095 \\
 \bottomrule
-\end{tabular}
+\end{tabular}%
+}
 \end{table}
 
 The degree centrality highlights the obvious large physical interchanges (Baker Street and King's Cross St. Pancras, both serving multiple lines). Closeness centrality identifies central London stations (Oxford Circus, Tottenham Court Road) that represent the geometric center of the network. Betweenness centrality, however, reveals the true structural bottlenecks. Stations like Baker Street ($0.2868$) and Bank ($0.2420$) act as vital transfer nodes linking distant residential branches to the employment core. Whitechapel ($0.2095$) also emerges as a major bottleneck due to its role as a gateway between East London and the central loop.
+
+\subsection{Core-Periphery Structure: k-Core Decomposition}
+To characterize the network's global structural organization beyond individual centralities, we apply a $k$-core decomposition. The $k$-core of a graph is the maximal subgraph in which all vertices have a degree of at least $k$. It is a standard method to study core-periphery structures in complex networks, identifying which nodes form a dense, cohesive nucleus ($k$-core) and which belong to peripheral branches ($k$-shell).
+
+Our analysis of the London Underground L-space graph reveals a maximum coreness value of $k_{max} = 2$. The network is partitioned into two distinct shells:
+\begin{itemize}
+    \item \textbf{Innermost Core ($2$-core)}: Consists of $166$ stations. This core encompasses all major central London interchange hubs (e.g., Baker Street, Bank, Oxford Circus, King's Cross St. Pancras) and intermediate stations along the overlapping central lines. This forms a highly integrated, loop-rich structural core that can tolerate local path disconnections due to routing redundancies.
+    \item \textbf{Periphery ($1$-core shell)}: Consists of $136$ stations. This shell is composed of peripheral branch lines and terminal stations (e.g., Amersham, Epping, Upminster, Heathrow terminals). Stations in this peripheral shell have a degree of 1, meaning they are connected via a single link to the rest of the network. A disruption at these nodes or their adjacent track segments instantly isolates the respective terminals, reflecting a classic tree-like peripheral architecture.
+\end{itemize}
+This $k$-core structure highlights that while the center of the London Underground is topologically redundant, the outer branches are highly vulnerable branch endpoints with zero redundancy.
+
+\subsection{Degree Distribution and Scale-Free Behavior}
+Many complex networks, such as social networks or the Internet, are characterized by a scale-free degree distribution that follows a power-law $P(k) \sim k^{-\gamma}$. Scale-free networks are dominated by a tiny fraction of massive hubs with hundreds or thousands of connections.
+
+However, in spatial infrastructure networks, the physical layout is bounded by geographical constraints: tracks and platforms must occupy real physical space, imposing a strict limit on the number of connections a station can have. To evaluate this behavior in the London Underground, we plot the node degree distribution (Fig.~\ref{fig:degree_dist}).
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.65\textwidth]{figures/london_degree_dist.png}
+\caption{Node degree distribution of the London Underground network. Node degrees are strictly bounded ($1 \le k \le 7$), showing a sharp exponential decay rather than scale-free scale-freedom.}
+\label{fig:degree_dist}
+\end{figure}
+
+The empirical degree distribution is highly bounded, ranging strictly from $k = 1$ to a maximum of $k_{max} = 7$ (achieved only by Baker Street and King's Cross St. Pancras). The majority of stations ($166$ nodes) have a degree of $k=2$, representing intermediate stops along single lines. The frequency of nodes decays rapidly as degree increases beyond 2.
+
+We can model this mathematically using an exponential distribution:
+\begin{equation}
+    P(k) \sim e^{-k/\lambda}
+\end{equation}
+The sharp truncation at $k=7$ confirms that the Tube is not a scale-free network. This planarity constraint limits the maximum degree of any single node, preventing the emergence of super-hubs. Consequently, the network's resilience profile is dominated by a moderately distributed set of bottlenecks rather than a single super-hub.
 
 \subsection{Macroscopic Autopsy: Small-Worldness and Efficiency}
 To determine if the Tube is a small-world network, we calculate the Average Path Length ($L$) and Clustering Coefficient ($C$) and compare them to an Erd\H{o}s-R\'enyi random graph ($G(N, p)$) of equal size and density ($p = 0.00768$) and a regular 1D lattice (average degree $\langle k \rangle \approx 2$). Table~\ref{tab:smallworld} reports the findings.
@@ -117,6 +149,7 @@ To determine if the Tube is a small-world network, we calculate the Average Path
 \centering
 \caption{Small-World Metric Comparisons}
 \label{tab:smallworld}
+\resizebox{\textwidth}{!}{%
 \begin{tabular}{lccc}
 \toprule
 \textbf{Metric} & \textbf{Empirical Network} & \textbf{Random Null Model} & \textbf{Lattice Null Model} \\
@@ -124,7 +157,8 @@ To determine if the Tube is a small-world network, we calculate the Average Path
 Average Path Length ($L$) & $14.0985$ & $6.4352$ & $75.7508$ \\
 Clustering Coefficient ($C$) & $0.0328$ & $0.0053$ & $0.0000$ \\
 \bottomrule
-\end{tabular}
+\end{tabular}%
+}
 \end{table}
 
 We compute the small-worldness coefficients:

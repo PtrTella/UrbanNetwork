@@ -4,22 +4,61 @@ import numpy as np
 
 def compute_centralities(G):
     """
-    Computes degree centrality, closeness centrality (weighted), and betweenness centrality (weighted).
+    Computes degree centrality, closeness centrality (weighted), betweenness centrality (weighted),
+    and coreness (k-core decomposition).
     Returns a pandas DataFrame.
     """
     deg_raw = dict(G.degree())
     deg_cent = nx.degree_centrality(G)
     close_cent = nx.closeness_centrality(G, distance='weight')
     bet_cent = nx.betweenness_centrality(G, weight='weight', normalized=True)
+    core_numbers = nx.core_number(G)
 
     df_micro = pd.DataFrame({
         'Station': list(G.nodes),
         'Degree': [deg_raw[n] for n in G.nodes],
         'Degree Centrality': [deg_cent[n] for n in G.nodes],
         'Closeness Centrality': [close_cent[n] for n in G.nodes],
-        'Betweenness Centrality': [bet_cent[n] for n in G.nodes]
+        'Betweenness Centrality': [bet_cent[n] for n in G.nodes],
+        'Coreness': [core_numbers[n] for n in G.nodes]
     })
     return df_micro
+
+def compute_cohesion_metrics(G):
+    """
+    Computes global network cohesion and compactness metrics.
+    """
+    N = len(G.nodes)
+    M = len(G.edges)
+    density = nx.density(G)
+    avg_degree = 2.0 * M / N if N > 0 else 0.0
+    
+    # Topological metrics
+    is_conn = nx.is_connected(G)
+    diameter = nx.diameter(G) if is_conn else float('inf')
+    radius = nx.radius(G) if is_conn else float('inf')
+    
+    # Clustering and transitivity
+    transitivity = nx.transitivity(G)
+    avg_clustering = nx.average_clustering(G)
+    
+    # Efficiency metrics
+    E_glob = nx.global_efficiency(G)
+    E_loc = nx.local_efficiency(G)
+    
+    return {
+        'N': N,
+        'M': M,
+        'Density': density,
+        'Average Degree': avg_degree,
+        'Connected': is_conn,
+        'Diameter': diameter,
+        'Radius': radius,
+        'Transitivity': transitivity,
+        'Average Clustering': avg_clustering,
+        'Global Efficiency': E_glob,
+        'Local Efficiency': E_loc
+    }
 
 def compute_small_worldness(G, er_runs=50):
     """
