@@ -1,11 +1,13 @@
+import os
 import pandas as pd
 import networkx as nx
 import numpy as np
 
-# London Tube URLs
-STATIONS_URL = "https://raw.githubusercontent.com/nicola/tubemaps/master/datasets/london.stations.csv"
-CONNECTIONS_URL = "https://raw.githubusercontent.com/nicola/tubemaps/master/datasets/london.connections.csv"
-LINES_URL = "https://raw.githubusercontent.com/nicola/tubemaps/master/datasets/london.lines.csv"
+# Path to the local dataset folder relative to this file
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+STATIONS_PATH = os.path.join(BASE_DIR, "dataset", "london.stations.csv")
+CONNECTIONS_PATH = os.path.join(BASE_DIR, "dataset", "london.connections.csv")
+LINES_PATH = os.path.join(BASE_DIR, "dataset", "london.lines.csv")
 
 def haversine(lat1, lon1, lat2, lon2):
     """
@@ -22,11 +24,11 @@ def haversine(lat1, lon1, lat2, lon2):
 
 def load_london_network():
     """
-    Downloads stations, lines and connections and builds an L-Space undirected Graph.
+    Loads stations, lines and connections from local CSV files and builds an L-Space undirected Graph.
     """
-    df_stations = pd.read_csv(STATIONS_URL)
-    df_connections = pd.read_csv(CONNECTIONS_URL)
-    df_lines = pd.read_csv(LINES_URL)
+    df_stations = pd.read_csv(STATIONS_PATH)
+    df_connections = pd.read_csv(CONNECTIONS_PATH)
+    df_lines = pd.read_csv(LINES_PATH)
 
     # Mappings
     id_to_name = dict(zip(df_stations['id'], df_stations['name']))
