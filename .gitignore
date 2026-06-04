@@ -331,3 +331,4 @@ pythontex-files-*/
 # Kpathsea
 *.pk
 .vscode/
+cache/
