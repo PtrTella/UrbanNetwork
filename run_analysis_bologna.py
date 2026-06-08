@@ -190,13 +190,13 @@ def main():
     ]
     for u, v, t in alt_edges:
         if G_alt.has_edge(u, v):
-            if 103 not in G_alt[u][v]['lines']:
-                G_alt[u][v]['lines'].append(103)
+            if 104 not in G_alt[u][v]['lines']:
+                G_alt[u][v]['lines'].append(104)
         else:
             lat1, lon1 = G_alt.nodes[u]['lat'], G_alt.nodes[u]['lon']
             lat2, lon2 = G_alt.nodes[v]['lat'], G_alt.nodes[v]['lon']
             dist = haversine(lat1, lon1, lat2, lon2)
-            G_alt.add_edge(u, v, weight=dist, time=t, lines=[103])
+            G_alt.add_edge(u, v, weight=dist, time=t, lines=[104])
             
     eff_alt_tram = compute_demand_weighted_efficiency(G_alt, df_demo)
     

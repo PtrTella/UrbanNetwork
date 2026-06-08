@@ -86,3 +86,41 @@ To write a rigorous essay and correctly interpret the data (the remaining 20% of
 2. **Betweenness vs Degree:** The professor will try to assess whether you truly understand the semantic distinction between these measures. You must explain that Degree Centrality identifies the major stations (such as Roma Termini in Rome or Milano Centrale in Milan), whereas Betweenness Centrality identifies vulnerable structural “bridges” (perhaps a small peripheral station that nevertheless represents the only access route to an entire district).
     
 3. **The Spatial Paradox:** Unlike the Internet (which can behave as an almost pure scale-free network), metro systems are physically anchored to the terrain. There is a physical limit to how many tracks can intersect within a station (network planarity). This means that node degrees can never reach the extreme levels observed in networks such as Spotify, thereby modifying the tail of the distribution. Correctly interpreting this factor will guarantee excellence.
+
+---
+
+### 5. Reproducing the Study and Dataset Generation
+
+To ensure transparency and reproducibility, all datasets in `dataset/bologna/` are generated from real-world OpenStreetMap data using python scripts included in this repository.
+
+#### A. Download Raw OSM Data
+Run the following script to query the Overpass API for Bologna's bus and trolleybus routes and save the raw JSON:
+```bash
+python scripts/download_raw_osm.py
+```
+This script fetches relations for lines `11A/B/C`, `13`, `14`, `19`, `20`, `27`, `32`, `33`, `35`, and `37` in the Bologna bounding box and saves it to `dataset/bologna/raw_bologna_osm.json`.
+
+#### B. Process and Generate Datasets
+Run the parsing and clustering script to process the raw JSON and build the structured CSV files:
+```bash
+python scripts/parse_and_build_dataset.py
+```
+This script:
+1. Clusters physical bus stops within 120 meters into single consolidated stations.
+2. Greedily maps UNIBO campuses and key tram hubs to distinct nearest stations, ensuring a 100% connected L-space network with no isolated nodes.
+3. Computes travel times and generates stop-to-stop connections.
+4. Allocates demographic population densities and UNIBO student attraction factors.
+5. Saves `bologna_stations.csv`, `bologna_connections.csv`, `bologna_lines.csv`, and `bologna_demographics.csv` to `dataset/bologna/`.
+
+#### C. Compile Jupyter Notebooks
+To compile the Jupyter notebooks containing the detailed analysis and visualizations:
+```bash
+python scripts/build_notebooks.py
+```
+
+#### D. Run the Complete Analysis Pipeline
+Run the main script to compute all network metrics, run the resilience simulations, and generate the plots:
+```bash
+python run_analysis_bologna.py
+```
+This script exports all centralities, GraphML files, and plots directly to `data_output/` and `latex/figures/bologna/`.
