@@ -3,7 +3,7 @@ import numpy as np
 
 def simulate_removal(G, removal_fraction, scenario="random", seed=None, sorted_nodes=None):
     """
-    Simulates node removal.
+    Simulates node removal on G.
     Returns:
     - relative_lcc: size of the largest connected component divided by original size.
     - num_components: total connected components left.

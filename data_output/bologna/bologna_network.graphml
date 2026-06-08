@@ -1,0 +1,398 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d7" for="edge" attr.name="lines" attr.type="string" />
+  <key id="d6" for="edge" attr.name="time" attr.type="int" />
+  <key id="d5" for="edge" attr.name="weight" attr.type="float" />
+  <key id="d4" for="node" attr.name="type" attr.type="string" />
+  <key id="d3" for="node" attr.name="zone" attr.type="string" />
+  <key id="d2" for="node" attr.name="lon" attr.type="double" />
+  <key id="d1" for="node" attr.name="lat" attr.type="double" />
+  <key id="d0" for="node" attr.name="id" attr.type="long" />
+  <graph edgedefault="undirected">
+    <node id="Bologna Centrale">
+      <data key="d0">1</data>
+      <data key="d1">44.5058</data>
+      <data key="d2">11.3431</data>
+      <data key="d3">Centro</data>
+      <data key="d4">Station</data>
+    </node>
+    <node id="Porta Galliera">
+      <data key="d0">2</data>
+      <data key="d1">44.5043</data>
+      <data key="d2">11.3435</data>
+      <data key="d3">Centro</data>
+      <data key="d4">Station</data>
+    </node>
+    <node id="XX Settembre">
+      <data key="d0">3</data>
+      <data key="d1">44.5033</data>
+      <data key="d2">11.3418</data>
+      <data key="d3">Centro</data>
+      <data key="d4">Station</data>
+    </node>
+    <node id="Piazza dei Martiri">
+      <data key="d0">4</data>
+      <data key="d1">44.502</data>
+      <data key="d2">11.3391</data>
+      <data key="d3">Centro</data>
+      <data key="d4">Station</data>
+    </node>
+    <node id="Via Marconi">
+      <data key="d0">5</data>
+      <data key="d1">44.4995</data>
+      <data key="d2">11.3377</data>
+      <data key="d3">Centro</data>
+      <data key="d4">Station</data>
+    </node>
+    <node id="Via Ugo Bassi">
+      <data key="d0">6</data>
+      <data key="d1">44.4947</data>
+      <data key="d2">11.3411</data>
+      <data key="d3">Centro</data>
+      <data key="d4">Station</data>
+    </node>
+    <node id="Rizzoli">
+      <data key="d0">7</data>
+      <data key="d1">44.4945</data>
+      <data key="d2">11.3433</data>
+      <data key="d3">Centro</data>
+      <data key="d4">Station</data>
+    </node>
+    <node id="Due Torri">
+      <data key="d0">8</data>
+      <data key="d1">44.4943</data>
+      <data key="d2">11.3468</data>
+      <data key="d3">Centro</data>
+      <data key="d4">Station</data>
+    </node>
+    <node id="Porta San Donato">
+      <data key="d0">9</data>
+      <data key="d1">44.4975</data>
+      <data key="d2">11.3571</data>
+      <data key="d3">San Donato</data>
+      <data key="d4">Station</data>
+    </node>
+    <node id="Sant'Egidio">
+      <data key="d0">10</data>
+      <data key="d1">44.499</data>
+      <data key="d2">11.3621</data>
+      <data key="d3">San Donato</data>
+      <data key="d4">Station</data>
+    </node>
+    <node id="Piazza Spadolini">
+      <data key="d0">11</data>
+      <data key="d1">44.5098</data>
+      <data key="d2">11.3695</data>
+      <data key="d3">San Donato</data>
+      <data key="d4">Station</data>
+    </node>
+    <node id="FICO Eataly World">
+      <data key="d0">12</data>
+      <data key="d1">44.5173</data>
+      <data key="d2">11.4056</data>
+      <data key="d3">San Donato</data>
+      <data key="d4">Station</data>
+    </node>
+    <node id="Borgo Panigale">
+      <data key="d0">13</data>
+      <data key="d1">44.5165</data>
+      <data key="d2">11.2825</data>
+      <data key="d3">Borgo Panigale</data>
+      <data key="d4">Station</data>
+    </node>
+    <node id="Santa Viola">
+      <data key="d0">14</data>
+      <data key="d1">44.5085</data>
+      <data key="d2">11.3094</data>
+      <data key="d3">Borgo Panigale</data>
+      <data key="d4">Station</data>
+    </node>
+    <node id="Ospedale Maggiore">
+      <data key="d0">15</data>
+      <data key="d1">44.5065</data>
+      <data key="d2">11.3175</data>
+      <data key="d3">Borgo Panigale</data>
+      <data key="d4">Station</data>
+    </node>
+    <node id="Porta San Felice">
+      <data key="d0">16</data>
+      <data key="d1">44.5015</data>
+      <data key="d2">11.3255</data>
+      <data key="d3">Porto-Saragozza</data>
+      <data key="d4">Station</data>
+    </node>
+    <node id="Corticella Stazione">
+      <data key="d0">17</data>
+      <data key="d1">44.5422</data>
+      <data key="d2">11.3533</data>
+      <data key="d3">Navile</data>
+      <data key="d4">Station</data>
+    </node>
+    <node id="Ippodromo">
+      <data key="d0">18</data>
+      <data key="d1">44.5218</data>
+      <data key="d2">11.3491</data>
+      <data key="d3">Navile</data>
+      <data key="d4">Station</data>
+    </node>
+    <node id="Piazza dell'Unita">
+      <data key="d0">19</data>
+      <data key="d1">44.5135</data>
+      <data key="d2">11.3461</data>
+      <data key="d3">Navile</data>
+      <data key="d4">Station</data>
+    </node>
+    <node id="Lazzaretto">
+      <data key="d0">20</data>
+      <data key="d1">44.5248</data>
+      <data key="d2">11.3115</data>
+      <data key="d3">Navile</data>
+      <data key="d4">Campus</data>
+    </node>
+    <node id="Navile">
+      <data key="d0">21</data>
+      <data key="d1">44.5255</data>
+      <data key="d2">11.3425</data>
+      <data key="d3">Navile</data>
+      <data key="d4">Campus</data>
+    </node>
+    <node id="Villa Spada">
+      <data key="d0">22</data>
+      <data key="d1">44.4895</data>
+      <data key="d2">11.3051</data>
+      <data key="d3">Porto-Saragozza</data>
+      <data key="d4">Campus</data>
+    </node>
+    <node id="Porta Saragozza">
+      <data key="d0">23</data>
+      <data key="d1">44.4912</data>
+      <data key="d2">11.3275</data>
+      <data key="d3">Porto-Saragozza</data>
+      <data key="d4">Station</data>
+    </node>
+    <node id="Meloncello">
+      <data key="d0">24</data>
+      <data key="d1">44.4899</data>
+      <data key="d2">11.3121</data>
+      <data key="d3">Porto-Saragozza</data>
+      <data key="d4">Station</data>
+    </node>
+    <node id="Stadio Dall'Ara">
+      <data key="d0">25</data>
+      <data key="d1">44.4925</data>
+      <data key="d2">11.3095</data>
+      <data key="d3">Porto-Saragozza</data>
+      <data key="d4">Station</data>
+    </node>
+    <node id="Mazzini Stazione">
+      <data key="d0">26</data>
+      <data key="d1">44.4851</data>
+      <data key="d2">11.3781</data>
+      <data key="d3">Savena</data>
+      <data key="d4">Station</data>
+    </node>
+    <node id="Porta Mazzini">
+      <data key="d0">27</data>
+      <data key="d1">44.4885</data>
+      <data key="d2">11.3615</data>
+      <data key="d3">Savena</data>
+      <data key="d4">Station</data>
+    </node>
+    <node id="San Ruffillo Stazione">
+      <data key="d0">28</data>
+      <data key="d1">44.4632</data>
+      <data key="d2">11.3795</data>
+      <data key="d3">Savena</data>
+      <data key="d4">Station</data>
+    </node>
+    <node id="Porta Santo Stefano">
+      <data key="d0">29</data>
+      <data key="d1">44.4842</data>
+      <data key="d2">11.3565</data>
+      <data key="d3">Santo Stefano</data>
+      <data key="d4">Station</data>
+    </node>
+    <node id="Giardini Margherita">
+      <data key="d0">30</data>
+      <data key="d1">44.4812</data>
+      <data key="d2">11.3532</data>
+      <data key="d3">Santo Stefano</data>
+      <data key="d4">Station</data>
+    </node>
+    <edge source="Bologna Centrale" target="Piazza dell'Unita">
+      <data key="d5">888.6347652186226</data>
+      <data key="d6">3</data>
+      <data key="d7">[27, 102]</data>
+    </edge>
+    <edge source="Bologna Centrale" target="Porta Galliera">
+      <data key="d5">169.78202174718064</data>
+      <data key="d6">2</data>
+      <data key="d7">[27, 32, 33, 35]</data>
+    </edge>
+    <edge source="Bologna Centrale" target="XX Settembre">
+      <data key="d5">296.4885705512718</data>
+      <data key="d6">2</data>
+      <data key="d7">[32, 33]</data>
+    </edge>
+    <edge source="Bologna Centrale" target="Navile">
+      <data key="d5">2191.0565794076406</data>
+      <data key="d6">5</data>
+      <data key="d7">[35]</data>
+    </edge>
+    <edge source="Bologna Centrale" target="Via Marconi">
+      <data key="d5">821.0607146332603</data>
+      <data key="d6">3</data>
+      <data key="d7">[102]</data>
+    </edge>
+    <edge source="Porta Galliera" target="XX Settembre">
+      <data key="d5">174.75750285057418</data>
+      <data key="d6">2</data>
+      <data key="d7">[27]</data>
+    </edge>
+    <edge source="Porta Galliera" target="Porta San Donato">
+      <data key="d5">1317.2309503745062</data>
+      <data key="d6">3</data>
+      <data key="d7">[32, 33, 35]</data>
+    </edge>
+    <edge source="XX Settembre" target="Via Marconi">
+      <data key="d5">533.1709976521142</data>
+      <data key="d6">3</data>
+      <data key="d7">[27]</data>
+    </edge>
+    <edge source="XX Settembre" target="Porta San Felice">
+      <data key="d5">1308.1001461321964</data>
+      <data key="d6">4</data>
+      <data key="d7">[32, 33]</data>
+    </edge>
+    <edge source="Via Marconi" target="Porta San Felice">
+      <data key="d5">992.8001476172502</data>
+      <data key="d6">4</data>
+      <data key="d7">[13, 101]</data>
+    </edge>
+    <edge source="Via Marconi" target="Via Ugo Bassi">
+      <data key="d5">597.9915931448988</data>
+      <data key="d6">2</data>
+      <data key="d7">[13, 27, 101, 102]</data>
+    </edge>
+    <edge source="Via Ugo Bassi" target="Rizzoli">
+      <data key="d5">175.90921112589027</data>
+      <data key="d6">2</data>
+      <data key="d7">[13, 27, 101]</data>
+    </edge>
+    <edge source="Rizzoli" target="Due Torri">
+      <data key="d5">278.5004102017874</data>
+      <data key="d6">2</data>
+      <data key="d7">[13, 27, 101]</data>
+    </edge>
+    <edge source="Due Torri" target="Porta Mazzini">
+      <data key="d5">1332.498845594472</data>
+      <data key="d6">5</data>
+      <data key="d7">[13]</data>
+    </edge>
+    <edge source="Due Torri" target="Porta Santo Stefano">
+      <data key="d5">1361.3715191816457</data>
+      <data key="d6">4</data>
+      <data key="d7">[27]</data>
+    </edge>
+    <edge source="Due Torri" target="Porta San Donato">
+      <data key="d5">891.0756068747394</data>
+      <data key="d6">4</data>
+      <data key="d7">[35, 101]</data>
+    </edge>
+    <edge source="Due Torri" target="Porta Saragozza">
+      <data key="d5">1569.1985818722012</data>
+      <data key="d6">3</data>
+      <data key="d7">[20]</data>
+    </edge>
+    <edge source="Porta San Donato" target="Porta Mazzini">
+      <data key="d5">1059.865011928031</data>
+      <data key="d6">4</data>
+      <data key="d7">[32, 33]</data>
+    </edge>
+    <edge source="Porta San Donato" target="Sant'Egidio">
+      <data key="d5">430.20968700623166</data>
+      <data key="d6">2</data>
+      <data key="d7">[101]</data>
+    </edge>
+    <edge source="Sant'Egidio" target="Piazza Spadolini">
+      <data key="d5">1336.624266195613</data>
+      <data key="d6">3</data>
+      <data key="d7">[101]</data>
+    </edge>
+    <edge source="Piazza Spadolini" target="FICO Eataly World">
+      <data key="d5">2981.4321171447014</data>
+      <data key="d6">5</data>
+      <data key="d7">[101]</data>
+    </edge>
+    <edge source="Borgo Panigale" target="Santa Viola">
+      <data key="d5">2311.0402121163465</data>
+      <data key="d6">4</data>
+      <data key="d7">[13, 101]</data>
+    </edge>
+    <edge source="Santa Viola" target="Ospedale Maggiore">
+      <data key="d5">679.7361337397577</data>
+      <data key="d6">3</data>
+      <data key="d7">[13, 101]</data>
+    </edge>
+    <edge source="Ospedale Maggiore" target="Porta San Felice">
+      <data key="d5">843.5731824185605</data>
+      <data key="d6">3</data>
+      <data key="d7">[13, 101]</data>
+    </edge>
+    <edge source="Porta San Felice" target="Porta Saragozza">
+      <data key="d5">1156.2409683033475</data>
+      <data key="d6">4</data>
+      <data key="d7">[32, 33]</data>
+    </edge>
+    <edge source="Corticella Stazione" target="Ippodromo">
+      <data key="d5">2292.6767394467347</data>
+      <data key="d6">4</data>
+      <data key="d7">[27, 102]</data>
+    </edge>
+    <edge source="Ippodromo" target="Piazza dell'Unita">
+      <data key="d5">953.0758643035905</data>
+      <data key="d6">3</data>
+      <data key="d7">[27, 102]</data>
+    </edge>
+    <edge source="Lazzaretto" target="Navile">
+      <data key="d5">2458.7763155145385</data>
+      <data key="d6">4</data>
+      <data key="d7">[35]</data>
+    </edge>
+    <edge source="Villa Spada" target="Stadio Dall'Ara">
+      <data key="d5">482.7957700024274</data>
+      <data key="d6">3</data>
+      <data key="d7">[20]</data>
+    </edge>
+    <edge source="Porta Saragozza" target="Porta Santo Stefano">
+      <data key="d5">2428.582843639066</data>
+      <data key="d6">5</data>
+      <data key="d7">[32, 33]</data>
+    </edge>
+    <edge source="Porta Saragozza" target="Meloncello">
+      <data key="d5">1230.0924150842775</data>
+      <data key="d6">3</data>
+      <data key="d7">[20]</data>
+    </edge>
+    <edge source="Meloncello" target="Stadio Dall'Ara">
+      <data key="d5">355.1285910180799</data>
+      <data key="d6">2</data>
+      <data key="d7">[20]</data>
+    </edge>
+    <edge source="Mazzini Stazione" target="Porta Mazzini">
+      <data key="d5">1370.0373184672449</data>
+      <data key="d6">4</data>
+      <data key="d7">[13]</data>
+    </edge>
+    <edge source="Mazzini Stazione" target="Porta Santo Stefano">
+      <data key="d5">1716.4631477709243</data>
+      <data key="d6">5</data>
+      <data key="d7">[27]</data>
+    </edge>
+    <edge source="Porta Mazzini" target="Porta Santo Stefano">
+      <data key="d5">621.2414881059134</data>
+      <data key="d6">3</data>
+      <data key="d7">[32, 33]</data>
+    </edge>
+  </graph>
+</graphml>

@@ -1,0 +1,31 @@
+station_id,station_name,neighborhood,population_density,unibo_attraction
+1,Bologna Centrale,Centro,8500,0.8
+2,Porta Galliera,Centro,8500,0.4
+3,XX Settembre,Centro,8500,0.3
+4,Piazza dei Martiri,Centro,8500,0.5
+5,Via Marconi,Centro,8500,0.6
+6,Via Ugo Bassi,Centro,9000,0.7
+7,Rizzoli,Centro,9000,0.8
+8,Due Torri,Centro,9000,0.9
+9,Porta San Donato,San Donato,6000,1.0
+10,Sant'Egidio,San Donato,6000,0.5
+11,Piazza Spadolini,San Donato,4500,0.4
+12,FICO Eataly World,San Donato,1500,0.1
+13,Borgo Panigale,Borgo Panigale,3500,0.1
+14,Santa Viola,Borgo Panigale,4800,0.2
+15,Ospedale Maggiore,Borgo Panigale,5000,0.3
+16,Porta San Felice,Porto-Saragozza,7500,0.4
+17,Corticella Stazione,Navile,4000,0.1
+18,Ippodromo,Navile,4500,0.2
+19,Piazza dell'Unita,Navile,7800,0.4
+20,Lazzaretto,Navile,3000,1.0
+21,Navile,Navile,5000,1.0
+22,Villa Spada,Porto-Saragozza,4000,1.0
+23,Porta Saragozza,Porto-Saragozza,7000,0.6
+24,Meloncello,Porto-Saragozza,6500,0.4
+25,Stadio Dall'Ara,Porto-Saragozza,6000,0.3
+26,Mazzini Stazione,Savena,8000,0.2
+27,Porta Mazzini,Savena,8200,0.3
+28,San Ruffillo Stazione,Savena,4500,0.1
+29,Porta Santo Stefano,Santo Stefano,7200,0.3
+30,Giardini Margherita,Santo Stefano,5500,0.2

@@ -1,0 +1,31 @@
+id,name,latitude,longitude,zone,type
+1,Bologna Centrale,44.5058,11.3431,Centro,Station
+2,Porta Galliera,44.5043,11.3435,Centro,Station
+3,XX Settembre,44.5033,11.3418,Centro,Station
+4,Piazza dei Martiri,44.5020,11.3391,Centro,Station
+5,Via Marconi,44.4995,11.3377,Centro,Station
+6,Via Ugo Bassi,44.4947,11.3411,Centro,Station
+7,Rizzoli,44.4945,11.3433,Centro,Station
+8,Due Torri,44.4943,11.3468,Centro,Station
+9,Porta San Donato,44.4975,11.3571,San Donato,Station
+10,Sant'Egidio,44.4990,11.3621,San Donato,Station
+11,Piazza Spadolini,44.5098,11.3695,San Donato,Station
+12,FICO Eataly World,44.5173,11.4056,San Donato,Station
+13,Borgo Panigale,44.5165,11.2825,Borgo Panigale,Station
+14,Santa Viola,44.5085,11.3094,Borgo Panigale,Station
+15,Ospedale Maggiore,44.5065,11.3175,Borgo Panigale,Station
+16,Porta San Felice,44.5015,11.3255,Porto-Saragozza,Station
+17,Corticella Stazione,44.5422,11.3533,Navile,Station
+18,Ippodromo,44.5218,11.3491,Navile,Station
+19,Piazza dell'Unita,44.5135,11.3461,Navile,Station
+20,Lazzaretto,44.5248,11.3115,Navile,Campus
+21,Navile,44.5255,11.3425,Navile,Campus
+22,Villa Spada,44.4895,11.3051,Porto-Saragozza,Campus
+23,Porta Saragozza,44.4912,11.3275,Porto-Saragozza,Station
+24,Meloncello,44.4899,11.3121,Porto-Saragozza,Station
+25,Stadio Dall'Ara,44.4925,11.3095,Porto-Saragozza,Station
+26,Mazzini Stazione,44.4851,11.3781,Savena,Station
+27,Porta Mazzini,44.4885,11.3615,Savena,Station
+28,San Ruffillo Stazione,44.4632,11.3795,Savena,Station
+29,Porta Santo Stefano,44.4842,11.3565,Santo Stefano,Station
+30,Giardini Margherita,44.4812,11.3532,Santo Stefano,Station
