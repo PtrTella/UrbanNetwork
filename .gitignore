@@ -333,3 +333,4 @@ pythontex-files-*/
 .vscode/
 cache/
 *.csv
+dataset/
