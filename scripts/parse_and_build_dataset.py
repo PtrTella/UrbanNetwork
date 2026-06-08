@@ -27,7 +27,7 @@ def clean_stop_name(name):
 def main():
     print("Loading raw OSM data...")
     if not os.path.exists(RAW_JSON_PATH):
-        print(f"Error: Raw OSM data not found at {RAW_JSON_PATH}. Run scripts/download_raw_osm.py first.")
+        print(f"Error: Raw OSM data not found at {RAW_JSON_PATH}. Run scripts/download_raw_osm.py or copy it.")
         return
         
     with open(RAW_JSON_PATH, 'r', encoding='utf-8') as f:
@@ -76,7 +76,7 @@ def main():
                         
     print(f"Total stop occurrences across all lines: {len(all_stops)}")
     
-    # 2. Clustering of stops (stops within 120m are grouped into a single station)
+    # Clustering of stops (stops within 120m are grouped into a single station)
     clusters = []
     for stop in all_stops:
         found_cluster = False
@@ -84,7 +84,6 @@ def main():
             dist = haversine(stop['lat'], stop['lon'], c['lat'], c['lon'])
             if dist < 120:
                 c['stops'].append(stop)
-                # Update centroid coordinates
                 c['lat'] = sum(s['lat'] for s in c['stops']) / len(c['stops'])
                 c['lon'] = sum(s['lon'] for s in c['stops']) / len(c['stops'])
                 found_cluster = True
@@ -117,24 +116,69 @@ def main():
         "Agraria Cadriano": (44.5385, 11.3985),
     }
     
-    # Key coordinates for tram hubs and key network points
-    key_points = {
-        "Bologna Centrale": (44.5058, 11.3431),
-        "Borgo Panigale": (44.5165, 11.2825),
-        "Santa Viola": (44.5085, 11.3094),
-        "Ospedale Maggiore": (44.5065, 11.3175),
-        "Porta San Felice": (44.5015, 11.3255),
-        "Via Marconi": (44.4995, 11.3377),
-        "Via Ugo Bassi": (44.4947, 11.3411),
-        "Rizzoli": (44.4945, 11.3433),
-        "Due Torri": (44.4943, 11.3468),
-        "Porta San Donato": (44.4975, 11.3571),
-        "Sant'Egidio": (44.4990, 11.3621),
+    # Official coordinates for the 50 announced tram stops
+    official_tram_stops = {
+        # Linea Rossa Trunk (Borgo Panigale to Porta San Felice)
+        "Emilio Lepido": (44.5173, 11.2750),
+        "Villaggio Ina": (44.5158, 11.2820),
+        "Ducati": (44.5147, 11.2885),
+        "Manuzio": (44.5134, 11.2940),
+        "Stazione Borgo Panigale-Teatri di Vita": (44.5118, 11.2995),
+        "Triumvirato-Fabbri 1905": (44.5103, 11.3050),
+        "Pontelungo-MAST": (44.5090, 11.3110),
+        "Santa Viola-Opificio Golinelli": (44.5076, 11.3160),
+        "Prati di Caprara": (44.5065, 11.3200),
+        "Ospedale Maggiore": (44.5045, 11.3250),
+        "Saffi": (44.5020, 11.3295),
+        "Porta San Felice": (44.4988, 11.3325),
+        # Paladozza Twin stops
+        "Paladozza-San Felice": (44.4975, 11.3360),
+        "Paladozza-Riva Reno": (44.4990, 11.3340),
+        # Center
+        "Canale di Reno-Lame": (44.4978, 11.3410),
+        "Ugo Bassi": (44.4955, 11.3430),
+        "Piazza Maggiore-San Pietro": (44.4950, 11.3470),
+        "Indipendenza-8 Agosto": (44.5010, 11.3490),
+        # Shared Rossa/Verde
+        "Stazione Centrale": (44.5058, 11.3431),
+        "Giacomo Matteotti-Stazione AV": (44.5072, 11.3461),
+        "Piazza dell'Unità": (44.5135, 11.3461),
+        # Fiera Branch
+        "Zucca-Museo Ustica (Centro)": (44.5115, 11.3500),
+        "Zucca-Museo Ustica (Fiera)": (44.5115, 11.3515),
+        "Stalingrado": (44.5100, 11.3552),
+        "Aldo Moro-Regione-Fiera": (44.5097, 11.3620),
+        "Viale della Fiera-Liceo Copernico": (44.5130, 11.3650),
+        "Michelino-Fiera nord": (44.5185, 11.3695),
+        # Pilastro/CAAB Branch
+        "Repubblica": (44.5105, 11.3710),
         "Piazza Spadolini": (44.5098, 11.3695),
-        "FICO Eataly World": (44.5173, 11.4056),
-        "Corticella Stazione": (44.5422, 11.3533),
-        "Ippodromo": (44.5218, 11.3491),
-        "Piazza dell'Unita": (44.5135, 11.3461),
+        "San Donato": (44.5030, 11.3633),
+        "San Donnino-Casalone": (44.5086, 11.3783),
+        "Villaggio S. Giorgio": (44.5095, 11.3835),
+        "Pirandello": (44.5116, 11.3899),
+        "Pilastro - Futura": (44.5105, 11.3960),
+        "Sighinolfi": (44.5111, 11.4010),
+        "Facoltà di Agraria": (44.5130, 11.4079),
+        # Linea Verde (from Mille to Corticella)
+        "Mille": (44.5018, 11.3417),
+        "Ca' dei Fiori": (44.5200, 11.3485),
+        "Ippodromo": (44.5185, 11.3479),
+        "Aldini Valeriani": (44.5215, 11.3481),
+        "Caserme Rosse": (44.5258, 11.3497),
+        "Croce Coperta": (44.5303, 11.3523),
+        "Pinardi": (44.5330, 11.3535),
+        "Don Fiammelli": (44.5360, 11.3545),
+        "Lipparini-Ca' Bura": (44.5393, 11.3592),
+        "Bentini-Villa Torchi": (44.5420, 11.3555),
+        "Gorki - Teatro Centofiori": (44.5440, 11.3565),
+        "Sant'Anna-Byron": (44.5464, 11.3605),
+        "Shakespeare": (44.5490, 11.3585),
+        "Stazione Corticella": (44.5519, 11.3545)
+    }
+    
+    # Other key network landmarks/gates to preserve
+    other_key_points = {
         "Casalecchio Garibaldi": (44.4782, 11.2785),
         "San Lazzaro di Savena": (44.4705, 11.4085),
         "Porta Saragozza": (44.4912, 11.3275),
@@ -148,30 +192,26 @@ def main():
         "Massarenti": (44.4945, 11.3785),
         "Casteldebole": (44.5082, 11.2685),
         "Irnerio": (44.4965, 11.3535),
-        "Pilastro": (44.5145, 11.3912),
         "Meloncello": (44.4899, 11.3121),
         "Porta Galliera": (44.5043, 11.3435),
         "XX Settembre": (44.5033, 11.3418),
         "Piazza dei Martiri": (44.5020, 11.3391)
     }
 
-    cluster_types = {}
-    cluster_unibo_attr = {}
-    
-    for c in clusters:
-        cluster_types[c['id']] = 'Station'
-        cluster_unibo_attr[c['id']] = 0.0
-        
-    key_station_mapping = {}
-    
-    # We map campuses and key points greedily to DISTINCT closest clusters
+    # Combined dictionary of all points to map
     all_points = {}
     for name, coords in campuses.items():
         all_points[name] = (coords, 'Campus')
-    for name, coords in key_points.items():
+    for name, coords in official_tram_stops.items():
+        all_points[name] = (coords, 'Station')
+    for name, coords in other_key_points.items():
         if name not in all_points:
             all_points[name] = (coords, 'Station')
-            
+
+    cluster_types = {c['id']: 'Station' for c in clusters}
+    cluster_unibo_attr = {c['id']: 0.0 for c in clusters}
+    key_station_mapping = {}
+    
     # Calculate all pairwise distances
     pair_distances = []
     for name, (coords, ptype) in all_points.items():
@@ -179,7 +219,6 @@ def main():
             dist = haversine(coords[0], coords[1], c['lat'], c['lon'])
             pair_distances.append((dist, name, c['id'], coords, ptype))
             
-    # Sort by distance ascending
     pair_distances.sort()
     
     assigned_clusters = set()
@@ -214,26 +253,24 @@ def main():
                 'stops': []
             })
             cluster_types[new_id] = ptype
-            cluster_unibo_attr[new_id] = 1.0 if name != "Agraria Cadriano" else 0.8
+            if ptype == 'Campus':
+                cluster_unibo_attr[new_id] = 1.0 if name != "Agraria Cadriano" else 0.8
             key_station_mapping[name] = new_id
             matched_names.add(name)
 
-    # 3. Generate sequential connections from routes
+    # Generate sequential connections from bus routes
     connections = []
     active_lines = set()
     
     for rel in relations:
         line_ref = rel.get('tags', {}).get('ref', '')
-        # Extract only digits to find the parent line number (e.g. "11A" -> 11)
         digits = ''.join(c for c in line_ref if c.isdigit())
         if not digits:
             continue
         line_id = int(digits)
-            
         active_lines.add(line_id)
         members = rel.get('members', [])
         
-        # Extract stop sequence for this relation
         stop_seq = []
         for m in members:
             if m['type'] == 'node' and m['role'] in ['stop', 'platform', 'stop_entry_only', 'stop_exit_only']:
@@ -241,13 +278,11 @@ def main():
                 if node_id in osm_to_cluster:
                     stop_seq.append(osm_to_cluster[node_id])
                     
-        # Remove consecutive duplicates
         clean_seq = []
         for sid in stop_seq:
             if not clean_seq or clean_seq[-1] != sid:
                 clean_seq.append(sid)
                 
-        # Generate stop-to-stop connections
         for idx in range(len(clean_seq) - 1):
             s1 = clean_seq[idx]
             s2 = clean_seq[idx + 1]
@@ -264,7 +299,6 @@ def main():
                     'time': time_min
                 })
                 
-    # Remove connection duplicates (same stations, same line)
     unique_conns = []
     seen_conns = set()
     for conn in connections:
@@ -275,27 +309,13 @@ def main():
             
     print(f"Generated {len(unique_conns)} unique bus connections.")
     
-    # 4. Integrate planned Tram Lines
-    tram_rossa_route = [
-        "Borgo Panigale", "Santa Viola", "Ospedale Maggiore", "Porta San Felice", 
-        "Via Marconi", "Via Ugo Bassi", "Rizzoli", "Due Torri", "Porta San Donato", 
-        "Sant'Egidio", "Piazza Spadolini", "FICO Eataly World"
-    ]
-    tram_verde_route = [
-        "Corticella Stazione", "Ippodromo", "Piazza dell'Unita", "Bologna Centrale", 
-        "Via Marconi", "Via Ugo Bassi"
-    ]
-    tram_blu_route = [
-        "Casalecchio Garibaldi", "Porta Saragozza", "Via Marconi", "Via Ugo Bassi",
-        "Rizzoli", "Due Torri", "Porta Mazzini", "Mazzini Stazione", "San Lazzaro di Savena"
-    ]
-    
+    # 4. Integrate planned/what-if Tram Lines
     def add_tram_connections(route, line_id):
         for idx in range(len(route) - 1):
             n1 = route[idx]
             n2 = route[idx + 1]
             s1 = key_station_mapping[n1]
-            s2 = key_station_mapping[n2]
+            s2 = key_station_mapping[s2_name := n2] # handle local scope variable assignment safely
             st1, st2 = min(s1, s2), max(s1, s2)
             c1 = [c for c in clusters if c['id'] == st1][0]
             c2 = [c for c in clusters if c['id'] == st2][0]
@@ -308,31 +328,132 @@ def main():
                 'line': line_id,
                 'time': time_min
             })
-            
-    add_tram_connections(tram_rossa_route, 101)
-    add_tram_connections(tram_verde_route, 102)
-    add_tram_connections(tram_blu_route, 103)
-    print("Planned tram lines integrated successfully.")
 
-    # 5. Connect isolated nodes like Agraria Cadriano!
-    # Connect Agraria to FICO and Pilastro via Line 35 walking/bus transfers
-    agraria_id = key_station_mapping["Agraria Cadriano"]
-    fico_id = key_station_mapping["FICO Eataly World"]
-    pilastro_id = key_station_mapping["Pilastro"]
+    # Linea Rossa (101):
+    # Main Borgo Panigale trunk
+    rossa_trunk = [
+        "Emilio Lepido", "Villaggio Ina", "Ducati", "Manuzio", "Stazione Borgo Panigale-Teatri di Vita", 
+        "Triumvirato-Fabbri 1905", "Pontelungo-MAST", "Santa Viola-Opificio Golinelli", "Prati di Caprara", 
+        "Ospedale Maggiore", "Saffi", "Porta San Felice"
+    ]
+    add_tram_connections(rossa_trunk, 101)
     
-    unique_conns.append({
-        'station1': min(agraria_id, fico_id),
-        'station2': max(agraria_id, fico_id),
-        'line': 35,
-        'time': 4
-    })
+    # Paladozza Twin Paths
+    # Path A (San Felice)
+    s_felice_path = ["Porta San Felice", "Paladozza-San Felice", "Canale di Reno-Lame", "Ugo Bassi"]
+    add_tram_connections(s_felice_path, 101)
+    # Path B (Riva Reno)
+    r_reno_path = ["Porta San Felice", "Paladozza-Riva Reno", "Canale di Reno-Lame", "Ugo Bassi"]
+    add_tram_connections(r_reno_path, 101)
+    
+    # Center section
+    rossa_center = ["Ugo Bassi", "Piazza Maggiore-San Pietro", "Indipendenza-8 Agosto", "Stazione Centrale", "Giacomo Matteotti-Stazione AV", "Piazza dell'Unità"]
+    add_tram_connections(rossa_center, 101)
+    
+    # Fiera Branch (including Zucca twin paths)
+    fiera_path_a = ["Piazza dell'Unità", "Zucca-Museo Ustica (Centro)", "Stalingrado"]
+    fiera_path_b = ["Piazza dell'Unità", "Zucca-Museo Ustica (Fiera)", "Stalingrado"]
+    add_tram_connections(fiera_path_a, 101)
+    add_tram_connections(fiera_path_b, 101)
+    
+    fiera_end = ["Stalingrado", "Aldo Moro-Regione-Fiera", "Viale della Fiera-Liceo Copernico", "Michelino-Fiera nord"]
+    add_tram_connections(fiera_end, 101)
+    
+    # Pilastro/CAAB Branch
+    pilastro_branch = [
+        "Piazza dell'Unità", "Repubblica", "Piazza Spadolini", "San Donato", "San Donnino-Casalone", 
+        "Villaggio S. Giorgio", "Pirandello", "Pilastro - Futura", "Sighinolfi", "Facoltà di Agraria"
+    ]
+    add_tram_connections(pilastro_branch, 101)
+    
+    # Linea Verde (102):
+    verde_route = [
+        "Mille", "Stazione Centrale", "Giacomo Matteotti-Stazione AV", "Piazza dell'Unità", 
+        "Ippodromo", "Ca' dei Fiori", "Aldini Valeriani", "Caserme Rosse", "Croce Coperta", 
+        "Pinardi", "Don Fiammelli", "Lipparini-Ca' Bura", "Bentini-Villa Torchi", 
+        "Gorki - Teatro Centofiori", "Sant'Anna-Byron", "Shakespeare", "Stazione Corticella"
+    ]
+    add_tram_connections(verde_route, 102)
+    
+    # Alternative Campus Tram (103):
+    campus_route = ["Lazzaretto", "Navile", "Piazza Spadolini", "Porta San Donato"]
+    add_tram_connections(campus_route, 103)
+    
+    # Alternative Circular Tram (Viali) (104):
+    circular_route = [
+        "Porta Galliera", "XX Settembre", "Piazza dei Martiri", "Porta San Felice", 
+        "Porta Saragozza", "Porta Santo Stefano", "Porta Mazzini", "Porta San Donato", "Porta Galliera"
+    ]
+    add_tram_connections(circular_route, 104)
+
+    print("Integrated Tram Linea Rossa (101), Linea Verde (102), Alternative Campus (103), and Alternative Circular (104).")
+
+    # Connect Agraria to FICO and Pilastro via Line 35 walking/bus transfers
+    agraria_id = key_station_mapping["Facoltà di Agraria"]
+    pilastro_id = key_station_mapping["Pilastro - Futura"]
+    
     unique_conns.append({
         'station1': min(agraria_id, pilastro_id),
         'station2': max(agraria_id, pilastro_id),
         'line': 35,
         'time': 3
     })
-    print("Agraria Cadriano connected to FICO and Pilastro via Line 35.")
+    print("Facoltà di Agraria connected to Pilastro - Futura via Line 35.")
+
+    # 5. Load and Merge Open Data
+    
+    # Load Spire Traffic
+    spire_path = f"{OUTPUT_DIR}/bologna_spire_traffic.csv"
+    if os.path.exists(spire_path):
+        df_spire = pd.read_csv(spire_path)
+        print(f"Loaded {len(df_spire)} spire traffic sensors.")
+    else:
+        print("Warning: bologna_spire_traffic.csv not found.")
+        df_spire = pd.DataFrame()
+        
+    # Load Accidents
+    accidents_path = f"{OUTPUT_DIR}/bologna_accidents.csv"
+    if os.path.exists(accidents_path):
+        df_acc = pd.read_csv(accidents_path)
+        acc_dict = df_acc.set_index("normalized_neighborhood").to_dict(orient="index")
+        print(f"Loaded {len(df_acc)} accident neighborhood records.")
+    else:
+        print("Warning: bologna_accidents.csv not found.")
+        acc_dict = {}
+        
+    # Load Bike Counters
+    bike_path = f"{OUTPUT_DIR}/bologna_bike_counters.csv"
+    if os.path.exists(bike_path):
+        df_bike = pd.read_csv(bike_path)
+        print(f"Loaded {len(df_bike)} bike counters.")
+    else:
+        print("Warning: bologna_bike_counters.csv not found.")
+        df_bike = pd.DataFrame()
+
+    # Pre-calculate zone average daily flows for spire fallback
+    # Match spire coordinates to neighborhoods
+    spire_flows_by_zone = {}
+    if not df_spire.empty:
+        for idx, row in df_spire.iterrows():
+            lat, lon = row["latitudine"], row["longitudine"]
+            zone = "Centro"
+            if lat > 44.515:
+                zone = "Navile" if lon < 11.37 else "San Donato"
+            elif lat < 44.485:
+                zone = "Santo Stefano" if lon > 11.34 else "Porto-Saragozza"
+                if lon > 11.37:
+                    zone = "Savena"
+            else:
+                if lon < 11.31:
+                    zone = "Borgo Panigale"
+                elif lon > 11.36:
+                    zone = "San Donato"
+                elif lon < 11.335:
+                    zone = "Porto-Saragozza"
+            spire_flows_by_zone.setdefault(zone, []).append(row["avg_daily_flow"])
+            
+    zone_avg_flow = {z: np.mean(flows) for z, flows in spire_flows_by_zone.items()}
+    overall_avg_flow = df_spire["avg_daily_flow"].mean() if not df_spire.empty else 5000.0
 
     # 6. Save data
     
@@ -355,13 +476,24 @@ def main():
             elif lon < 11.335:
                 zone = "Porto-Saragozza"
                 
+        # Find nearest bike counter within 300 meters
+        bike_flow = 0.0
+        if not df_bike.empty:
+            for idx, row in df_bike.iterrows():
+                b_lat, b_lon = row["latitude"], row["longitude"]
+                if pd.notna(b_lat) and pd.notna(b_lon):
+                    dist = haversine(lat, lon, b_lat, b_lon)
+                    if dist < 300:
+                        bike_flow = max(bike_flow, row["avg_hourly_flow"])
+                        
         stations_data.append({
             'id': c['id'],
             'name': c['name'],
             'latitude': round(lat, 5),
             'longitude': round(lon, 5),
             'zone': zone,
-            'type': cluster_types.get(c['id'], 'Station')
+            'type': cluster_types.get(c['id'], 'Station'),
+            'bike_flow_hourly': round(bike_flow, 2)
         })
         
     df_stations_out = pd.DataFrame(stations_data)
@@ -373,7 +505,7 @@ def main():
     df_conns_out.to_csv(f"{OUTPUT_DIR}/bologna_connections.csv", index=False)
     print(f"Saved {len(df_conns_out)} connections to bologna_connections.csv")
     
-    # 6c. Demographics CSV
+    # 6c. Demographics & Open Data CSV
     zone_densities = {
         "Centro": 8500,
         "San Donato": 5500,
@@ -399,12 +531,34 @@ def main():
         if "Agraria" in name:
             density = 1500
             
+        # Match nearest vehicle spire flow (within 500m)
+        traffic_flow = None
+        min_dist = float('inf')
+        if not df_spire.empty:
+            for idx, s_row in df_spire.iterrows():
+                s_lat, s_lon = s_row["latitudine"], s_row["longitudine"]
+                dist = haversine(c["lat"], c["lon"], s_lat, s_lon)
+                if dist < min_dist:
+                    min_dist = dist
+                    traffic_flow = s_row["avg_daily_flow"]
+                    
+        # Apply neighborhood fallback if no spire is within 500m
+        if min_dist > 500 or traffic_flow is None:
+            traffic_flow = zone_avg_flow.get(zone, overall_avg_flow)
+            
+        # Match neighborhood accident statistics
+        acc_info = acc_dict.get(zone, {"total_accidents": 0, "total_injured": 0, "total_deaths": 0})
+        
         demo_data.append({
             'station_id': cid,
             'station_name': name,
             'neighborhood': zone,
             'population_density': density,
-            'unibo_attraction': cluster_unibo_attr.get(cid, 0.0)
+            'unibo_attraction': cluster_unibo_attr.get(cid, 0.0),
+            'traffic_flow_daily': round(traffic_flow, 2),
+            'zone_total_accidents': acc_info.get("total_accidents", 0),
+            'zone_total_injured': acc_info.get("total_injured", 0),
+            'zone_total_deaths': acc_info.get("total_deaths", 0)
         })
         
     df_demo_out = pd.DataFrame(demo_data)
@@ -425,7 +579,8 @@ def main():
         37: ("Linea 37 (Bus)", "546E7A"),
         101: ("Tram Linea Rossa", "E53935"),
         102: ("Tram Linea Verde", "43A047"),
-        103: ("Tram Linea Blu", "1E88E5"),
+        103: ("Tram Alternativo Campus", "F57C00"),
+        104: ("Tram Alternativo Circolare Viali", "0288D1"),
     }
     
     lines_data = []

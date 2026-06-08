@@ -1,9 +1,14 @@
 line,name,colour
+11,Linea 11 (Bus),00897B
 13,Linea 13 (Bus),D32F2F
+14,Linea 14 (Bus),7CB342
+19,Linea 19 (Bus),FB8C00
+20,Linea 20 (Bus),F4511E
 27,Linea 27 (Bus),1976D2
 32,Circolare 32 (Bus),388E3C
 33,Circolare 33 (Bus),FBC02D
 35,Linea Navetta 35 (Bus),8E24AA
-20,Linea 20 (Bus),E65100
+37,Linea 37 (Bus),546E7A
 101,Tram Linea Rossa,E53935
 102,Tram Linea Verde,43A047
+103,Tram Linea Blu,1E88E5

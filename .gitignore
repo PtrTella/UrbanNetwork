@@ -332,3 +332,4 @@ pythontex-files-*/
 *.pk
 .vscode/
 cache/
+*.csv
