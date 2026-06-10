@@ -1,181 +1,194 @@
-import os
-import networkx as nx
+import warnings
 import pandas as pd
-import matplotlib.pyplot as plt
+from pathlib import Path
 
-# --- NUOVI IMPORT ALLINEATI ALLA TUA REPO ---
+# Importiamo i nostri Specialisti
 from src.graph import load_bologna_graph
 from src.analyzer import (
     compute_centralities,
     compute_small_worldness,
-    compute_demand_weighted_efficiency,
+    compute_weighted_global_efficiency,
 )
+from src.urban_analysis import calculate_demographics_weight
+from src.scenarios import inject_hypothetical_tram
 from src.simulator import run_resilience_simulation
+
+warnings.filterwarnings("ignore")
+
+BASE_DIR = Path(__file__).resolve().parent
+RAW_DIR = BASE_DIR / "dataset" / "bologna" / "raw"
+PROCESSED_DIR = BASE_DIR / "dataset" / "bologna" / "processed"
 
 
 def main():
-    print("=== Phase 1: Data Ingestion & Preprocessing ===")
-    os.makedirs("data_output/bologna", exist_ok=True)
-    os.makedirs("latex/figures/bologna", exist_ok=True)
-
-    # 1. Caricamento tramite il nuovo graph.py
-    G_bus = load_bologna_graph(scenario="bus_only")
-    G_tram = load_bologna_graph(scenario="real_tram")
-
-    print("\nBologna Bus-Only Network:")
-    print(f"  Stations (Nodes, N): {len(G_bus.nodes)}")
-    print(f"  Connections (Edges, M): {len(G_bus.edges)}")
-    print(f"  Density (p): {nx.density(G_bus):.6f}")
-
-    print("\nBologna Bus+Tram Network:")
-    print(f"  Stations (Nodes, N): {len(G_tram.nodes)}")
-    print(f"  Connections (Edges, M): {len(G_tram.edges)}")
-    print(f"  Density (p): {nx.density(G_tram):.6f}")
-
-    # Plot network layouts
-    pos = {node: (data["lon"], data["lat"]) for node, data in G_tram.nodes(data=True)}
-
-    plt.figure(figsize=(10, 8))
-    plt.gca().set_facecolor("#fdfefe")
-
-    # Disegna Archi Bus (Adattato al nuovo attributo 'type')
-    bus_edges = [
-        (u, v) for u, v, data in G_tram.edges(data=True) if data.get("type") == "bus"
-    ]
-    nx.draw_networkx_edges(
-        G_tram,
-        pos,
-        edgelist=bus_edges,
-        edge_color="#bdc3c7",
-        width=1.0,
-        alpha=0.5,
-        label="Bus Lines",
-    )
-
-    # Disegna Archi Tram (Adattato al nuovo attributo 'type')
-    tram_edges = [
-        (u, v) for u, v, data in G_tram.edges(data=True) if data.get("type") == "tram"
-    ]
-    nx.draw_networkx_edges(
-        G_tram,
-        pos,
-        edgelist=tram_edges,
-        edge_color="#C62828",
-        width=3.5,
-        alpha=0.9,
-        label="Tram Lines",
-    )
-
-    # Disegna Nodi
-    station_nodes = [
-        node for node, data in G_tram.nodes(data=True) if data.get("type") == "bus"
-    ]
-    tram_nodes = [
-        node for node, data in G_tram.nodes(data=True) if data.get("type") == "tram"
-    ]
-
-    nx.draw_networkx_nodes(
-        G_tram, pos, nodelist=station_nodes, node_size=15, node_color="black", alpha=0.6
-    )
-    nx.draw_networkx_nodes(
-        G_tram,
-        pos,
-        nodelist=tram_nodes,
-        node_size=60,
-        node_color="#1976D2",
-        node_shape="s",
-        label="Tram Stops",
-    )
-
-    plt.title(
-        "Bologna Integrated Public Transport Network (L-Space)",
-        fontsize=13,
-        fontweight="bold",
-    )
-    plt.legend(loc="lower left", frameon=True)
-    plt.axis("off")
-    plt.tight_layout()
-    plt.savefig("latex/figures/bologna/bologna_tube_map.png", dpi=300)
-    plt.close()
-
-    # Save GraphML
-    nx.write_graphml(G_tram, "data_output/bologna/bologna_network.graphml")
-
-    print("\n=== Phase 2: Microscopic Centrality Analysis ===")
-    df_micro = compute_centralities(G_bus)
-    df_micro.to_csv("data_output/bologna/bologna_centralities.csv", index=False)
-
-    print("\nTop 5 Stations by Betweenness Centrality (Bottlenecks):")
+    print("\n" + "=" * 110)
     print(
-        df_micro.sort_values(by="Betweenness Centrality", ascending=False).head(5)[
-            ["Station", "Betweenness Centrality"]
-        ]
-    )
-
-    print("\n=== Phase 3: Macroscopic Analysis & Small-Worldness ===")
-    sw_bus = compute_small_worldness(G_bus)
-    sw_tram = compute_small_worldness(G_tram)
-
-    print(f"{'Metrica':<30}{'Rete Bus':<15}{'Rete Bus+Tram':<15}")
-    print("-" * 60)
-    print(f"{'Avg Path Length L':<30}{sw_bus['L']:.4f}{'':<8}{sw_tram['L']:.4f}")
-    print(f"{'Clustering Coeff C':<30}{sw_bus['C']:.4f}{'':<8}{sw_tram['C']:.4f}")
-    print(
-        f"{'Global Efficiency E_glob':<30}{sw_bus['E_glob']:.4f}{'':<8}{sw_tram['E_glob']:.4f}"
-    )
-
-    print("\n=== Phase 4: Resilience Stress-Test ===")
-    # Ora il simulatore funzionerà perché il grafo non è direzionato!
-    fracs, r_lcc_bus, t_lcc_bus, r_frag_bus, t_frag_bus, r_eff_bus, t_eff_bus = (
-        run_resilience_simulation(G_bus, random_runs=10)
-    )
-    _, r_lcc_tram, t_lcc_tram, r_frag_tram, t_frag_tram, r_eff_tram, t_eff_tram = (
-        run_resilience_simulation(G_tram, random_runs=10)
-    )
-
-    plt.figure(figsize=(7, 5))
-    plt.plot(
-        fracs * 100,
-        t_lcc_bus,
-        "s--",
-        color="#e74c3c",
-        label="Targeted Attack (Bus Only)",
-        linewidth=2,
-    )
-    plt.plot(
-        fracs * 100,
-        t_lcc_tram,
-        "s-",
-        color="#27ae60",
-        label="Targeted Attack (Bus+Tram)",
-        linewidth=2,
-    )
-    plt.xlabel("Fraction of Nodes Removed (%)")
-    plt.ylabel("Relative Size of LCC")
-    plt.title("Connectedness decay (LCC) under Node Removal", fontweight="bold")
-    plt.grid(True, linestyle="--", alpha=0.5)
-    plt.legend()
-    plt.tight_layout()
-    plt.savefig("latex/figures/bologna/resilience_lcc.png", dpi=300)
-    plt.close()
-
-    print("\n=== Phase 5: Demographic Demand-Weighted Efficiency ===")
-    # Il data_loader pulito non restituisce più df_demo. Lo carichiamo direttamente qui se esiste.
-    demo_path = "dataset/bologna/bologna_demographics.csv"
-    if os.path.exists(demo_path):
-        df_demo = pd.read_csv(demo_path)
-        eff_bus = compute_demand_weighted_efficiency(G_bus, df_demo)
-        eff_real_tram = compute_demand_weighted_efficiency(G_tram, df_demo)
-
-        print("Efficienza di Trasporto Pesata sulla Domanda:")
-        print(f"  1. Rete Bus Attuale (Bus Only):                  {eff_bus:.6f}")
-        print(
-            f"  2. Rete Integrata con Tram Reale (Bus+Tram):      {eff_real_tram:.6f}"
+        "🚀 BOLOGNA L-SPACE TRANSIT NETWORK ANALYSIS (WITH PREDICTIVE SCENARIO) 🚀".center(
+            110
         )
-    else:
-        print("Dataset Demografico non trovato, salto il calcolo di efficienza pesata.")
+    )
+    print("=" * 110 + "\n")
 
-    print("\n[SUCCESS] Bologna transit network analysis complete!")
+    # =========================================================================
+    print("=== PHASE 1: Data Ingestion & Preprocessing ===")
+    # =========================================================================
+    G_bus = load_bologna_graph(scenario="bus_only")
+    G_fused = load_bologna_graph(scenario="tram", integration_mode="fused")
+    G_multi = load_bologna_graph(scenario="tram", integration_mode="multiplex")
+
+    G_futuro = inject_hypothetical_tram(G_fused, route_to_upgrade="32")
+
+    print("\n📊 Riepilogo Topologia:")
+    print(
+        f"  🚌 Solo Bus:        {G_bus.number_of_nodes()} Nodi | {G_bus.number_of_edges()} Archi"
+    )
+    print(
+        f"  🔗 Fused (Bus+Tram):  {G_fused.number_of_nodes()} Nodi | {G_fused.number_of_edges()} Archi"
+    )
+    print(
+        f"  🚶 Multiplex:       {G_multi.number_of_nodes()} Nodi | {G_multi.number_of_edges()} Archi"
+    )
+    print(
+        f"  🔮 Futuro (Circolare): {G_futuro.number_of_nodes()} Nodi | {G_futuro.number_of_edges()} Archi"
+    )
+
+    # =========================================================================
+    print("\n=== PHASE 2: Microscopic Centrality (Vulnerabilità) ===")
+    # =========================================================================
+    df_centrality = compute_centralities(G_bus)
+    df_top_5 = df_centrality.sort_values(
+        by="Betweenness Centrality", ascending=False
+    ).head(5)
+
+    print("⚠️ Top 5 Bottlenecks (Vene Giugulari della città):")
+    print("-" * 50)
+    print(f"{'Stazione':<32} | {'Betweenness Score':<15}")
+    print("-" * 50)
+    for _, row in df_top_5.iterrows():
+        print(f"{row['Station_Name']:<32} | {row['Betweenness Centrality']:.5f}")
+
+    top_node_data = list(zip(df_top_5["Station_ID"], df_top_5["Station_Name"]))
+
+    # =========================================================================
+    print("\n=== PHASE 3: Macroscopic Analysis (Efficienza Globale) ===")
+    # =========================================================================
+    m_bus = compute_small_worldness(G_bus)
+    m_fused = compute_small_worldness(G_fused)
+    m_multi = compute_small_worldness(G_multi)
+    m_futuro = compute_small_worldness(G_futuro)
+
+    print("-" * 115)
+    print(
+        f"{'Metrica Topologica':<25} | {'🚌 Solo Bus':<16} | {'🔗 Fused':<16} | {'🚶 Multiplex':<16} | {'🔮 Fused+Circolare':<18}"
+    )
+    print("-" * 115)
+    print(
+        f"{'Avg Path Length (L)':<25} | {m_bus['L']:<16.4f} | {m_fused['L']:<16.4f} | {m_multi['L']:<16.4f} | {m_futuro['L']:<18.4f}"
+    )
+    print(
+        f"{'Clustering Coeff (C)':<25} | {m_bus['C']:<16.4f} | {m_fused['C']:<16.4f} | {m_multi['C']:<16.4f} | {m_futuro['C']:<18.4f}"
+    )
+    print(
+        f"{'Global Efficiency (E)':<25} | {m_bus['E_glob']:<16.6f} | {m_fused['E_glob']:<16.6f} | {m_multi['E_glob']:<16.6f} | {m_futuro['E_glob']:<18.6f}"
+    )
+    print(
+        f"{'Small-World Sigma (σ)':<25} | {m_bus.get('Sigma', 0.0):<16.2f} | {m_fused.get('Sigma', 0.0):<16.2f} | {m_multi.get('Sigma', 0.0):<16.2f} | {m_futuro.get('Sigma', 0.0):<18.2f}"
+    )
+    print("-" * 115)
+
+    # =========================================================================
+    print("\n=== PHASE 4: Resilience Stress-Test (Attacco ai Bottlenecks) ===")
+    # =========================================================================
+    print("A) Simulazione di Crollo Infrastrutturale Mirato (Top 5 Hub)...")
+    eff_bus_base, eff_fused_base = m_bus["E_glob"], m_fused["E_glob"]
+    eff_multi_base, eff_futuro_base = m_multi["E_glob"], m_futuro["E_glob"]
+
+    print("-" * 105)
+    print(
+        f"{'Hub Compromesso':<22} | {'📉 Crollo Bus':<16} | {'📉 Crollo Fused':<16} | {'📉 Crollo Multi':<16} | {'🛡️ Crollo Futuro':<18}"
+    )
+    print("-" * 105)
+
+    # [FIX CITTÀ]: Corretta l'assegnazione delle copie dei grafi
+    G_bus_att, G_fused_att = G_bus.copy(), G_fused.copy()
+    G_multi_att, G_futuro_att = G_multi.copy(), G_futuro.copy()
+
+    for node_id, node_name in top_node_data:
+        if G_bus_att.has_node(node_id):
+            G_bus_att.remove_node(node_id)
+        if G_fused_att.has_node(node_id):
+            G_fused_att.remove_node(node_id)
+        if G_multi_att.has_node(node_id):
+            G_multi_att.remove_node(node_id)
+        if G_futuro_att.has_node(node_id):
+            G_futuro_att.remove_node(node_id)
+
+        drop_bus = (
+            (eff_bus_base - compute_weighted_global_efficiency(G_bus_att))
+            / eff_bus_base
+        ) * 100
+        drop_fused = (
+            (eff_fused_base - compute_weighted_global_efficiency(G_fused_att))
+            / eff_fused_base
+        ) * 100
+        drop_multi = (
+            (eff_multi_base - compute_weighted_global_efficiency(G_multi_att))
+            / eff_multi_base
+        ) * 100
+        drop_futuro = (
+            (eff_futuro_base - compute_weighted_global_efficiency(G_futuro_att))
+            / eff_futuro_base
+        ) * 100
+
+        name_short = node_name[:20] + ".." if len(node_name) > 20 else node_name
+        print(
+            f"{name_short:<22} | -{drop_bus:.2f}%{'':<9} | -{drop_fused:.2f}%{'':<9} | -{drop_multi:.2f}%{'':<9} | -{drop_futuro:.2f}%"
+        )
+    print("-" * 105)
+
+    print(
+        "\nB) Simulazione di Percolazione Globale (Random vs Targeted vs Accidents)..."
+    )
+    print("   -> Calcolo in corso sulla rete integrata Bus+Tram (Scenario Fused)...")
+
+    # [FIX SIMULATORE]: Estratte tutte e 10 le variabili, incluso lo scenario Incidenti!
+    (
+        fracs,
+        rand_lcc,
+        targ_lcc,
+        acc_lcc,
+        rand_frag,
+        targ_frag,
+        acc_frag,
+        rand_eff,
+        targ_eff,
+        acc_eff,
+    ) = run_resilience_simulation(G_fused, random_runs=20)
+
+    df_percolation = pd.DataFrame(
+        {
+            "Removal_Fraction": fracs,
+            "Random_LCC_Size": rand_lcc,
+            "Targeted_LCC_Size": targ_lcc,
+            "Accidents_LCC_Size": acc_lcc,
+            "Random_Efficiency": rand_eff,
+            "Targeted_Efficiency": targ_eff,
+            "Accidents_Efficiency": acc_eff,
+        }
+    )
+    df_percolation.to_csv(
+        PROCESSED_DIR / "resilience_percolation_results.csv", index=False
+    )
+    print("   ✅ Simulazione completata! Risultati (3 Scenari) salvati in CSV.")
+
+    # =========================================================================
+    print("\n=== PHASE 5: Demographic Demand (Pressione Urbana) ===")
+    # =========================================================================
+    calculate_demographics_weight(G_fused, RAW_DIR)
+
+    print(
+        "\n✅ [SUCCESS] Pipeline analitica, predittiva e di resilienza completata al 100%."
+    )
 
 
 if __name__ == "__main__":

@@ -91,7 +91,6 @@ def process_and_annotate_tram():
         }
 
     tram_nodes_csv = []
-    new_id_counter = 900000
     json_id_to_final_id = {}
 
     print(" -> Ricerca Coordinate in corso...")
@@ -107,11 +106,10 @@ def process_and_annotate_tram():
             norm_name = normalize_name(MANUAL_OVERRIDES[name_upper])
 
         json_id = stop["id"]
-        lat, lon, final_id = None, None, ""
+        lat, lon = None, None
 
         # --- STRATEGIA 1: Match Esatto (su stringa normalizzata) ---
         if norm_name in bus_map:
-            final_id = bus_map[norm_name]["id"]
             lat, lon = bus_map[norm_name]["lat"], bus_map[norm_name]["lon"]
             print(f"Match diretto {original_name}")
 
@@ -120,21 +118,17 @@ def process_and_annotate_tram():
             coords = get_coordinates_from_map(original_name)
             if coords:
                 lat, lon = coords
-                final_id = str(new_id_counter)
-                new_id_counter += 1
                 print(f"      ✅ Trovato: {lat:.5f}, {lon:.5f}")
             else:
                 # Fallback (Da correggere a mano)
                 lat, lon = 44.4949, 11.3426
-                final_id = str(new_id_counter)
-                new_id_counter += 1
                 print(f"    ❌ Fallito: '{original_name}'. Assegnato Piazza Maggiore.")
 
-        json_id_to_final_id[json_id] = final_id
+        json_id_to_final_id[json_id] = json_id
 
         tram_nodes_csv.append(
             {
-                "stop_id": final_id,
+                "stop_id": json_id,
                 "stop_name": name_upper,
                 "stop_lat": lat,
                 "stop_lon": lon,

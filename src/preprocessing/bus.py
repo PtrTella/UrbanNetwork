@@ -133,7 +133,7 @@ def process_bus_network():
     # =========================================================
     print(" -> Mappatura Spire di Traffico e Incidenti...")
 
-    # [Traffico]
+    # [Traffico con Capacità Empirica Dinamica]
     try:
         df_spire = pd.read_csv(RAW_DIR / "bologna_spire_traffic.csv", sep=";")
         df_spire = df_spire.dropna(subset=["longitudine", "latitudine"])
@@ -145,18 +145,36 @@ def process_bus_network():
         )
 
         colonne_orarie = df_spire.filter(regex=r"\d{2}_00_\d{2}_00").columns
-        df_spire["flusso_totale_giorno"] = (
+
+        # 1. Calcoliamo il massimo orario di OGNI riga (il picco di quel giorno)
+        df_spire["picco_orario_giorno"] = (
             df_spire[colonne_orarie]
             .apply(pd.to_numeric, errors="coerce")
             .fillna(0)
-            .sum(axis=1)
+            .max(axis=1)
         )
+
+        # 2. Aggreghiamo per Spira/Coordinate calcolando:
+        #    - Il flusso medio nell'ora di punta (Volume V)
+        #    - Il massimo assoluto mai registrato (Capacità C)
         df_spire_agg = (
-            df_spire.groupby(["longitudine", "latitudine"])["flusso_totale_giorno"]
-            .mean()
+            df_spire.groupby(["longitudine", "latitudine"])
+            .agg(
+                flusso_medio_picco=("picco_orario_giorno", "mean"),
+                capacita_massima_storica=("picco_orario_giorno", "max"),
+            )
             .reset_index()
         )
 
+        # Un piccolo moltiplicatore di sicurezza (es. +10%) evita divisioni per zero
+        # e stabilisce una capacità teorica leggermente superiore al massimo osservato
+        df_spire_agg["capacita_strada"] = df_spire_agg["capacita_massima_storica"] * 1.1
+        # Forza un limite minimo di capacità (es. 300 auto/ora) per vicoli piccolissimi
+        df_spire_agg["capacita_strada"] = df_spire_agg["capacita_strada"].clip(
+            lower=300.0
+        )
+
+        # Configurazione GeoPandas per lo Spatial Join
         gdf_stops = gpd.GeoDataFrame(
             df_stops,
             geometry=gpd.points_from_xy(df_stops.stop_lon, df_stops.stop_lat),
@@ -170,24 +188,40 @@ def process_bus_network():
             crs="EPSG:4326",
         )
 
+        # Join geografico per trovare la spira più vicina alla fermata
         joined_spire = gpd.sjoin_nearest(
             gdf_stops.to_crs("EPSG:32632"),
-            gdf_spire.to_crs("EPSG:32632")[["geometry", "flusso_totale_giorno"]],
+            gdf_spire.to_crs("EPSG:32632")[
+                ["geometry", "flusso_medio_picco", "capacita_strada"]
+            ],
+            how="left",
+        ).drop_duplicates(subset=["stop_id"])
+
+        # Integriamo i dati nel dataframe principale delle fermate
+        df_stops = df_stops.merge(
+            joined_spire[["stop_id", "flusso_medio_picco", "capacita_strada"]],
+            on="stop_id",
             how="left",
         )
-        joined_spire = joined_spire.drop_duplicates(subset=["stop_id"])
-
-        df_stops = df_stops.merge(
-            joined_spire[["stop_id", "flusso_totale_giorno"]], on="stop_id", how="left"
-        )
         df_stops.rename(
-            columns={"flusso_totale_giorno": "nearest_traffic_flow"}, inplace=True
+            columns={
+                "flusso_medio_picco": "nearest_traffic_flow",
+                "capacita_strada": "road_capacity",
+            },
+            inplace=True,
         )
+
         df_stops["nearest_traffic_flow"] = (
             df_stops["nearest_traffic_flow"].fillna(0).round(2)
         )
+        df_stops["road_capacity"] = (
+            df_stops["road_capacity"].fillna(1000).round(2)
+        )  # Fallback a 1000 se isolata
+
     except Exception as e:
+        print(f"Errore nell'elaborazione del traffico: {e}")
         df_stops["nearest_traffic_flow"] = 0
+        df_stops["road_capacity"] = 1000
 
     # [Incidenti]
     try:
@@ -214,7 +248,7 @@ def process_bus_network():
 
         df_stops = df_stops.merge(acc_counts, on="stop_id", how="left")
         df_stops["accidents_300m"] = df_stops["accidents_300m"].fillna(0).astype(int)
-    except Exception as e:
+    except Exception:
         df_stops["accidents_300m"] = 0
 
     # =========================================================
@@ -231,7 +265,7 @@ def process_bus_network():
     df_stops[col_finali].to_csv(PROCESSED_DIR / "bologna_stations.csv", index=False)
     df_edges.to_csv(PROCESSED_DIR / "bologna_connections.csv", index=False)
 
-    print(f"✅ Pipeline Completata con Successo (White-List)!")
+    print("✅ Pipeline Completata con Successo (White-List)!")
     print(f"   - Nodi (Fermate Bologna Urbana): {len(df_stops)}")
     print(f"   - Archi (Connessioni Topologiche): {len(df_edges)}")
 
