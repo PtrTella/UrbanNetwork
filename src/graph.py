@@ -1,111 +1,87 @@
 import pandas as pd
 import networkx as nx
-import os
+import numpy as np
+from pathlib import Path
 
-PROCESSED_DIR = "dataset/bologna/processed"
+BASE_DIR = Path(__file__).resolve().parent.parent
+PROCESSED_DIR = BASE_DIR / "dataset" / "bologna" / "processed"
+
+
+def haversine(lat1, lon1, lat2, lon2):
+    R = 6371000.0
+    phi1, phi2 = np.radians(lat1), np.radians(lat2)
+    dphi = np.radians(lat2 - lat1)
+    dlam = np.radians(lon2 - lon1)
+    a = np.sin(dphi / 2.0) ** 2 + np.cos(phi1) * np.cos(phi2) * np.sin(dlam / 2.0) ** 2
+    return R * 2.0 * np.arctan2(np.sqrt(a), np.sqrt(1.0 - a))
 
 
 def load_bologna_graph(scenario="bus_only"):
-    """
-    Costruisce il grafo L-Space caricando i CSV pre-processati.
-    Scenari: 'bus_only', 'real_tram', 'alt_campus', 'alt_circular'
-    """
-    print(f"Caricamento Grafo - Scenario: {scenario.upper()}")
+    print(f"Caricamento Grafo Integrato - Scenario: {scenario.upper()}")
 
-    # File Base (Sempre presenti)
-    bus_nodes_file = os.path.join(PROCESSED_DIR, "bologna_stations.csv")
-    bus_edges_file = os.path.join(PROCESSED_DIR, "bologna_connections.csv")
+    # 1. Carica Bus
+    df_bus_nodes = pd.read_csv(PROCESSED_DIR / "bologna_stations.csv")
+    df_bus_edges = pd.read_csv(PROCESSED_DIR / "bologna_connections.csv")
 
-    # File Tram (Caricati solo se richiesti)
-    tram_nodes_file = os.path.join(PROCESSED_DIR, "bologna_tram_stations.csv")
-    tram_edges_file = os.path.join(PROCESSED_DIR, "bologna_tram_connections.csv")
+    G = nx.Graph()
 
-    if not os.path.exists(bus_nodes_file) or not os.path.exists(bus_edges_file):
-        raise FileNotFoundError(
-            "CSV dei Bus mancanti. Esegui parse_and_build_dataset.py"
-        )
-
-    G = nx.DiGraph()
-
-    # --- 1. CARICAMENTO RETE BUS BASE ---
-    df_bus_nodes = pd.read_csv(bus_nodes_file)
+    # Popola Nodi da Bus
     for _, row in df_bus_nodes.iterrows():
         G.add_node(
             str(row["stop_id"]),
             name=row["stop_name"],
             lat=row["stop_lat"],
             lon=row["stop_lon"],
-            traffic_flow=row.get("nearest_traffic_flow", 0),
-            accidents=row.get("accidents_300m", 0),
             type="bus",
         )
 
-    df_bus_edges = pd.read_csv(bus_edges_file)
+    # Aggiungi Archi Bus
     for _, row in df_bus_edges.iterrows():
         u, v = str(row["stop_id"]), str(row["next_stop_id"])
         if u in G and v in G:
-            # Calcolo del peso dell'arco basato sul traffico
-            avg_traffic = (
-                G.nodes[u].get("traffic_flow", 0) + G.nodes[v].get("traffic_flow", 0)
-            ) / 2.0
-            weight = 1.0 + (avg_traffic / 15000.0)
-
             G.add_edge(
                 u,
                 v,
-                route=row["route_id"],
+                weight=haversine(
+                    G.nodes[u]["lat"],
+                    G.nodes[u]["lon"],
+                    G.nodes[v]["lat"],
+                    G.nodes[v]["lon"],
+                ),
                 type="bus",
-                weight=weight,
-                frequency=row["frequency"],
             )
 
-    # --- 2. CARICAMENTO RETE TRAM (SE RICHIESTO) ---
+    # 2. Carica Tram (SE RICHIESTO)
     if scenario != "bus_only":
-        if not os.path.exists(tram_nodes_file) or not os.path.exists(tram_edges_file):
-            raise FileNotFoundError(
-                "CSV del Tram mancanti. Esegui parse_and_build_tram.py"
-            )
+        df_tram_nodes = pd.read_csv(PROCESSED_DIR / "bologna_tram_stations.csv")
+        df_tram_edges = pd.read_csv(PROCESSED_DIR / "bologna_tram_connections.csv")
 
-        df_tram_nodes = pd.read_csv(tram_nodes_file)
-        df_tram_edges = pd.read_csv(tram_edges_file)
-
-        # Aggiungiamo tutti i nodi fisici del tram
+        # Popola Nodi Tram (se non esistono già)
         for _, row in df_tram_nodes.iterrows():
-            G.add_node(
-                str(row["stop_id"]),
-                name=row["stop_name"],
-                lat=row["stop_lat"],
-                lon=row["stop_lon"],
-                traffic_flow=0,
-                accidents=0,
-                type="tram",
-            )
-
-        # Filtriamo le linee tram da attivare in base allo scenario
-        allowed_routes = []
-        if scenario == "real_tram":
-            allowed_routes = ["101_LINEA_ROSSA", "102_LINEA_VERDE"]
-        elif scenario == "alt_campus":
-            allowed_routes = ["103_TRAM_CAMPUS"]
-        elif scenario == "alt_circular":
-            allowed_routes = ["104_TRAM_VIALI"]
-
-        df_active_tram = df_tram_edges[df_tram_edges["route_id"].isin(allowed_routes)]
-
-        # Aggiungiamo gli archi tram (peso basso, zero traffico)
-        for _, row in df_active_tram.iterrows():
-            u, v = str(row["stop_id"]), str(row["next_stop_id"])
-            if u in G and v in G:
-                G.add_edge(
-                    u,
-                    v,
-                    route=row["route_id"],
+            nid = str(row["stop_id"])
+            if nid not in G:
+                G.add_node(
+                    nid,
+                    name=row["stop_name"],
+                    lat=row["stop_lat"],
+                    lon=row["stop_lon"],
                     type="tram",
-                    weight=0.5,
-                    frequency=row["frequency"],
                 )
 
+        # Aggiungi Archi Tram
+        for _, row in df_tram_edges.iterrows():
+            u, v = str(row["stop_id"]), str(row["next_stop_id"])
+            if u in G and v in G:
+                # Il tram ha peso ridotto (sede protetta)
+                dist = haversine(
+                    G.nodes[u]["lat"],
+                    G.nodes[u]["lon"],
+                    G.nodes[v]["lat"],
+                    G.nodes[v]["lon"],
+                )
+                G.add_edge(u, v, weight=dist * 0.5, type="tram")
+
     print(
-        f"✅ Grafo generato. Nodi: {G.number_of_nodes()}, Archi: {G.number_of_edges()}"
+        f"✅ Grafo Integrato: {G.number_of_nodes()} Nodi, {G.number_of_edges()} Archi."
     )
     return G

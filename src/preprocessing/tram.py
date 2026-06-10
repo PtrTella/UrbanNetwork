@@ -1,121 +1,171 @@
 import pandas as pd
 import json
-import os
+import time
+import re
+from pathlib import Path
+from geopy.geocoders import Nominatim
+from geopy.exc import GeocoderTimedOut
 
-RAW_DIR = "dataset/bologna/raw"
-PROCESSED_DIR = "dataset/bologna/processed"
+# Configurazione Percorsi
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+RAW_DIR = BASE_DIR / "dataset" / "bologna" / "raw"
+PROCESSED_DIR = BASE_DIR / "dataset" / "bologna" / "processed"
+
+INPUT_JSON = RAW_DIR / "tram_official.json"
+OUTPUT_JSON = RAW_DIR / "tram_annotated.json"
+
+geolocator = Nominatim(user_agent="bologna_transit_lspace_builder")
+
+# =========================================================
+# IL CECCHINO: Mappature manuali per le fermate impossibili
+# =========================================================
+MANUAL_OVERRIDES = {
+    "PALADOZZA": "PALASPORT",
+    "INDIPENDENZA - PIAZZA VIII AGOSTO": "VIII AGOSTO",
+    "ZUCCA MUSEO USTICA": "ZUCCA",
+    "SANTA VIOLA OPIFICIO GOLINELLI": "BERRETTA ROSSA - OPIFICIO GOLINELLI",
+    "STAZIONE BORGO PANIGALE": "BORGO PANIGALE STAZIONE",
+    "GORKI TEATRO CENTOFIORI": "CENTOFIORI",
+    "BENTINI VILLA TORCHI": "BENTINI",
+    "TRIUMVIRATO FABBRI 1905": "TRIUMVIRATO",
+}
 
 
-def build_tram_datasets():
-    print("Inizio elaborazione Rete Tranviaria (Dati Ufficiali)...")
+def normalize_name(name):
+    """Pulisce la stringa da accenti, backtick e punteggiatura inutile."""
+    name = str(name).upper().strip()
+    name = name.replace("`", "'").replace("’", "'")
+    name = (
+        name.replace("À", "A'")
+        .replace("È", "E'")
+        .replace("Ì", "I'")
+        .replace("Ò", "O'")
+        .replace("Ù", "U'")
+    )
+    # Rimuove caratteri speciali mantenendo lettere, numeri, spazi e apostrofi
+    name = re.sub(r"[^A-Z0-9\s']", " ", name)
+    return " ".join(name.split())
 
-    tram_json_path = os.path.join(RAW_DIR, "tram_official.json")
-    bus_nodes_path = os.path.join(PROCESSED_DIR, "bologna_stations.csv")
 
-    if not os.path.exists(tram_json_path) or not os.path.exists(bus_nodes_path):
-        raise FileNotFoundError(
-            "Mancano i file raw del tram o le stazioni bus processate."
-        )
+def get_coordinates_from_map(stop_name):
+    """Ricerca su OSM con strategie progressive."""
+    # Split per trattino o spazio: cerca solo la prima parte per nomi troppo complessi
+    first_part = stop_name.split("-")[0].split()[0]
 
-    # 1. Caricamento Dati
-    with open(tram_json_path, "r", encoding="utf-8") as f:
-        official_tram_stops = json.load(f)
+    queries = [
+        f"Fermata {stop_name}, Bologna, Italia",
+        f"Via {stop_name}, Bologna, Italia",
+        f"{stop_name}, Bologna, Italia",
+        f"Via {first_part}, Bologna, Italia",  # Strategia disperata
+    ]
 
-    bus_df = pd.read_csv(bus_nodes_path)
+    for query in queries:
+        try:
+            time.sleep(1)
+            location = geolocator.geocode(query, timeout=10)
+            if location:
+                return location.latitude, location.longitude
+        except GeocoderTimedOut:
+            continue
+    return None
 
-    # Mappa dei nomi dei bus per ricerca coordinate (Tutto maiuscolo per facilitare il match)
-    bus_map = {
-        str(row["stop_name"]).upper(): (row["stop_lat"], row["stop_lon"])
-        for _, row in bus_df.iterrows()
-    }
 
-    # 2. Risoluzione Spaziale dei Nodi (Geocoding basato su TPER)
-    tram_nodes = []
+def process_and_annotate_tram():
+    print("Inizio Geolocalizzazione Automatica v2.0 (Smart Matching)...")
 
-    for stop in official_tram_stops:
-        name_upper = stop["name"].upper()
-        lat, lon = None, None
+    with open(INPUT_JSON, "r", encoding="utf-8") as f:
+        tram_data = json.load(f)
 
-        # Match Esatto
-        if name_upper in bus_map:
-            lat, lon = bus_map[name_upper]
+    # 1. Caricamento e Normalizzazione Bus
+    df_bus = pd.read_csv(PROCESSED_DIR / "bologna_stations.csv")
+    bus_map = {}
+    for _, row in df_bus.iterrows():
+        raw_name = str(row["stop_name"])
+        norm_name = normalize_name(raw_name)
+        # Teniamo sempre l'ultimo ID se ci sono omonimi
+        bus_map[norm_name] = {
+            "id": str(row["stop_id"]),
+            "lat": row["stop_lat"],
+            "lon": row["stop_lon"],
+            "raw": raw_name,
+        }
+
+    tram_nodes_csv = []
+    new_id_counter = 900000
+    json_id_to_final_id = {}
+
+    print(" -> Ricerca Coordinate in corso...")
+
+    for stop in tram_data:
+        original_name = stop["name"].strip()
+        name_upper = original_name.upper()
+        norm_name = normalize_name(original_name)
+
+        # Applica l'Override se esiste
+        if name_upper in MANUAL_OVERRIDES:
+            print("manual override")
+            norm_name = normalize_name(MANUAL_OVERRIDES[name_upper])
+
+        json_id = stop["id"]
+        lat, lon, final_id = None, None, ""
+
+        # --- STRATEGIA 1: Match Esatto (su stringa normalizzata) ---
+        if norm_name in bus_map:
+            final_id = bus_map[norm_name]["id"]
+            lat, lon = bus_map[norm_name]["lat"], bus_map[norm_name]["lon"]
+            print(f"Match diretto {original_name}")
+
         else:
-            # Match Parziale (es. "SAFFI" dentro "PORTA SAFFI")
-            for bus_name, coords in bus_map.items():
-                if name_upper in bus_name or bus_name in name_upper:
-                    lat, lon = coords
-                    break
+            print(f"    🌍 Cerco su Mappa OSM: '{original_name}'...")
+            coords = get_coordinates_from_map(original_name)
+            if coords:
+                lat, lon = coords
+                final_id = str(new_id_counter)
+                new_id_counter += 1
+                print(f"      ✅ Trovato: {lat:.5f}, {lon:.5f}")
+            else:
+                # Fallback (Da correggere a mano)
+                lat, lon = 44.4949, 11.3426
+                final_id = str(new_id_counter)
+                new_id_counter += 1
+                print(f"    ❌ Fallito: '{original_name}'. Assegnato Piazza Maggiore.")
 
-        # Fallback se non esiste fermata bus vicina (Centro di Bologna)
-        if lat is None:
-            lat, lon = 44.4949, 11.3426
+        json_id_to_final_id[json_id] = final_id
 
-        tram_nodes.append(
+        tram_nodes_csv.append(
             {
-                "stop_id": stop["id"],
-                "stop_name": stop["name"],
+                "stop_id": final_id,
+                "stop_name": name_upper,
                 "stop_lat": lat,
                 "stop_lon": lon,
-                "line_group": stop["line"],
-                "nearest_traffic_flow": 0,  # Sede protetta
-                "accidents_300m": 0,  # Sede protetta
+                "node_type": stop.get("node_type", "fermata"),
             }
         )
 
-    df_tram_nodes = pd.DataFrame(tram_nodes)
+    df_tram_nodes = pd.DataFrame(tram_nodes_csv).drop_duplicates(subset=["stop_id"])
+    edges_data = []
+    rossa_stops = [s for s in tram_data if "Rossa" in s["line"]]
+    verde_stops = [s for s in tram_data if "Verde" in s["line"]]
 
-    # 3. Creazione degli Archi (Sequenze Linee)
-    tram_edges = []
-
-    def add_sequence(stops_list, route_id):
+    def build_edges(stops_list, route_id):
         for i in range(len(stops_list) - 1):
-            tram_edges.append(
+            edges_data.append(
                 {
-                    "stop_id": stops_list[i]["stop_id"],
-                    "next_stop_id": stops_list[i + 1]["stop_id"],
+                    "stop_id": json_id_to_final_id[stops_list[i]["id"]],
+                    "next_stop_id": json_id_to_final_id[stops_list[i + 1]["id"]],
                     "route_id": route_id,
-                    "type": "tram",
-                    "frequency": 120,  # Alta frequenza
                 }
             )
 
-    # Dividiamo i nodi per linea per creare le sequenze logiche
-    rossa = df_tram_nodes[df_tram_nodes["line_group"] == "Rossa"].to_dict("records")
-    verde = df_tram_nodes[df_tram_nodes["line_group"] == "Verde"].to_dict("records")
+    build_edges(rossa_stops, "101")
+    build_edges(verde_stops, "102")
+    df_tram_edges = pd.DataFrame(edges_data).drop_duplicates()
 
-    # Costruiamo gli scenari
-    add_sequence(rossa, "101_LINEA_ROSSA")
-    add_sequence(verde, "102_LINEA_VERDE")
+    df_tram_nodes.to_csv(PROCESSED_DIR / "bologna_tram_stations.csv", index=False)
+    df_tram_edges.to_csv(PROCESSED_DIR / "bologna_tram_connections.csv", index=False)
 
-    # Costruiamo lo scenario What-If Campus (Lazzaretto, Spadolini, San Donato)
-    campus_names = ["Lazzaretto / Campus Navile", "Piazza Spadolini", "San Donato"]
-    campus = df_tram_nodes[df_tram_nodes["stop_name"].isin(campus_names)].to_dict(
-        "records"
-    )
-    if len(campus) > 1:
-        add_sequence(campus, "103_TRAM_CAMPUS")
-
-    # Costruiamo lo scenario What-If Viali (San Felice, San Donato, Saffi, Stazione)
-    viali_names = ["Porta San Felice", "San Donato", "Saffi", "Stazione Centrale"]
-    viali = df_tram_nodes[df_tram_nodes["stop_name"].isin(viali_names)].to_dict(
-        "records"
-    )
-    if len(viali) > 1:
-        add_sequence(viali, "104_TRAM_VIALI")
-
-    df_tram_edges = pd.DataFrame(tram_edges)
-
-    # 4. Salvataggio in processed
-    nodes_out = os.path.join(PROCESSED_DIR, "bologna_tram_stations.csv")
-    edges_out = os.path.join(PROCESSED_DIR, "bologna_tram_connections.csv")
-
-    df_tram_nodes.to_csv(nodes_out, index=False)
-    df_tram_edges.to_csv(edges_out, index=False)
-
-    print(
-        f"✅ Tram processato! Nodi: {len(df_tram_nodes)}, Archi: {len(df_tram_edges)}"
-    )
+    print(f"\n✅ Completato! Controlla {OUTPUT_JSON} e lancia src/visualize_map.py")
 
 
 if __name__ == "__main__":
-    build_tram_datasets()
+    process_and_annotate_tram()

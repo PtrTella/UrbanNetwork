@@ -5,39 +5,46 @@ import numpy as np
 
 def compute_centralities(G):
     """
-    Computes Degree, Closeness, and Betweenness Centralities for G,
-    and performs a k-core decomposition.
+    Calcola le metriche di centralità microscopica per i nodi.
+    Aggiornato per usare l'attributo 'name' dei nodi al posto dell'ID.
     """
-    # Degree
     degree_dict = dict(G.degree())
     deg_cent = nx.degree_centrality(G)
 
-    # Closeness (weighted by geographical distance 'weight')
-    clos_cent = nx.closeness_centrality(G, distance="weight")
+    # La closeness soffre se il grafo non è completamente connesso
+    if nx.is_connected(G):
+        clos_cent = nx.closeness_centrality(G, distance="weight")
+    else:
+        clos_cent = {}
+        for comp in nx.connected_components(G):
+            subG = G.subgraph(comp)
+            sub_clos = nx.closeness_centrality(subG, distance="weight")
+            clos_cent.update(sub_clos)
 
-    # Betweenness (weighted by geographical distance 'weight')
+    # Betweenness pesata sui colli di bottiglia e distanze
     bet_cent = nx.betweenness_centrality(G, weight="weight")
 
     # k-Core Decomposition
-    # To run k_core we need to remove self-loops if any
     G_self = G.copy()
     G_self.remove_edges_from(nx.selfloop_edges(G_self))
     coreness = nx.core_number(G_self)
 
     # Build DataFrame
     data = []
-    for node in G.nodes():
+    for node, attr in G.nodes(data=True):
+        # Usiamo 'name' che è l'attributo che abbiamo assegnato nel graph.py
+        station_name = attr.get("name", str(node))
+
         data.append(
             {
-                "Station": node,
-                "Degree": degree_dict[node],
-                "Degree Centrality": deg_cent[node],
-                "Closeness Centrality": clos_cent[node],
-                "Betweenness Centrality": bet_cent[node],
+                "Station": station_name,
+                "Degree": degree_dict.get(node, 0),
+                "Degree Centrality": deg_cent.get(node, 0),
+                "Closeness Centrality": clos_cent.get(node, 0),
+                "Betweenness Centrality": bet_cent.get(node, 0),
                 "Coreness": coreness.get(node, 0),
             }
         )
-
     return pd.DataFrame(data)
 
 
@@ -45,7 +52,6 @@ def compute_small_worldness(G, er_runs=50):
     """
     Computes global metrics and compares with random and lattice null models.
     """
-    # Extract Largest Connected Component (LCC) for path metrics
     if nx.is_connected(G):
         G_lcc = G
     else:
@@ -55,10 +61,9 @@ def compute_small_worldness(G, er_runs=50):
     N_lcc = len(G_lcc.nodes)
     M_lcc = len(G_lcc.edges)
 
-    L = nx.average_shortest_path_length(G_lcc)
+    L = nx.average_shortest_path_length(G_lcc, weight="weight")
     C = nx.average_clustering(G)
 
-    # Global & Local Efficiency
     E_glob = nx.global_efficiency(G)
     E_loc = nx.local_efficiency(G)
 
@@ -69,7 +74,6 @@ def compute_small_worldness(G, er_runs=50):
 
     for _ in range(er_runs):
         G_rand = nx.fast_gnp_random_graph(N_lcc, p)
-        # Ensure random graph has a valid path length
         if nx.is_connected(G_rand):
             rand_L_list.append(nx.average_shortest_path_length(G_rand))
             rand_C_list.append(nx.average_clustering(G_rand))
@@ -84,12 +88,8 @@ def compute_small_worldness(G, er_runs=50):
     L_rand = np.mean(rand_L_list) if rand_L_list else 1.0
     C_rand = np.mean(rand_C_list) if rand_C_list else p
 
-    # 1D Regular Lattice Null Model (Ring Lattice)
-    avg_k = int(round(2.0 * M_lcc / N_lcc))
-    if avg_k < 2:
-        avg_k = 2
-    G_lat = nx.navigable_small_world_graph(N_lcc, p=1, q=0, r=2, dim=1)  # approximation
-    # Build simple ring lattice
+    # Lattice Model
+    avg_k = max(2, int(round(2.0 * M_lcc / N_lcc)))
     G_lat = nx.Graph()
     G_lat.add_nodes_from(range(N_lcc))
     for i in range(N_lcc):
@@ -104,10 +104,8 @@ def compute_small_worldness(G, er_runs=50):
     )
     C_lat = nx.average_clustering(G_lat)
 
-    # Coefficients
+    # Coefficienti Small World
     sigma = (C / C_rand) / (L / L_rand) if L_rand > 0 and C_rand > 0 else 0.0
-    # Telesford et al. omega
-    # omega = (L_rand / L) - (C / C_lat)
     omega = (L_rand / L) - (C / C_lat) if C_lat > 0 else 0.0
 
     return {
@@ -127,34 +125,45 @@ def compute_small_worldness(G, er_runs=50):
 def compute_demand_weighted_efficiency(G, df_demo):
     """
     Computes global transport efficiency weighted by neighborhood population density
-    (as origin weights) and university (UNIBO) campus attraction weights (as destination weights).
-    Formula:
-      E_demand = Sum_{i != j} [P_i * D_j / d_ij] / Sum_{i != j} [P_i * D_j]
-    where d_ij is the topological distance. If disconnected, d_ij = inf -> 1/d_ij = 0.
+    and university (UNIBO) campus attraction weights.
+    Aggiornato per usare l'attributo 'name' del nodo e non il suo ID.
     """
-    # Map station names to demographics
+    # Mappiamo i nomi formattati sulle densità
     pop_dict = dict(zip(df_demo["station_name"], df_demo["population_density"]))
     attr_dict = dict(zip(df_demo["station_name"], df_demo["unibo_attraction"]))
 
     total_demand = 0.0
     weighted_sum = 0.0
 
-    nodes = list(G.nodes())
-    path_lengths = dict(nx.all_pairs_shortest_path_length(G))
+    nodes = list(G.nodes(data=True))
+
+    # Pre-calcoliamo le distanze minime pesate (costo del traffico/tram)
+    path_lengths = dict(nx.all_pairs_dijkstra_path_length(G, weight="weight"))
 
     for i in range(len(nodes)):
-        u = nodes[i]
-        p_u = pop_dict.get(u, 0.0)
+        u_id, u_data = nodes[i]
+        u_name = u_data.get("name", "")
+
+        p_u = pop_dict.get(u_name, 0.0)
+        if p_u == 0:
+            continue  # Ottimizzazione: se la pop è zero salta
+
         for j in range(len(nodes)):
             if i == j:
                 continue
-            v = nodes[j]
-            d_v = attr_dict.get(v, 0.0)
+
+            v_id, v_data = nodes[j]
+            v_name = v_data.get("name", "")
+            d_v = attr_dict.get(v_name, 0.0)
 
             demand_weight = p_u * d_v
+            if demand_weight == 0:
+                continue
+
             total_demand += demand_weight
 
-            d_uv = path_lengths.get(u, {}).get(v, float("inf"))
+            # Usiamo la distanza pesata salvata dal Dijkstra
+            d_uv = path_lengths.get(u_id, {}).get(v_id, float("inf"))
             if d_uv != float("inf") and d_uv > 0:
                 weighted_sum += demand_weight / d_uv
 

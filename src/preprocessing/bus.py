@@ -1,220 +1,240 @@
 import pandas as pd
 import geopandas as gpd
-from shapely.geometry import Point
-import zipfile
-import os
+from pathlib import Path
 
-# --- PATH CONFIGURATION ---
-RAW_DIR = "dataset/bologna/raw"
-PROCESSED_DIR = "dataset/bologna/processed"
-GTFS_ZIP = os.path.join(RAW_DIR, "gommagtfsbo.zip")
+# Configurazione Percorsi
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+RAW_DIR = BASE_DIR / "dataset" / "bologna" / "raw"
+GTFS_DIR = RAW_DIR / "gommagtfsbo"
+PROCESSED_DIR = BASE_DIR / "dataset" / "bologna" / "processed"
+PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
 
-# Sistemi di coordinate: 4326 (Lat/Lon standard) -> 32632 (Metrico per l'Italia, zona 32N)
-CRS_WGS84 = "EPSG:4326"
-CRS_METRIC = "EPSG:32632"
+# =========================================================
+# LA WHITE-LIST: Solo le vere linee urbane di Bologna
+# =========================================================
+BOLOGNA_URBAN_LINES = {
+    # Linee Storiche Radiali e Tangenziali
+    "11",
+    "13",
+    "14",
+    "15",
+    "16",
+    "18",
+    "19",
+    "20",
+    "21",
+    "25",
+    "27",
+    "28",
+    "29",
+    "30",
+    "32",
+    "33",
+    "35",
+    "36",
+    "37",
+    "38",
+    "39",
+    # Linee periferiche urbane/suburbane primarie
+    "51",
+    "52",
+    "54",
+    "55",
+    "56",
+    "58",
+    "59",
+    "60",
+    # Navette Centro Storico e Speciali
+    "A",
+    "C",
+    "D",
+    "T1",
+}
 
 
-def load_gtfs_network():
-    print("1. Estrazione Rete Bus dai file GTFS estratti...")
+def clean_id(val):
+    if pd.isna(val):
+        return None
+    try:
+        return str(int(float(val)))
+    except ValueError:
+        return str(val).strip()
 
-    # Puntiamo direttamente alla cartella estratta
-    GTFS_DIR = os.path.join(RAW_DIR, "gommagtfsbo")
-    stops_path = os.path.join(GTFS_DIR, "stops.txt")
-    stop_times_path = os.path.join(GTFS_DIR, "stop_times.txt")
-    trips_path = os.path.join(GTFS_DIR, "trips.txt")
 
-    if not os.path.exists(stops_path):
+def process_bus_network():
+    print("Inizio Preprocessing Rete Bus (Hard Filter Linee Bologna)...")
+
+    if (
+        not (GTFS_DIR / "stops.txt").exists()
+        or not (GTFS_DIR / "stop_times.txt").exists()
+    ):
         raise FileNotFoundError(
-            f"Non trovo i file GTFS in {GTFS_DIR}. Sicuro di averli estratti lì?"
+            f"Estrai gommagtfsbo.zip nella cartella {GTFS_DIR} prima di procedere!"
         )
 
-    # Carica i nodi (fermate)
-    stops = pd.read_csv(stops_path)
-    stops = stops[["stop_id", "stop_name", "stop_lat", "stop_lon"]].drop_duplicates(
-        subset=["stop_id"]
+    # =========================================================
+    # 1. FILTRO HARD SULLE LINEE (routes.txt)
+    # =========================================================
+    print(" -> Analisi Linee (Filtraggio tramite White-List)...")
+    df_routes = pd.read_csv(GTFS_DIR / "routes.txt")
+
+    # Assicuriamoci che i nomi siano stringhe pulite e maiuscole per il match
+    df_routes["clean_short_name"] = (
+        df_routes["route_short_name"].astype(str).str.strip().str.upper()
     )
 
-    # Carica gli archi (stop_times) e i viaggi
-    stop_times = pd.read_csv(
-        stop_times_path, usecols=["trip_id", "stop_id", "stop_sequence"]
-    )
-    trips = pd.read_csv(trips_path, usecols=["route_id", "trip_id"])
+    # Teniamo solo le rotte che matchano la nostra lista
+    df_routes_bologna = df_routes[
+        df_routes["clean_short_name"].isin(BOLOGNA_URBAN_LINES)
+    ]
+    urban_route_ids = df_routes_bologna["route_id"].unique()
 
-    # Creazione degli archi logici (Edges)
-    seq = pd.merge(stop_times, trips, on="trip_id")
-    seq = seq.sort_values(by=["trip_id", "stop_sequence"])
+    # =========================================================
+    # 2. ESTRAZIONE ARCHI (Solo tracciati della White-List)
+    # =========================================================
+    print(" -> Estrazione Archi (Costruzione topologia pura)...")
+    stop_times = pd.read_csv(GTFS_DIR / "stop_times.txt")
+    trips = pd.read_csv(GTFS_DIR / "trips.txt")
 
-    # Colonna "next_stop_id" shiftando le righe per lo stesso viaggio
-    seq["next_stop_id"] = seq.groupby("trip_id")["stop_id"].shift(-1)
-    edges = seq.dropna(subset=["next_stop_id"]).copy()
+    trips_urban = trips[trips["route_id"].isin(urban_route_ids)]
 
-    # Raggruppiamo e pesiamo per frequenza
-    edges_agg = (
-        edges.groupby(["stop_id", "next_stop_id", "route_id"])
-        .size()
-        .reset_index(name="frequency")
-    )
+    st_trips = stop_times.merge(trips_urban[["trip_id", "route_id"]], on="trip_id")
+    st_trips = st_trips.sort_values(["trip_id", "stop_sequence"])
 
-    return stops, edges_agg
+    st_trips["next_stop_id"] = st_trips.groupby("trip_id")["stop_id"].shift(-1)
+    edges_raw = st_trips.dropna(subset=["next_stop_id"])
 
+    df_edges = pd.DataFrame()
+    df_edges["stop_id"] = edges_raw["stop_id"].apply(clean_id)
+    df_edges["next_stop_id"] = edges_raw["next_stop_id"].apply(clean_id)
+    df_edges["route_id"] = edges_raw["route_id"].astype(str)
 
-def enrich_nodes_with_opendata(stops_df):
-    print("2. Arricchimento Spaziale dei Nodi (Geopandas)...")
+    df_edges = df_edges.drop_duplicates(subset=["stop_id", "next_stop_id", "route_id"])
 
-    # Convertiamo le fermate in Geometries
-    gdf_stops = gpd.GeoDataFrame(
-        stops_df,
-        geometry=gpd.points_from_xy(stops_df.stop_lon, stops_df.stop_lat),
-        crs=CRS_WGS84,
-    ).to_crs(CRS_METRIC)  # Proiettiamo in metri
+    valid_stops = set(df_edges["stop_id"]).union(set(df_edges["next_stop_id"]))
 
-    # --- INCIDENTI (Raggio 300m) ---
-    print("   -> Calcolo Risk Score (Incidenti entro 300m)...")
-    df_acc = pd.read_csv(os.path.join(RAW_DIR, "bologna_accidents.csv"), sep=";")
+    # =========================================================
+    # 3. LETTURA NODI (Solo fermate toccate dalle linee filtrate)
+    # =========================================================
+    print(" -> Elaborazione Nodi (Rimozione orfani extraurbani)...")
+    df_stops_raw = pd.read_csv(GTFS_DIR / "stops.txt")
+    df_stops_raw["stop_id_clean"] = df_stops_raw["stop_id"].apply(clean_id)
 
-    # NOVITÀ: Dividiamo "geo_point_2d" (che è "lat, lon") in due colonne separate
-    # Eliminiamo le righe dove geo_point_2d è nullo per evitare errori
-    df_acc = df_acc.dropna(subset=["geo_point_2d"])
-    df_acc[["lat", "lon"]] = (
-        df_acc["geo_point_2d"].str.split(",", expand=True).astype(float)
-    )
+    df_stops = df_stops_raw[df_stops_raw["stop_id_clean"].isin(valid_stops)].copy()
 
-    gdf_acc = gpd.GeoDataFrame(
-        df_acc, geometry=gpd.points_from_xy(df_acc["lon"], df_acc["lat"]), crs=CRS_WGS84
-    ).to_crs(CRS_METRIC)
+    df_stops["stop_id"] = df_stops["stop_id_clean"]
+    df_stops["stop_name"] = df_stops["stop_name"].str.upper()
+    df_stops["stop_lat"] = df_stops["stop_lat"].astype(float)
+    df_stops["stop_lon"] = df_stops["stop_lon"].astype(float)
+    df_stops = df_stops.drop_duplicates(subset=["stop_id"])
 
-    # Creiamo un buffer di 300 metri attorno ad ogni fermata
-    gdf_stops_buffer = gdf_stops.copy()
-    gdf_stops_buffer.geometry = gdf_stops_buffer.geometry.buffer(300)
+    # =========================================================
+    # 4. INTEGRAZIONE TRAFFICO E INCIDENTI
+    # =========================================================
+    print(" -> Mappatura Spire di Traffico e Incidenti...")
 
-    # Spatial Join: contiamo quanti incidenti cadono nel buffer
-    joined_acc = gpd.sjoin(gdf_acc, gdf_stops_buffer, how="inner", predicate="within")
-    acc_counts = (
-        joined_acc.groupby("index_right").size().reset_index(name="accidents_300m")
-    )
-
-    # Eseguiamo il merge dei risultati sui nodi
-    gdf_stops = gdf_stops.merge(
-        acc_counts, left_index=True, right_on="index_right", how="left"
-    ).drop(columns=["index_right"])
-    gdf_stops["accidents_300m"] = gdf_stops["accidents_300m"].fillna(0)
-
-    # --- SPIRE TRAFFICO (Sensore più vicino) ---
-    print("   -> Aggancio Traffico Spire (Sensore più vicino)...")
-    df_spire = pd.read_csv(os.path.join(RAW_DIR, "bologna_spire_traffic.csv"), sep=";")
-
-    col_lon, col_lat = "longitudine", "latitudine"
-
-    if col_lon in df_spire.columns:
-        # 1. Puliamo i dati rimuovendo i sensori senza coordinate
-        df_spire = df_spire.dropna(subset=[col_lon, col_lat])
-
-        # Le coordinate a volte hanno la virgola invece del punto nei dataset italiani
-        df_spire[col_lon] = (
-            df_spire[col_lon].astype(str).str.replace(",", ".").astype(float)
+    # [Traffico]
+    try:
+        df_spire = pd.read_csv(RAW_DIR / "bologna_spire_traffic.csv", sep=";")
+        df_spire = df_spire.dropna(subset=["longitudine", "latitudine"])
+        df_spire["longitudine"] = (
+            df_spire["longitudine"].astype(str).str.replace(",", ".").astype(float)
         )
-        df_spire[col_lat] = (
-            df_spire[col_lat].astype(str).str.replace(",", ".").astype(float)
+        df_spire["latitudine"] = (
+            df_spire["latitudine"].astype(str).str.replace(",", ".").astype(float)
         )
 
-        # 2. Calcoliamo il 'flusso_totale' sommando tutte le 24 colonne orarie
-        # Generiamo i nomi delle colonne orarie in modo programmatico per non scriverle tutte a mano
-        colonne_orarie = [
-            f"{str(i).zfill(2)}_00_{str(i + 1).zfill(2)}_00" for i in range(24)
-        ]
-
-        # Convertiamo i valori orari in numeri (se ci sono errori/vuoti mettiamo 0)
-        df_spire[colonne_orarie] = (
-            df_spire[colonne_orarie].apply(pd.to_numeric, errors="coerce").fillna(0)
+        colonne_orarie = df_spire.filter(regex=r"\d{2}_00_\d{2}_00").columns
+        df_spire["flusso_totale_giorno"] = (
+            df_spire[colonne_orarie]
+            .apply(pd.to_numeric, errors="coerce")
+            .fillna(0)
+            .sum(axis=1)
         )
-        df_spire["flusso_totale"] = df_spire[colonne_orarie].sum(axis=1)
+        df_spire_agg = (
+            df_spire.groupby(["longitudine", "latitudine"])["flusso_totale_giorno"]
+            .mean()
+            .reset_index()
+        )
 
-        # 3. Mappatura su Geopandas e calcolo spaziale
+        gdf_stops = gpd.GeoDataFrame(
+            df_stops,
+            geometry=gpd.points_from_xy(df_stops.stop_lon, df_stops.stop_lat),
+            crs="EPSG:4326",
+        )
         gdf_spire = gpd.GeoDataFrame(
-            df_spire,
-            geometry=gpd.points_from_xy(df_spire[col_lon], df_spire[col_lat]),
-            crs=CRS_WGS84,
-        ).to_crs(CRS_METRIC)
-
-        # Spatial Join Nearest: trova la spira più vicina alla fermata
-        gdf_stops = gpd.sjoin_nearest(
-            gdf_stops, gdf_spire[["geometry", "flusso_totale"]], how="left"
+            df_spire_agg,
+            geometry=gpd.points_from_xy(
+                df_spire_agg.longitudine, df_spire_agg.latitudine
+            ),
+            crs="EPSG:4326",
         )
 
-        # Rinominiamo e puliamo
-        gdf_stops.rename(
-            columns={"flusso_totale": "nearest_traffic_flow"}, inplace=True
+        joined_spire = gpd.sjoin_nearest(
+            gdf_stops.to_crs("EPSG:32632"),
+            gdf_spire.to_crs("EPSG:32632")[["geometry", "flusso_totale_giorno"]],
+            how="left",
         )
-        gdf_stops = gdf_stops.drop_duplicates(subset=["stop_id"]).drop(
-            columns=["index_right"], errors="ignore"
+        joined_spire = joined_spire.drop_duplicates(subset=["stop_id"])
+
+        df_stops = df_stops.merge(
+            joined_spire[["stop_id", "flusso_totale_giorno"]], on="stop_id", how="left"
+        )
+        df_stops.rename(
+            columns={"flusso_totale_giorno": "nearest_traffic_flow"}, inplace=True
+        )
+        df_stops["nearest_traffic_flow"] = (
+            df_stops["nearest_traffic_flow"].fillna(0).round(2)
+        )
+    except Exception as e:
+        df_stops["nearest_traffic_flow"] = 0
+
+    # [Incidenti]
+    try:
+        df_acc = pd.read_csv(RAW_DIR / "bologna_accidents.csv", sep=";")
+        df_acc = df_acc.dropna(subset=["geo_point_2d"])
+        acc_coords = df_acc["geo_point_2d"].str.split(",", expand=True)
+        df_acc["lat"], df_acc["lon"] = (
+            acc_coords[0].astype(float),
+            acc_coords[1].astype(float),
         )
 
-    return gdf_stops.to_crs(
-        CRS_WGS84
-    )  # Riportiamo in Lat/Lon per comodità di esportazione
+        gdf_acc = gpd.GeoDataFrame(
+            df_acc, geometry=gpd.points_from_xy(df_acc.lon, df_acc.lat), crs="EPSG:4326"
+        ).to_crs("EPSG:32632")
+        gdf_stops_metric = gdf_stops.to_crs("EPSG:32632")
+        gdf_stops_metric["geometry"] = gdf_stops_metric.geometry.buffer(300)
 
+        joined_acc = gpd.sjoin(
+            gdf_acc, gdf_stops_metric, how="inner", predicate="intersects"
+        )
+        acc_counts = (
+            joined_acc.groupby("stop_id").size().reset_index(name="accidents_300m")
+        )
 
-def inject_tram_scenarios(nodes, edges):
-    print("3. Iniezione Scenari Tram What-if...")
-    # TODO: QUI INSERIRAI LE TUE 50 FERMATE HARDCODATE.
-    # Esempio di struttura:
-    tram_stops = pd.DataFrame(
-        [
-            {
-                "stop_id": "TRAM_R_01",
-                "stop_name": "Terminale Fiera",
-                "stop_lat": 44.512,
-                "stop_lon": 11.365,
-            },
-            {
-                "stop_id": "TRAM_R_02",
-                "stop_name": "Aldo Moro",
-                "stop_lat": 44.509,
-                "stop_lon": 11.361,
-            },
-            # ... aggiungi le altre 48 ...
-        ]
-    )
+        df_stops = df_stops.merge(acc_counts, on="stop_id", how="left")
+        df_stops["accidents_300m"] = df_stops["accidents_300m"].fillna(0).astype(int)
+    except Exception as e:
+        df_stops["accidents_300m"] = 0
 
-    # Esempio archi tram (sequenza lineare)
-    tram_edges = pd.DataFrame(
-        [
-            {
-                "stop_id": "TRAM_R_01",
-                "next_stop_id": "TRAM_R_02",
-                "route_id": "Linea_Rossa_101",
-                "frequency": 100,
-            }
-        ]
-    )
+    # =========================================================
+    # 5. ESPORTAZIONE
+    # =========================================================
+    col_finali = [
+        "stop_id",
+        "stop_name",
+        "stop_lat",
+        "stop_lon",
+        "nearest_traffic_flow",
+        "accidents_300m",
+    ]
+    df_stops[col_finali].to_csv(PROCESSED_DIR / "bologna_stations.csv", index=False)
+    df_edges.to_csv(PROCESSED_DIR / "bologna_connections.csv", index=False)
 
-    # Unione dei dataframe
-    # return pd.concat([nodes, tram_stops]), pd.concat([edges, tram_edges])
-
-    # Per ora restituiamo l'originale in attesa dei tuoi dati
-    return nodes, edges
+    print(f"✅ Pipeline Completata con Successo (White-List)!")
+    print(f"   - Nodi (Fermate Bologna Urbana): {len(df_stops)}")
+    print(f"   - Archi (Connessioni Topologiche): {len(df_edges)}")
 
 
 if __name__ == "__main__":
-    print("Avvio Pipeline di Parsing Dati Bologna...")
-
-    # 1. Estrai base da GTFS
-    raw_stops, raw_edges = load_gtfs_network()
-
-    # 2. Arricchisci con Open Data e Geopandas
-    enriched_stops = enrich_nodes_with_opendata(raw_stops)
-
-    # 3. Aggiungi i Tram
-    final_nodes, final_edges = inject_tram_scenarios(enriched_stops, raw_edges)
-
-    # 4. Salvataggio
-    print("4. Salvataggio dei dataset processati...")
-    # Rimuoviamo la colonna geometry prima di salvare in CSV
-    final_nodes.drop(columns=["geometry"], errors="ignore").to_csv(
-        os.path.join(PROCESSED_DIR, "bologna_stations.csv"), index=False
-    )
-    final_edges.to_csv(
-        os.path.join(PROCESSED_DIR, "bologna_connections.csv"), index=False
-    )
-
-    print("✅ Build del Dataset Completato! I file sono in dataset/bologna/processed/")
+    process_bus_network()
