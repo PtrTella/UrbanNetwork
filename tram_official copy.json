@@ -1,0 +1,296 @@
+[
+    {
+        "id": "TR_R_01",
+        "name": "Facoltà di Agraria",
+        "line": "Rossa",
+        "node_type": "capolinea"
+    },
+    {
+        "id": "TR_R_02",
+        "name": "Sighinolfi",
+        "line": "Rossa",
+        "node_type": "fermata"
+    },
+    {
+        "id": "TR_R_03",
+        "name": "Pilastro",
+        "line": "Rossa",
+        "node_type": "fermata"
+    },
+    {
+        "id": "TR_R_04",
+        "name": "Pirandello",
+        "line": "Rossa",
+        "node_type": "fermata"
+    },
+    {
+        "id": "TR_R_05",
+        "name": "Cadriano Bivio",
+        "line": "Rossa",
+        "node_type": "fermata"
+    },
+    {
+        "id": "TR_R_06",
+        "name": "San Donnino",
+        "line": "Rossa",
+        "node_type": "fermata"
+    },
+    {
+        "id": "TR_R_07",
+        "name": "San Donato",
+        "line": "Rossa",
+        "node_type": "fermata"
+    },
+    {
+        "id": "TR_R_08",
+        "name": "Piazza Spadolini",
+        "line": "Rossa",
+        "node_type": "fermata"
+    },
+    {
+        "id": "TR_R_09",
+        "name": "Repubblica",
+        "line": "Rossa",
+        "node_type": "fermata"
+    },
+    {
+        "id": "TR_R_10",
+        "name": "Aldo Moro-Regione-Fiera",
+        "line": "Rossa",
+        "node_type": "fermata"
+    },
+    {
+        "id": "TR_R_11",
+        "name": "Stalingrado",
+        "line": "Rossa",
+        "node_type": "fermata"
+    },
+    {
+        "id": "TR_R_12",
+        "name": "Zucca",
+        "line": "Rossa",
+        "node_type": "fermata"
+    },
+    {
+        "id": "TR_RV_01",
+        "name": "Piazza dell'Unità",
+        "line": "Rossa",
+        "node_type": "intersezione"
+    },
+    {
+        "id": "TR_RV_02",
+        "name": "Giacomo Matteotti-Stazione AV",
+        "line": "Rossa",
+        "node_type": "intersezione"
+    },
+    {
+        "id": "TR_RV_03",
+        "name": "Stazione Centrale",
+        "line": "Rossa",
+        "node_type": "intersezione"
+    },
+    {
+        "id": "TR_R_13",
+        "name": "Indipendenza-8 Agosto",
+        "line": "Rossa",
+        "node_type": "fermata"
+    },
+    {
+        "id": "TR_R_14",
+        "name": "Piazza Maggiore-San Pietro",
+        "line": "Rossa",
+        "node_type": "fermata"
+    },
+    {
+        "id": "TR_R_15",
+        "name": "Ugo Bassi",
+        "line": "Rossa",
+        "node_type": "fermata"
+    },
+    {
+        "id": "TR_R_16",
+        "name": "Canale di Reno-Lame",
+        "line": "Rossa",
+        "node_type": "fermata"
+    },
+    {
+        "id": "TR_R_17",
+        "name": "Paladozza-Riva Reno",
+        "line": "Rossa",
+        "node_type": "fermata"
+    },
+    {
+        "id": "TR_R_18",
+        "name": "Porta San Felice",
+        "line": "Rossa",
+        "node_type": "fermata"
+    },
+    {
+        "id": "TR_R_19",
+        "name": "Saffi",
+        "line": "Rossa",
+        "node_type": "fermata"
+    },
+    {
+        "id": "TR_R_20",
+        "name": "Ospedale Maggiore",
+        "line": "Rossa",
+        "node_type": "fermata"
+    },
+    {
+        "id": "TR_R_21",
+        "name": "Prati di Caprara",
+        "line": "Rossa",
+        "node_type": "fermata"
+    },
+    {
+        "id": "TR_R_22",
+        "name": "Santa Viola",
+        "line": "Rossa",
+        "node_type": "fermata"
+    },
+    {
+        "id": "TR_R_23",
+        "name": "Pontelungo",
+        "line": "Rossa",
+        "node_type": "fermata"
+    },
+    {
+        "id": "TR_R_24",
+        "name": "Triumvirato",
+        "line": "Rossa",
+        "node_type": "fermata"
+    },
+    {
+        "id": "TR_R_25",
+        "name": "Stazione Borgo  Panigale",
+        "line": "Rossa",
+        "node_type": "fermata"
+    },
+    {
+        "id": "TR_R_26",
+        "name": "Manuzio",
+        "line": "Rossa",
+        "node_type": "fermata"
+    },
+    {
+        "id": "TR_R_27",
+        "name": "Ducati",
+        "line": "Rossa",
+        "node_type": "fermata"
+    },
+    {
+        "id": "TR_R_28",
+        "name": "Villaggio Ina",
+        "line": "Rossa",
+        "node_type": "fermata"
+    },
+    {
+        "id": "TR_R_29",
+        "name": "Emilio Lepido",
+        "line": "Rossa",
+        "node_type": "capolinea"
+    },
+    {
+        "id": "TR_V_01",
+        "name": "Stazione Corticella",
+        "line": "Verde",
+        "node_type": "capolinea"
+    },
+    {
+        "id": "TR_V_02",
+        "name": "Shakespeare",
+        "line": "Verde",
+        "node_type": "fermata"
+    },
+    {
+        "id": "TR_V_03",
+        "name": "Sant'Anna-Byron",
+        "line": "Verde",
+        "node_type": "fermata"
+    },
+    {
+        "id": "TR_V_04",
+        "name": "Teatro Centofiori",
+        "line": "Verde",
+        "node_type": "fermata"
+    },
+    {
+        "id": "TR_V_05",
+        "name": "Bentini",
+        "line": "Verde",
+        "node_type": "fermata"
+    },
+    {
+        "id": "TR_V_06",
+        "name": "Lipparini",
+        "line": "Verde",
+        "node_type": "fermata"
+    },
+    {
+        "id": "TR_V_07",
+        "name": "Don Fiammelli",
+        "line": "Verde",
+        "node_type": "fermata"
+    },
+    {
+        "id": "TR_V_08",
+        "name": "Pinardi",
+        "line": "Verde",
+        "node_type": "fermata"
+    },
+    {
+        "id": "TR_V_09",
+        "name": "Croce Coperta",
+        "line": "Verde",
+        "node_type": "fermata"
+    },
+    {
+        "id": "TR_V_10",
+        "name": "Caserme Rosse",
+        "line": "Verde",
+        "node_type": "fermata"
+    },
+    {
+        "id": "TR_V_11",
+        "name": "Aldini Valeriani",
+        "line": "Verde",
+        "node_type": "fermata"
+    },
+    {
+        "id": "TR_V_12",
+        "name": "Ippodromo",
+        "line": "Verde",
+        "node_type": "fermata"
+    },
+    {
+        "id": "TR_V_13",
+        "name": "Ca' dei Fiori",
+        "line": "Verde",
+        "node_type": "fermata"
+    },
+    {
+        "id": "TR_RV_01",
+        "name": "Piazza dell'Unità",
+        "line": "Verde",
+        "node_type": "intersezione"
+    },
+    {
+        "id": "TR_RV_02",
+        "name": "Giacomo Matteotti-Stazione AV",
+        "line": "Verde",
+        "node_type": "intersezione"
+    },
+    {
+        "id": "TR_RV_03",
+        "name": "Stazione Centrale",
+        "line": "Verde",
+        "node_type": "intersezione"
+    },
+    {
+        "id": "TR_V_14",
+        "name": "Mille",
+        "line": "Verde",
+        "node_type": "capolinea"
+    }
+]

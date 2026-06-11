@@ -260,6 +260,7 @@ def process_bus_network():
         "stop_lat",
         "stop_lon",
         "nearest_traffic_flow",
+        "road_capacity",
         "accidents_300m",
     ]
     df_stops[col_finali].to_csv(PROCESSED_DIR / "bologna_stations.csv", index=False)
