@@ -1,51 +1,15 @@
-import networkx as nx
 import pandas as pd
-
-
-def attack_top_hubs(G_bus, G_full, top_bottlenecks):
-    """
-    Esegue uno stress-test infrastrutturale rimuovendo a cascata i Top Hub.
-    Dimostra la differenza di resilienza tra una rete solo-bus e una bus+tram.
-    """
-    print("\n=== Phase 4: Resilience Stress-Test ===")
-    print(
-        "Simulazione attacco a cascata ai Top 5 Hub (Infrastructural Node Failure)..."
-    )
-
-    # Efficienza Iniziale (Baseline)
-    eff_bus_base = nx.global_efficiency(G_bus)
-    eff_full_base = nx.global_efficiency(G_full)
-
-    print(
-        f"\n{'Hub Compromesso':<32} | {'Crollo Rete Solo-Bus':<22} | {'Crollo Rete Bus+Tram':<22}"
-    )
-    print("-" * 82)
-
-    G_bus_attack = G_bus.copy()
-    G_full_attack = G_full.copy()
-
-    for node_id, node_name in top_bottlenecks:
-        # Attacco l'Infrastruttura (Il nodo scompare dalla città in entrambi gli scenari)
-        if G_bus_attack.has_node(node_id):
-            G_bus_attack.remove_node(node_id)
-        if G_full_attack.has_node(node_id):
-            G_full_attack.remove_node(node_id)
-
-        # Ricalcolo
-        eff_bus_new = nx.global_efficiency(G_bus_attack)
-        eff_full_new = nx.global_efficiency(G_full_attack)
-
-        # Calcolo del Delta percentuale
-        drop_bus = ((eff_bus_base - eff_bus_new) / eff_bus_base) * 100
-        drop_full = ((eff_full_base - eff_full_new) / eff_full_base) * 100
-
-        print(f"{node_name:<32} | -{drop_bus:.2f}%{'':<15} | -{drop_full:.2f}%")
+import numpy as np
+from src.config import TransitConfig
+from src.graph import haversine
 
 
 def calculate_demographics_weight(G_full, raw_dir_path):
     """
     Fase 5: Carica i dati demografici ISTAT e li spalma sulle fermate in base all'Area Statistica.
-    Bug Fix: Normalizzazione testi e rimozione fermate duplicate (Stop-Line).
+    Usa un matching ibrido:
+    1. Match esatto per nome fermata normalizzato.
+    2. Fallback geografico tramite snapping (entro DEMOGRAPHIC_SNAPPING_RADIUS) se il nome non corrisponde.
     """
     demo_path = raw_dir_path / "bologna_demographics.csv"
     stops_path = raw_dir_path / "bologna_bus_stops.csv"
@@ -67,6 +31,12 @@ def calculate_demographics_weight(G_full, raw_dir_path):
 
     # 2. Caricamento e Normalizzazione Fermate
     df_stops = pd.read_csv(stops_path, sep=";")
+    df_stops = df_stops.dropna(subset=["geopoint", "area_statistica"])
+
+    # Estraiamo le coordinate dal geopoint
+    df_stops[["lat", "lon"]] = (
+        df_stops["geopoint"].str.split(",", expand=True).astype(float)
+    )
     df_stops["stop_name"] = (
         df_stops["denominazione"].astype(str).str.upper().str.strip()
     )
@@ -74,9 +44,10 @@ def calculate_demographics_weight(G_full, raw_dir_path):
         df_stops["area_statistica"].astype(str).str.upper().str.strip()
     )
 
-    # FIX FONDAMENTALE: Rimuovere i duplicati!
-    # Teniamo solo le combinazioni uniche (Nome Fermata - Area)
-    df_unique_stops = df_stops[["stop_name", "area_statistica"]].drop_duplicates()
+    # Rimuovere i duplicati calcolando le coordinate medie per ogni fermata unica per l'area statistica
+    df_unique_stops = df_stops.groupby(
+        ["stop_name", "area_statistica"], as_index=False
+    ).agg(lat=("lat", "mean"), lon=("lon", "mean"))
 
     # Calcoliamo quante fermate "fisiche" vere ci sono per ogni Area
     stops_per_area = df_unique_stops["area_statistica"].value_counts().reset_index()
@@ -94,17 +65,43 @@ def calculate_demographics_weight(G_full, raw_dir_path):
     # Raggruppiamo per sicurezza nel caso una fermata stia sul confine di due aree
     pop_dict = df_stops_pop.groupby("stop_name")["pop_per_stop"].mean().to_dict()
 
+    # Creiamo un subset per la ricerca spaziale rapida (escludiamo zone contrassegnate fuori confine)
+    df_spatial_lookup = df_stops_pop[
+        df_stops_pop["area_statistica"] != "FUORI BOLOGNA"
+    ].copy()
+
     # 3. Pesatura del Grafo L-Space
+    matched_by_name = 0
+    matched_by_space = 0
+
     for n, data in G_full.nodes(data=True):
         node_name = data.get("name", "").strip().upper()
-        # Se la fermata è fuori Bologna o non ha dati, prende 0
-        peso_pop = pop_dict.get(node_name, 0)
+
+        # Metodo A: Match esatto sul nome della fermata
+        peso_pop = pop_dict.get(node_name, 0.0)
+        if peso_pop > 0:
+            matched_by_name += 1
+
+        # Metodo B: Fallback Spaziale (snapping di prossimità geografica)
+        elif "lat" in data and "lon" in data and len(df_spatial_lookup) > 0:
+            n_lat, n_lon = data["lat"], data["lon"]
+            dists = haversine(
+                n_lat,
+                n_lon,
+                df_spatial_lookup["lat"].values,
+                df_spatial_lookup["lon"].values,
+            )
+            if len(dists) > 0:
+                min_idx = np.argmin(dists)
+                if dists[min_idx] <= TransitConfig.DEMOGRAPHIC_SNAPPING_RADIUS:
+                    peso_pop = df_spatial_lookup["pop_per_stop"].iloc[min_idx]
+                    matched_by_space += 1
 
         # --- INIEZIONE PENDOLARI (Dati Ufficiali RFI / PUMS) ---
         if node_name == "STAZIONE CENTRALE" or node_name == "MEDAGLIE D'ORO":
-            peso_pop += 159000  # RFI: 58 mln/anno
+            peso_pop += TransitConfig.STAZIONE_CENTRALE_PENDOLARI
         if node_name == "AUTOSTAZIONE":
-            peso_pop += 14000  # PUMS: ~5 mln/anno
+            peso_pop += TransitConfig.AUTOSTAZIONE_PENDOLARI
         # -------------------------------------------------------
 
         G_full.nodes[n]["population_served"] = peso_pop
@@ -117,6 +114,13 @@ def calculate_demographics_weight(G_full, raw_dir_path):
         unique_hubs[name] = max(unique_hubs.get(name, 0), pop)
 
     nodes_pop = sorted(unique_hubs.items(), key=lambda x: x[1], reverse=True)
+
+    print("📊 Associazione Demografica Completata:")
+    print(f"   - Match esatti per Nome: {matched_by_name}")
+    print(f"   - Match per Snapping Spaziale: {matched_by_space}")
+    print(
+        f"   - Fermate senza dati (extraurbane/non trovate): {len(G_full) - (matched_by_name + matched_by_space)}"
+    )
 
     print("\nTop 5 Hub per Pressione Demografica (Residenti + Pendolari):")
     for name, pop in nodes_pop[:5]:

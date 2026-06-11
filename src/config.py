@@ -17,3 +17,11 @@ class TransitConfig:
     # Capacità oraria nominale di una corsia stradale urbana (Standard PUMS Bologna / HCM)
     BPR_ALPHA = 0.15  # Coefficiente standard di inizio rallentamento
     BPR_BETA = 4.0  # Esponente di penalizzazione stocastica esponenziale
+
+    # --- DEMOGRAFIA ---
+    # Raggio massimo in metri per associare spazialmente una fermata del grafo alle aree ISTAT
+    DEMOGRAPHIC_SNAPPING_RADIUS = 250.0
+    # Flussi di pendolari aggiuntivi stimati (PUMS / RFI)
+    STAZIONE_CENTRALE_PENDOLARI = 159000
+    AUTOSTAZIONE_PENDOLARI = 14000
+

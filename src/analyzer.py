@@ -99,7 +99,7 @@ def compute_small_worldness(G, er_runs=5):
     rand_C_list = []
 
     for _ in range(er_runs):
-        G_rand = nx.fast_gnp_random_graph(N_lcc, p)
+        G_rand = nx.fast_gnp_random_graph(N_lcc, p, seed=42 + _)
         if nx.is_connected(G_rand):
             rand_L_list.append(nx.average_shortest_path_length(G_rand, weight=None))
             rand_C_list.append(nx.average_clustering(G_rand))

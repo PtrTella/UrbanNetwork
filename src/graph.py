@@ -28,30 +28,16 @@ def load_bologna_graph(scenario="bus_only", integration_mode="fused"):
 
     G = nx.Graph()
 
-    # 1. Carica Nodi Bus
+    # 1. Carica Nodi Bus (Leggiamo traffico, capacità stradale, e incidenti in un singolo passo)
     for _, row in df_bus_nodes.iterrows():
         G.add_node(
             str(row["stop_id"]),
             name=row["stop_name"],
             lat=row["stop_lat"],
             lon=row["stop_lon"],
-            traffic=row.get("nearest_traffic_flow", 0),  # Ora contiene il picco orario!
-            accidents=row.get(
-                "accidents_300m", 0
-            ),  # Diventa un attributo stocastico di rischio
-            type="bus",
-        )
-
-    # 1. Carica Bus (Leggiamo anche la capacità specifica!)
-    for _, row in df_bus_nodes.iterrows():
-        G.add_node(
-            str(row["stop_id"]),
-            name=row["stop_name"],
-            lat=row["stop_lat"],
-            lon=row["stop_lon"],
-            traffic=row.get("nearest_traffic_flow", 0),
-            capacity=row.get("road_capacity", 1000),  # <-- CAPACITÀ DINAMICA DELLA VIA
-            accidents=row.get("accidents_300m", 0),
+            traffic=row.get("nearest_traffic_flow", 0),  # Flusso di picco orario
+            capacity=row.get("road_capacity", 1000),    # Capacità dinamica della via
+            accidents=row.get("accidents_300m", 0),     # Rischio stocastico di incidenti
             type="bus",
         )
 

@@ -24,6 +24,7 @@ def simulate_removal(
         # FIX: Usiamo l'efficienza temporale
         return len(lcc) / N, 1, compute_weighted_global_efficiency(G_temp)
 
+    # Random attack
     if scenario == "random":
         if seed is not None:
             np.random.seed(seed)
@@ -31,6 +32,7 @@ def simulate_removal(
             list(G_temp.nodes), size=num_to_remove, replace=False
         )
 
+    # Attack to the top hubs
     elif scenario == "targeted":
         if sorted_nodes is None:
             original_bet = nx.betweenness_centrality(G, weight="weight")
@@ -48,9 +50,9 @@ def simulate_removal(
 
         nodi_lista = list(G_temp.nodes)
         # Estraiamo gli incidenti per ogni nodo (base_risk = 1.0)
-        rischi = np.array(
-            [G_temp.nodes[n].get("accidents", 0) + 1.0 for n in nodi_lista]
-        )
+        rischi = np.array([
+            G_temp.nodes[n].get("accidents", 0) + 1.0 for n in nodi_lista
+        ])
 
         # Normalizziamo le probabilità
         probabilita = rischi / rischi.sum()
@@ -160,3 +162,51 @@ def run_resilience_simulation(G, fractions=None, random_runs=30):
         targeted_eff,
         accidents_eff,
     )
+
+
+def simulate_targeted_hub_attack(graphs_dict, top_node_data):
+    """
+    Simula l'attacco mirato a cascata sui Top 5 Hub (Betweenness) su un insieme di grafi.
+    Stampa la tabella dei risultati.
+    """
+    # Copiamo i grafi per non alterare gli originali
+    graph_copies = {name: G.copy() for name, G in graphs_dict.items()}
+    
+    # Calcoliamo l'efficienza base per ciascun grafo
+    base_efficiencies = {
+        name: compute_weighted_global_efficiency(G) 
+        for name, G in graphs_dict.items()
+    }
+
+    # Intestazione della tabella dinamica
+    headers = [f"📉 Crollo {name}" for name in graphs_dict.keys()]
+    header_str = " | ".join(f"{h:<16}" for h in headers)
+    print("-" * (25 + len(headers) * 19))
+    print(f"{'Hub Compromesso':<22} | {header_str}")
+    print("-" * (25 + len(headers) * 19))
+
+    results = []
+
+    for node_id, node_name in top_node_data:
+        drops = {}
+        for name, G_copy in graph_copies.items():
+            if G_copy.has_node(node_id):
+                G_copy.remove_node(node_id)
+            
+            # Calcola il crollo percentuale dell'efficienza
+            eff_base = base_efficiencies[name]
+            eff_current = compute_weighted_global_efficiency(G_copy)
+            drops[name] = ((eff_base - eff_current) / eff_base * 100) if eff_base > 0 else 0.0
+
+        name_short = node_name[:20] + ".." if len(node_name) > 20 else node_name
+        drops_str = " | ".join(f"-{drops[name]:.2f}%{'':<10}" for name in graphs_dict.keys())
+        print(f"{name_short:<22} | {drops_str}")
+        
+        node_results = {"node_id": node_id, "node_name": node_name}
+        for name in graphs_dict.keys():
+            node_results[f"drop_{name.lower()}"] = drops[name]
+        results.append(node_results)
+
+    print("-" * (25 + len(headers) * 19))
+    return results
+
