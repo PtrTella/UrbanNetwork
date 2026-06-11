@@ -153,43 +153,21 @@ def main():
     # =========================================================================
     print("\n=== PHASE 6: Post-Processing & Visualizations ===")
     # =========================================================================
+    # 1. Generate resilience curves
     plot_resilience_curves()
 
-    # Create the figures directory in LaTeX folder
-    latex_fig_dir = BASE_DIR / "latex" / "figures" / "bologna"
-    latex_fig_dir.mkdir(parents=True, exist_ok=True)
-
-    # Copy resilience curves to LaTeX figures
-    import shutil
-    shutil.copy(
-        BASE_DIR / "data_output" / "bologna" / "bologna_resilience_curves.png",
-        latex_fig_dir / "bologna_resilience_curves.png"
-    )
-    print(f"   ✅ Copiato grafico resilienza in: {latex_fig_dir / 'bologna_resilience_curves.png'}")
-
-    # Generate centrality correlation scatter plot and betweenness histogram
+    # 2. Generate centrality correlation scatter plot and betweenness histogram
     plot_centrality_analysis(
         df_centrality, 
         BASE_DIR / "data_output" / "bologna" / "bologna_centrality_scatter.png",
         BASE_DIR / "data_output" / "bologna" / "bologna_betweenness_hist.png"
     )
-    # Copy them to latex figures
-    shutil.copy(
-        BASE_DIR / "data_output" / "bologna" / "bologna_centrality_scatter.png",
-        latex_fig_dir / "bologna_centrality_scatter.png"
-    )
-    shutil.copy(
-        BASE_DIR / "data_output" / "bologna" / "bologna_betweenness_hist.png",
-        latex_fig_dir / "bologna_betweenness_hist.png"
-    )
-    print(f"   ✅ Copiati grafici di centralità in: {latex_fig_dir}")
 
-    # Generate interactive map
+    # 3. Generate interactive HTML map
     generate_interactive_map()
 
-    # Generate static map for LaTeX in both folders
+    # 4. Generate static map with transparent street basemap
     plot_static_network(G_fused, BASE_DIR / "data_output" / "bologna" / "bologna_transit_map.png")
-    plot_static_network(G_fused, latex_fig_dir / "bologna_transit_map.png")
 
     print(
         "\n✅ [SUCCESS] Pipeline analitica, predittiva e di resilienza completata al 100%."

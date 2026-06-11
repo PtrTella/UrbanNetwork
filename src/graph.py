@@ -3,7 +3,7 @@ import pandas as pd
 import networkx as nx
 import numpy as np
 from pathlib import Path
-from src.config import TransitConfig  # <-- Importiamo la configurazione
+from config import TransitConfig  # <-- Importiamo la configurazione
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 PROCESSED_DIR = BASE_DIR / "dataset" / "bologna" / "processed"
@@ -36,8 +36,8 @@ def load_bologna_graph(scenario="bus_only", integration_mode="fused"):
             lat=row["stop_lat"],
             lon=row["stop_lon"],
             traffic=row.get("nearest_traffic_flow", 0),  # Flusso di picco orario
-            capacity=row.get("road_capacity", 1000),    # Capacità dinamica della via
-            accidents=row.get("accidents_300m", 0),     # Rischio stocastico di incidenti
+            capacity=row.get("road_capacity", 1000),  # Capacità dinamica della via
+            accidents=row.get("accidents_300m", 0),  # Rischio stocastico di incidenti
             type="bus",
         )
 
@@ -67,7 +67,14 @@ def load_bologna_graph(scenario="bus_only", integration_mode="fused"):
                 effective_speed = TransitConfig.MIN_BUS_SPEED
 
             travel_time_sec = dist_m / effective_speed
-            G.add_edge(u, v, weight=travel_time_sec, dist_meters=dist_m, type="bus")
+            G.add_edge(
+                u,
+                v,
+                weight=travel_time_sec,
+                dist_meters=dist_m,
+                type="bus",
+                route_id=row.get("route_id"),
+            )
 
     # 3. Carica Tram
     if scenario != "bus_only":
@@ -140,11 +147,20 @@ def load_bologna_graph(scenario="bus_only", integration_mode="fused"):
                     G.nodes[v]["lon"],
                 )
 
-                # IL TRAM NON SUBISCE TRAFFICO: Tempo costante basato sulla sede protetta
                 tram_time_sec = dist_m / TransitConfig.TRAM_SPEED
-                G.add_edge(u, v, weight=tram_time_sec, dist_meters=dist_m, type="tram")
+                G.add_edge(
+                    u,
+                    v,
+                    weight=tram_time_sec,
+                    dist_meters=dist_m,
+                    type="tram",
+                    route_id=row.get("route_id"),
+                )
 
     print(
         f"✅ Grafo Integrato ({integration_mode}): {G.number_of_nodes()} Nodi, {G.number_of_edges()} Archi. (Pesi Temporali Rigorosi BPR)"
     )
+
+    # SAVE GRAPH
+    nx.write_gexf(G, "data_output/bologna/bologna_network_graph.gexf")
     return G

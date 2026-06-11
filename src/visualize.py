@@ -86,8 +86,8 @@ def generate_interactive_map():
         route = str(row["route_id"]).upper()
 
         if u in all_coords and v in all_coords:
-            # FIX: Supporta sia l'ID testuale (RED) che l'eventuale ID numerico (101)
-            if "RED" in route or "ROSSA" in route or "101" in route:
+            # FIX: Supporta sia l'ID testuale (RED)
+            if "RED" in route or "ROSSA" in route:
                 folium.PolyLine(
                     locations=[all_coords[u], all_coords[v]],
                     color="#e74c3c",
@@ -148,6 +148,6 @@ def generate_interactive_map():
     m.save(str(OUTPUT_MAP))
     print(f"✅ Mappa salvata con successo in: {OUTPUT_MAP}")
 
+
 if __name__ == "__main__":
     generate_interactive_map()
-
