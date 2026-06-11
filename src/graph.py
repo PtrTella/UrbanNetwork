@@ -103,11 +103,16 @@ def load_bologna_graph(scenario="bus_only", integration_mode="fused"):
                     )
                     tram_to_bus_map[tram_id] = tram_id
 
-                    # Trasbordo Pedonale Multiplex (Tempo a piedi in secondi)
+                    # Trasbordo Pedonale Multiplex con Frizione (Cammino + Attesa + Penalità Cognitiva)
+                    transfer_time = (
+                        (min_dist / TransitConfig.WALKING_SPEED)
+                        + TransitConfig.TRANSFER_WAITING_TIME
+                        + TransitConfig.TRANSFER_COGNITIVE_PENALTY
+                    )
                     G.add_edge(
                         tram_id,
                         closest_bus_id,
-                        weight=min_dist / TransitConfig.WALKING_SPEED,
+                        weight=transfer_time,
                         type="trasbordo_pedonale",
                     )
             else:

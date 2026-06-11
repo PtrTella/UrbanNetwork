@@ -11,7 +11,7 @@ from src.analyzer import (
 from src.demographic import calculate_demographics_weight
 from src.scenarios import inject_hypothetical_tram
 from src.simulator import run_resilience_simulation, simulate_targeted_hub_attack
-from src.plot_resilience import plot_resilience_curves
+from src.plottings import plot_resilience_curves, plot_centrality_analysis, plot_static_network
 from src.visualize import generate_interactive_map
 
 warnings.filterwarnings("ignore")
@@ -154,7 +154,42 @@ def main():
     print("\n=== PHASE 6: Post-Processing & Visualizations ===")
     # =========================================================================
     plot_resilience_curves()
+
+    # Create the figures directory in LaTeX folder
+    latex_fig_dir = BASE_DIR / "latex" / "figures" / "bologna"
+    latex_fig_dir.mkdir(parents=True, exist_ok=True)
+
+    # Copy resilience curves to LaTeX figures
+    import shutil
+    shutil.copy(
+        BASE_DIR / "data_output" / "bologna" / "bologna_resilience_curves.png",
+        latex_fig_dir / "bologna_resilience_curves.png"
+    )
+    print(f"   ✅ Copiato grafico resilienza in: {latex_fig_dir / 'bologna_resilience_curves.png'}")
+
+    # Generate centrality correlation scatter plot and betweenness histogram
+    plot_centrality_analysis(
+        df_centrality, 
+        BASE_DIR / "data_output" / "bologna" / "bologna_centrality_scatter.png",
+        BASE_DIR / "data_output" / "bologna" / "bologna_betweenness_hist.png"
+    )
+    # Copy them to latex figures
+    shutil.copy(
+        BASE_DIR / "data_output" / "bologna" / "bologna_centrality_scatter.png",
+        latex_fig_dir / "bologna_centrality_scatter.png"
+    )
+    shutil.copy(
+        BASE_DIR / "data_output" / "bologna" / "bologna_betweenness_hist.png",
+        latex_fig_dir / "bologna_betweenness_hist.png"
+    )
+    print(f"   ✅ Copiati grafici di centralità in: {latex_fig_dir}")
+
+    # Generate interactive map
     generate_interactive_map()
+
+    # Generate static map for LaTeX in both folders
+    plot_static_network(G_fused, BASE_DIR / "data_output" / "bologna" / "bologna_transit_map.png")
+    plot_static_network(G_fused, latex_fig_dir / "bologna_transit_map.png")
 
     print(
         "\n✅ [SUCCESS] Pipeline analitica, predittiva e di resilienza completata al 100%."

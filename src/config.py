@@ -25,3 +25,10 @@ class TransitConfig:
     STAZIONE_CENTRALE_PENDOLARI = 159000
     AUTOSTAZIONE_PENDOLARI = 14000
 
+    # --- FRIZIONE DI TRASBORDO (MULTIPLEX TRANSFER FRICTION) ---
+    # Tempo di attesa medio (secondi) stimato per accedere alla coincidenza (1/2 headway medio)
+    TRANSFER_WAITING_TIME = 150.0  # 2.5 minuti
+    # Penalità cognitiva in secondi per tenere conto dello stress/scomodità del cambio linea
+    TRANSFER_COGNITIVE_PENALTY = 180.0  # 3 minuti
+
+

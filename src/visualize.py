@@ -148,6 +148,6 @@ def generate_interactive_map():
     m.save(str(OUTPUT_MAP))
     print(f"✅ Mappa salvata con successo in: {OUTPUT_MAP}")
 
-
 if __name__ == "__main__":
     generate_interactive_map()
+
