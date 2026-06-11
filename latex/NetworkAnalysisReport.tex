@@ -14,10 +14,12 @@
 \usepackage{booktabs}
 \usepackage{hyperref}
 
-\author{[Student 1 Name], Digital Humanities and Digital Knowledge, Matricola: [ID 1]
-\\ [Student 2 Name], Digital Humanities and Digital Knowledge, Matricola: [ID 2]}
+\author{[Student 1 Name] \\ Digital Humanities and Digital Knowledge, Matricola: [ID 1]
+\\ \vspace{1ex}
+{[Student 2 Name]} \\ Digital Humanities and Digital Knowledge, Matricola: [ID 2]}
 \date{}
 \title{The Topology of Urban Resilience: Small-World Analysis, Bottlenecks, and Structural Vulnerability in the Integrated Transit Network of Bologna}
+
 
 \begin{document}
 \maketitle
@@ -31,13 +33,11 @@ This study project examines the topological structure of the public transit netw
 
 Our analysis models these transit layers as complex spatial networks. Specifically, we investigate:
 \begin{itemize}
-    \item How the insertion of the high-speed, congestion-free tramways modifies the overall macroscopic efficiency and small-world properties of the city.
+    \item How the insertion of high-speed, congestion-free tramways modifies the overall macroscopic efficiency and small-world properties of the city.
     \item Which central junctions act as vital microscopic "gatekeepers" or bottlenecks.
     \item How the network responds to infrastructural failures under different threat models (random, accident-prone, and targeted attacks).
     \item The alignment of demographic demand with network hubs to evaluate municipal travel pressure.
 \end{itemize}
-
----
 
 \section{Problem and Motivation}
 \label{problem-and-motivation}
@@ -58,9 +58,7 @@ Our research design relies on key literature in complex networks:
     \item \textbf{Robustness under Attack}: Derrible and Kennedy (2010) analyzed 33 metro systems globally, demonstrating that transit networks are often scale-free-like structures dominated by major transfer hubs. This topology exhibits high resistance to random failures but extreme fragility under targeted attacks.
 \end{itemize}
 
-The main contribution of this project is a rigorous, reproducible, data-driven pipeline for Bologna. It models traffic congestion via the Bureau of Public Roads (BPR) function, quantifies pedestrian transfer friction (waiting times and cognitive penalties), maps municipal census data, and simulates structural percolation.
-
----
+The main contribution of this project is a rigorous, data-driven, and reproducible pipeline for Bologna. It models traffic congestion via the Bureau of Public Roads (BPR) function, quantifies pedestrian transfer friction (waiting times and cognitive penalties), maps municipal census data, and simulates structural percolation.
 
 \section{Datasets}
 \label{datasets}
@@ -75,8 +73,6 @@ The data was compiled from multiple open municipal and open-source datasets to e
 \end{enumerate}
 
 We utilized the Python library \texttt{Geopandas} for spatial data processing, \texttt{Shapely} for geographic distance buffers, and \texttt{NetworkX} as the core mathematical engine to construct and analyze the L-Space network topology. The final visualizations were generated using \texttt{Matplotlib} (for static reporting graphs) and \texttt{Folium} (for interactive HTML maps). Execution environment and dependency packages were managed using the fast Python package manager \texttt{uv}.
-
----
 
 \section{Validity and Reliability}
 \label{validity-and-reliability-not-needed-for-the-project-proposal}
@@ -96,9 +92,7 @@ To guarantee the \textbf{validity} of our model (how closely it mirrors the real
     \item \textbf{Hybrid Demographic Snapping}: ISTAT census populations are mapped to stations. To avoid spelling discrepancies between GTFS names and official census names, we snap unmatched stations to their nearest census stop within a $250$-meter radius.
 \end{enumerate}
 
-To ensure \textbf{reliability} (reproducibility), all random models are seeded. The Erdős-Rényi null model generation in \texttt{analyzer.py} uses a deterministic seed list, and the stochastically-weighted percolation loops in \texttt{simulator.py} use a fixed numpy seed.
-
----
+To ensure \textbf{reliability} (reproducibility), all random models are seeded. A deterministic list of seeds is used for Erd\H{o}s-R\'enyi null models in \texttt{analyzer.py}, and stochastically-weighted percolation loops in \texttt{simulator.py} use a fixed numpy seed.
 
 \section{Measures and Results}
 \label{measures}
@@ -112,7 +106,7 @@ We executed the complete pipeline on the four topological scenarios. Figure~\ref
     \label{fig:transit_map}
 \end{figure}
 
-### A. Microscopic Analysis: Centrality and Bottlenecks
+\subsection{Microscopic Analysis: Centrality and Bottlenecks}
 We calculated Betweenness Centrality on travel time weights to identify structural bottlenecks (Table~\ref{tab:bottlenecks}).
 
 \begin{table}[H]
@@ -134,7 +128,25 @@ We calculated Betweenness Centrality on travel time weights to identify structur
 
 These locations represent the narrow historical corridors in the southern part of Bologna's center (e.g., Via Farini, Piazza Cavour), acting as crucial bridge points between different sectors of the city.
 
-### B. Macroscopic Analysis: Small-Worldness and Efficiency
+To further investigate the topological characteristics of these bottlenecks, we analyze the relationship between node degree and betweenness centrality. Figure~\ref{fig:centrality_scatter} shows a scatter plot of Betweenness Centrality against Node Degree. In spatial transport networks, node degree is strongly constrained by the 2D planarity of the physical layout (with most stations having $k \le 4$). However, the betweenness centrality of bridge junctions is exceptionally high, demonstrating that degree is an insufficient proxy for structural criticality.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{figures/bologna/bologna_centrality_scatter.png}
+    \caption{Correlation between Node Degree and Betweenness Centrality. The top 5 bottlenecks are highlighted in red, displaying high betweenness despite low-to-medium degree values.}
+    \label{fig:centrality_scatter}
+\end{figure}
+
+Furthermore, Figure~\ref{fig:betweenness_hist} presents the probability density distribution of betweenness centrality values greater than zero. The distribution is highly right-skewed, characterized by a heavy tail. This power-law-like structure is typical of scale-free networks, meaning that the vast majority of nodes have negligible betweenness, whereas a tiny elite of bottlenecks controls the transit flows across the municipal area.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{figures/bologna/bologna_betweenness_hist.png}
+    \caption{Histogram of Betweenness Centrality (values $>0$) with a Kernel Density Estimate (KDE) curve, demonstrating the extreme right-skewed, heavy-tailed bottleneck distribution.}
+    \label{fig:betweenness_hist}
+\end{figure}
+
+\subsection{Macroscopic Analysis: Small-Worldness and Efficiency}
 We computed path length, clustering, global efficiency ($E_{glob}$), Watts-Strogatz Sigma ($\sigma$), and Telesford Omega ($\omega$) across the networks (Table~\ref{tab:macroscopic}).
 
 \begin{table}[H]
@@ -160,7 +172,7 @@ We computed path length, clustering, global efficiency ($E_{glob}$), Watts-Strog
 
 The $\sigma$ values are all greater than 1, indicating that the network exhibits small-world characteristics. However, Telesford's Omega ($\omega$) evaluates to exactly `0.00` in all scenarios. 
 
-### C. Resilience Stress-Tests
+\subsection{Resilience Stress-Tests}
 We simulated a targeted attack by removing the top 5 centrality bottlenecks identified in Phase 2. Table~\ref{tab:targeted_attack} details the resulting croll percentages in global efficiency.
 
 \begin{table}[H]
@@ -189,8 +201,6 @@ We also performed a global percolation simulation comparing three threat scenari
     \label{fig:resilience}
 \end{figure}
 
----
-
 \section{Conclusion}
 \label{conclusion}
 
@@ -198,13 +208,11 @@ The macroscopic analysis reveals that the integration of the tram network (Fused
 
 In the predictive future circular tramway scenario, upgrading circular Line 32 significantly reduces the average travel time back to `1888.57` seconds and achieves the highest global efficiency of `0.000818` $\text{s}^{-1}$. This indicates that converting circular bus routes into dedicated tramways effectively bypasses congested avenues and creates powerful alternative routing paths.
 
-### Interpretation of the Small-World Metrics
+\subsection*{Interpretation of the Small-World Metrics}
 The collapse of Telesford's Omega ($\omega = 0.00$) is a structural property of Space L transit networks. Because transportation lines are linear chains, the average node degree $\langle k \rangle \approx 2.4$. The reference regular lattice generated to match this degree has $k = 2$ (a simple cycle). Since a simple cycle contains no triangles, its clustering coefficient $C_{lat}$ is exactly $0.0$, making the ratio $C/C_{lat}$ in Telesford's formula undefined. In this regime, the Watts-Strogatz Sigma ($\sigma$) remains a more informative indicator of small-worldness.
 
-### Resilience Behavior
+\subsection*{Resilience Behavior}
 The percolation curves (Figure~\ref{fig:resilience}) demonstrate a classic spatial network phenomenon. Under targeted attacks, global efficiency drops much faster than the size of the Largest Connected Component (LCC). For example, at 5\% targeted removal, the LCC is still 91.1\% of its original size, but global efficiency has crashed by 23.6\%. This is because removing bottlenecks forces passengers to take long detour routes, severely degrading travel efficiency before the physical network fragments.
-
----
 
 \section{Critique}
 \label{critique}
@@ -217,8 +225,6 @@ While this pipeline is highly robust, several limitations remain:
 \end{enumerate}
 
 Despite these limitations, this study successfully demonstrates the power of Network Science to evaluate urban transport changes, proving that the Bologna tramway will substantially improve city-wide mobility.
-
----
 
 \begin{thebibliography}{99}
 \bibitem{latora} Latora, V., and Marchiori, M. (2002). Is the Boston subway a small-world network? \textit{Physica A: Statistical Mechanics and its Applications}, 314(1-4), 109-113.
