@@ -1,9 +1,13 @@
 # src/graph.py
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).resolve().parent.parent))
+
 import pandas as pd
 import networkx as nx
 import numpy as np
-from pathlib import Path
-from config import TransitConfig  # <-- Importiamo la configurazione
+
+from src.config import TransitConfig  # <-- Importiamo la configurazione
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 PROCESSED_DIR = BASE_DIR / "dataset" / "bologna" / "processed"
@@ -160,7 +164,69 @@ def load_bologna_graph(scenario="bus_only", integration_mode="fused"):
     print(
         f"✅ Grafo Integrato ({integration_mode}): {G.number_of_nodes()} Nodi, {G.number_of_edges()} Archi. (Pesi Temporali Rigorosi BPR)"
     )
-
-    # SAVE GRAPH
-    nx.write_gexf(G, "data_output/bologna/bologna_network_graph.gexf")
     return G
+
+
+def load_cached_graph(name, scenario=None, integration_mode="fused"):
+    """
+    Tenta di caricare un grafo salvato in formato pickle da data_output/bologna/graphs/.
+    Se non esiste, lo calcola al volo e lo salva.
+    """
+    import pickle
+
+    cache_path = BASE_DIR / "data_output" / "bologna" / "graphs" / f"{name}.pkl"
+    if cache_path.exists():
+        try:
+            with open(cache_path, "rb") as f:
+                G = pickle.load(f)
+            print(f"✅ Caricato grafo cached da: {cache_path}")
+            return G
+        except Exception as e:
+            print(f"⚠️ Errore nel caricamento cache: {e}. Ricostruzione...")
+
+    # Ricostruzione in caso di mancanza cache
+    if name == "G_bus":
+        G = load_bologna_graph(scenario="bus_only")
+    elif name == "G_fused":
+        G = load_bologna_graph(scenario="tram", integration_mode="fused")
+    elif name == "G_multiplex":
+        G = load_bologna_graph(scenario="tram", integration_mode="multiplex")
+    elif name == "G_futuro":
+        from src.scenarios import inject_hypothetical_tram
+
+        G_f = load_cached_graph("G_fused")
+        G = inject_hypothetical_tram(G_f, route_to_upgrade="32")
+    else:
+        G = load_bologna_graph(scenario=scenario, integration_mode=integration_mode)
+
+    # Salva in cache
+    cache_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(cache_path, "wb") as f:
+        pickle.dump(G, f)
+    print(f"✅ Grafo salvato in cache: {cache_path}")
+    return G
+
+
+if __name__ == "__main__":
+    import pickle
+    from src.scenarios import inject_hypothetical_tram
+
+    OUTPUT_DIR = BASE_DIR / "data_output" / "bologna" / "graphs"
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+
+    print("🚀 Loading and saving all graphs to graphs/ directory...")
+    G_bus = load_bologna_graph(scenario="bus_only")
+    G_fused = load_bologna_graph(scenario="tram", integration_mode="fused")
+    G_multi = load_bologna_graph(scenario="tram", integration_mode="multiplex")
+    G_futuro = inject_hypothetical_tram(G_fused, route_to_upgrade="32")
+
+    for name, G in [
+        ("G_bus", G_bus),
+        ("G_fused", G_fused),
+        ("G_multiplex", G_multi),
+        ("G_futuro", G_futuro),
+    ]:
+        path = OUTPUT_DIR / f"{name}.pkl"
+        with open(path, "wb") as f:
+            pickle.dump(G, f)
+        print(f"  ✅ Saved {name} to {path}")

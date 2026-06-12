@@ -1,3 +1,8 @@
+# src/demographic.py
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).resolve().parent.parent))
+
 import pandas as pd
 import numpy as np
 from src.config import TransitConfig
@@ -125,3 +130,37 @@ def calculate_demographics_weight(G_full, raw_dir_path):
     print("\nTop 5 Hub per Pressione Demografica (Residenti + Pendolari):")
     for name, pop in nodes_pop[:5]:
         print(f"  - {name:<35} {int(pop)} abitanti")
+
+
+if __name__ == "__main__":
+    from src.graph import load_cached_graph
+    from pathlib import Path
+
+    BASE_DIR = Path(__file__).resolve().parent.parent
+    RAW_DIR = BASE_DIR / "dataset" / "bologna" / "raw"
+    OUTPUT_DIR = BASE_DIR / "data_output" / "bologna"
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+
+    print("🚀 Running autonomous Demographic Pressure Analysis...")
+    G_fused = load_cached_graph("G_fused")
+
+    calculate_demographics_weight(G_fused, RAW_DIR)
+
+    # Raccogliamo i risultati in un DataFrame da salvare
+    data = []
+    for n, attr in G_fused.nodes(data=True):
+        data.append({
+            "Station_ID": str(n),
+            "Station_Name": attr.get("name", ""),
+            "Latitude": attr.get("lat", 0.0),
+            "Longitude": attr.get("lon", 0.0),
+            "Type": attr.get("type", "bus"),
+            "Population_Served": attr.get("population_served", 0.0),
+        })
+    df_demo_res = pd.DataFrame(data).sort_values(
+        by="Population_Served", ascending=False
+    )
+
+    out_csv = OUTPUT_DIR / "demographic_pressure_results.csv"
+    df_demo_res.to_csv(out_csv, index=False)
+    print(f"  ✅ Demographic pressure results saved to: {out_csv}")

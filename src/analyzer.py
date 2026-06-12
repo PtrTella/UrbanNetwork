@@ -1,3 +1,7 @@
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).resolve().parent.parent))
+
 import networkx as nx
 import pandas as pd
 import numpy as np
@@ -51,17 +55,15 @@ def compute_centralities(G):
     data = []
     for node, attr in G.nodes(data=True):
         station_name = attr.get("name", str(node))
-        data.append(
-            {
-                "Station_ID": str(node),
-                "Station_Name": station_name,
-                "Degree": degree_dict.get(node, 0),
-                "Degree Centrality": deg_cent.get(node, 0),
-                "Closeness Centrality": clos_cent.get(node, 0),
-                "Betweenness Centrality": bet_cent.get(node, 0),
-                "Coreness": coreness.get(node, 0),
-            }
-        )
+        data.append({
+            "Station_ID": str(node),
+            "Station_Name": station_name,
+            "Degree": degree_dict.get(node, 0),
+            "Degree Centrality": deg_cent.get(node, 0),
+            "Closeness Centrality": clos_cent.get(node, 0),
+            "Betweenness Centrality": bet_cent.get(node, 0),
+            "Coreness": coreness.get(node, 0),
+        })
     return pd.DataFrame(data)
 
 
@@ -150,3 +152,45 @@ def compute_small_worldness(G, er_runs=5):
         "omega": omega,
         "Omega": omega,
     }
+
+
+if __name__ == "__main__":
+    from src.graph import load_cached_graph
+    from pathlib import Path
+
+    BASE_DIR = Path(__file__).resolve().parent.parent
+    OUTPUT_DIR = BASE_DIR / "data_output" / "bologna"
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+
+    print("🚀 Running autonomous Network Analysis...")
+    G_bus = load_cached_graph("G_bus")
+    G_fused = load_cached_graph("G_fused")
+    G_multi = load_cached_graph("G_multiplex")
+
+    print(" -> Computing centralities on Bus-Only network...")
+    df_cent = compute_centralities(G_bus)
+    cent_csv = OUTPUT_DIR / "centrality_results.csv"
+    df_cent.to_csv(cent_csv, index=False)
+    print(f"  ✅ Centrality results saved to: {cent_csv}")
+
+    print(" -> Computing global small-world metrics...")
+    m_bus = compute_small_worldness(G_bus)
+    m_fused = compute_small_worldness(G_fused)
+    m_multi = compute_small_worldness(G_multi)
+
+    # Rimuoviamo eventuali chiavi duplicate per il CSV pulito
+    def clean_metrics(m):
+        return {
+            k: v
+            for k, v in m.items()
+            if k in ["N", "M", "L", "L_hops", "C", "E_glob", "E_loc", "Sigma", "Omega"]
+        }
+
+    df_macro = pd.DataFrame([
+        {"Scenario": "Solo Bus", **clean_metrics(m_bus)},
+        {"Scenario": "Fused (Bus+Tram)", **clean_metrics(m_fused)},
+        {"Scenario": "Multiplex", **clean_metrics(m_multi)},
+    ])
+    macro_csv = OUTPUT_DIR / "macroscopic_results.csv"
+    df_macro.to_csv(macro_csv, index=False)
+    print(f"  ✅ Macroscopic results saved to: {macro_csv}")

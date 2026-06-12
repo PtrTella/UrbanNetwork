@@ -3,15 +3,18 @@ import pandas as pd
 from pathlib import Path
 
 # Importiamo i nostri Specialisti
-from src.graph import load_bologna_graph
+from src.graph import load_cached_graph
 from src.analyzer import (
     compute_centralities,
     compute_small_worldness,
 )
 from src.demographic import calculate_demographics_weight
-from src.scenarios import inject_hypothetical_tram
 from src.simulator import run_resilience_simulation, simulate_targeted_hub_attack
-from src.plottings import plot_resilience_curves, plot_centrality_analysis, plot_static_network
+from src.plottings import (
+    plot_resilience_curves,
+    plot_centrality_analysis,
+    plot_static_network,
+)
 from src.visualize import generate_interactive_map
 
 warnings.filterwarnings("ignore")
@@ -33,11 +36,11 @@ def main():
     # =========================================================================
     print("=== PHASE 1: Data Ingestion & Preprocessing ===")
     # =========================================================================
-    G_bus = load_bologna_graph(scenario="bus_only")
-    G_fused = load_bologna_graph(scenario="tram", integration_mode="fused")
-    G_multi = load_bologna_graph(scenario="tram", integration_mode="multiplex")
+    G_bus = load_cached_graph("G_bus")
+    G_fused = load_cached_graph("G_fused")
+    G_multi = load_cached_graph("G_multiplex")
 
-    G_futuro = inject_hypothetical_tram(G_fused, route_to_upgrade="32")
+    G_futuro = load_cached_graph("G_futuro")
 
     print("\n📊 Riepilogo Topologia:")
     print(
@@ -108,7 +111,7 @@ def main():
         "Bus": G_bus,
         "Fused": G_fused,
         "Multi": G_multi,
-        "Futuro": G_futuro
+        "Futuro": G_futuro,
     }
     simulate_targeted_hub_attack(graphs_to_test, top_node_data)
 
@@ -157,17 +160,13 @@ def main():
     plot_resilience_curves()
 
     # 2. Generate centrality correlation scatter plot and betweenness histogram
-    plot_centrality_analysis(
-        df_centrality, 
-        BASE_DIR / "data_output" / "bologna" / "bologna_centrality_scatter.png",
-        BASE_DIR / "data_output" / "bologna" / "bologna_betweenness_hist.png"
-    )
+    plot_centrality_analysis(df_centrality)
 
     # 3. Generate interactive HTML map
     generate_interactive_map()
 
     # 4. Generate static map with transparent street basemap
-    plot_static_network(G_fused, BASE_DIR / "data_output" / "bologna" / "bologna_transit_map.png")
+    plot_static_network(G_fused)
 
     print(
         "\n✅ [SUCCESS] Pipeline analitica, predittiva e di resilienza completata al 100%."

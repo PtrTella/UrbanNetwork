@@ -1,14 +1,18 @@
 # src/plottings.py
+import sys
+from pathlib import Path
+
+sys.path.append(str(Path(__file__).resolve().parent.parent))
+
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import networkx as nx
-from pathlib import Path
 
 # Configurazioni di base
 BASE_DIR = Path(__file__).resolve().parent.parent
 PROCESSED_DIR = BASE_DIR / "dataset" / "bologna" / "processed"
-OUTPUT_DIR = BASE_DIR / "data_output" / "bologna"
+OUTPUT_DIR = BASE_DIR / "data_output" / "bologna" / "figures"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 
@@ -92,7 +96,7 @@ def plot_resilience_curves():
     print(f"✅ Grafico di percolazione salvato in: {output_path}")
 
 
-def plot_centrality_analysis(df_centrality, output_path_scatter, output_path_hist):
+def plot_centrality_analysis(df_centrality):
     """Genera grafici correlazione grado-betweenness e istogramma della betweenness."""
     sns.set_theme(style="whitegrid", context="paper", font_scale=1.2)
 
@@ -144,6 +148,7 @@ def plot_centrality_analysis(df_centrality, output_path_scatter, output_path_his
     ax.set_ylabel("Centralità di Betweenness (Weighted)", fontweight="bold")
     ax.legend()
     plt.tight_layout()
+    output_path_scatter = OUTPUT_DIR / "bologna_centrality_scatter.png"
     plt.savefig(output_path_scatter, dpi=300, bbox_inches="tight")
     plt.close()
     print(f"✅ Grafico correlazione centralità salvato in: {output_path_scatter}")
@@ -168,12 +173,13 @@ def plot_centrality_analysis(df_centrality, output_path_scatter, output_path_his
     ax.set_xlabel("Centralità di Betweenness", fontweight="bold")
     ax.set_ylabel("Densità di Frequenza", fontweight="bold")
     plt.tight_layout()
+    output_path_hist = OUTPUT_DIR / "bologna_betweenness_hist.png"
     plt.savefig(output_path_hist, dpi=300, bbox_inches="tight")
     plt.close()
     print(f"✅ Istogramma distribuzione betweenness salvato in: {output_path_hist}")
 
 
-def plot_static_network(G, output_path):
+def plot_static_network(G):
     """Genera una visualizzazione statica del grafo con coordinate geografiche per LaTeX."""
     import contextily as ctx
     from collections import defaultdict
@@ -314,6 +320,188 @@ def plot_static_network(G, output_path):
     ax.set_ylabel("Latitudine", fontweight="bold")
 
     plt.tight_layout()
+    output_path = OUTPUT_DIR / "bologna_static_network.png"
     plt.savefig(output_path, dpi=300, bbox_inches="tight")
     plt.close()
     print(f"✅ Mappa statica della rete salvata in: {output_path}")
+
+
+def plot_optimized_layout(G_planned, G_opt):
+    """Genera un grafico comparativo side-by-side geografico tra il tracciato pianificato e quello ottimizzato."""
+    import contextily as ctx
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(20, 10))
+
+    # Prepara coordinate nodi
+    pos_planned = {
+        n: (data["lon"], data["lat"])
+        for n, data in G_planned.nodes(data=True)
+        if "lon" in data and "lat" in data
+    }
+    pos_opt = {
+        n: (data["lon"], data["lat"])
+        for n, data in G_opt.nodes(data=True)
+        if "lon" in data and "lat" in data
+    }
+
+    # ------------------ SUBPLOT 1: PIANIFICATO (TPER) ------------------
+    # Bus edges (grigio molto chiaro)
+    bus_edges_p = [
+        (u, v)
+        for u, v, data in G_planned.edges(data=True)
+        if data.get("type") == "bus" and u in pos_planned and v in pos_planned
+    ]
+    nx.draw_networkx_edges(
+        G_planned,
+        pos_planned,
+        edgelist=bus_edges_p,
+        ax=ax1,
+        edge_color="#bdc3c7",
+        width=0.8,
+        alpha=0.3,
+    )
+
+    # Tram edges planned (rosso/verde)
+    tram_edges_p = [
+        (u, v)
+        for u, v, data in G_planned.edges(data=True)
+        if data.get("type") == "tram" and u in pos_planned and v in pos_planned
+    ]
+    nx.draw_networkx_edges(
+        G_planned,
+        pos_planned,
+        edgelist=tram_edges_p,
+        ax=ax1,
+        edge_color="#e74c3c",
+        width=2.5,
+        alpha=0.9,
+    )
+
+    # Nodi tram
+    tram_nodes_p = [
+        n
+        for n, data in G_planned.nodes(data=True)
+        if data.get("type") in ["tram", "intersezione_bus_tram"] and n in pos_planned
+    ]
+    nx.draw_networkx_nodes(
+        G_planned,
+        pos_planned,
+        nodelist=tram_nodes_p,
+        ax=ax1,
+        node_color="#2980b9",
+        node_size=30,
+        alpha=0.9,
+    )
+
+    ax1.set_title(
+        "Layout Pianificato (Rete Rossa & Verde TPER)", fontsize=14, fontweight="bold"
+    )
+    ax1.set_xlabel("Longitudine", fontweight="bold")
+    ax1.set_ylabel("Latitudine", fontweight="bold")
+
+    # ------------------ SUBPLOT 2: OTTIMIZZATO (Greedy TNDP) ------------------
+    # Bus edges (grigio molto chiaro)
+    bus_edges_o = [
+        (u, v)
+        for u, v, data in G_opt.edges(data=True)
+        if data.get("type") == "bus" and u in pos_opt and v in pos_opt
+    ]
+    nx.draw_networkx_edges(
+        G_opt,
+        pos_opt,
+        edgelist=bus_edges_o,
+        ax=ax2,
+        edge_color="#bdc3c7",
+        width=0.8,
+        alpha=0.3,
+    )
+
+    # Tram edges optimized (viola elettrico)
+    tram_edges_o = [
+        (u, v)
+        for u, v, data in G_opt.edges(data=True)
+        if data.get("type") == "tram" and u in pos_opt and v in pos_opt
+    ]
+    nx.draw_networkx_edges(
+        G_opt,
+        pos_opt,
+        edgelist=tram_edges_o,
+        ax=ax2,
+        edge_color="#9b59b6",
+        width=2.5,
+        alpha=0.9,
+    )
+
+    # Nodi tram
+    tram_nodes_o = [
+        n
+        for n, data in G_opt.nodes(data=True)
+        if data.get("type") in ["tram", "intersezione_bus_tram"] and n in pos_opt
+    ]
+    nx.draw_networkx_nodes(
+        G_opt,
+        pos_opt,
+        nodelist=tram_nodes_o,
+        ax=ax2,
+        node_color="#8e44ad",
+        node_size=30,
+        alpha=0.9,
+    )
+
+    ax2.set_title(
+        "Layout Ottimizzato (Algoritmo Greedy Steiner-TNDP)",
+        fontsize=14,
+        fontweight="bold",
+    )
+    ax2.set_xlabel("Longitudine", fontweight="bold")
+    ax2.set_ylabel("Latitudine", fontweight="bold")
+
+    # Aggiungi basemap e mantieni i limiti
+    for ax, pos in [(ax1, pos_planned), (ax2, pos_opt)]:
+        xlim = ax.get_xlim()
+        ylim = ax.get_ylim()
+        try:
+            ctx.add_basemap(
+                ax, crs="EPSG:4326", source=ctx.providers.CartoDB.Positron, alpha=0.45
+            )
+        except Exception as e:
+            print(f"⚠️ Errore caricamento mappa di sfondo: {e}")
+        ax.set_xlim(xlim)
+        ax.set_ylim(ylim)
+
+    plt.suptitle(
+        "Bologna: Confronto tra Rete Tram Pianificata e Ottimizzata (Budget 20 km)",
+        fontsize=16,
+        fontweight="bold",
+    )
+    plt.tight_layout()
+    output_path = OUTPUT_DIR / "bologna_optimized_layout.png"
+    plt.savefig(output_path, dpi=300, bbox_inches="tight")
+    plt.close()
+    print(f"✅ Grafico di confronto layout salvato in: {output_path}")
+
+
+if __name__ == "__main__":
+    from src.graph import load_cached_graph
+    from src.analyzer import compute_centralities
+
+    # 1. Resilience curves
+    print(" -> Generating resilience curves...")
+    plot_resilience_curves()
+
+    # 2. Centrality plots
+    print(" -> Loading graph and computing centralities for plots...")
+    G_bus = load_cached_graph("G_bus")
+    df_cent = compute_centralities(G_bus)
+
+    print(" -> Generating centrality plots...")
+    plot_centrality_analysis(df_cent)
+
+    # 3. Static network layout map
+    print(" -> Loading fused graph for static network map...")
+    G_fused = load_cached_graph("G_fused")
+
+    print(" -> Generating static transit map...")
+    plot_static_network(G_fused)
+
+    print("✅ All plots generated successfully!")
