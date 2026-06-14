@@ -86,7 +86,7 @@ def compute_small_worldness(G, er_runs=5):
     L_time = nx.average_shortest_path_length(
         G_lcc, weight="weight"
     )  # Tempo medio in secondi
-    C = nx.average_clustering(G)  # Clustering topologico
+    C = nx.average_clustering(G_lcc)  # Clustering topologico calcolato sulla LCC per coerenza con L_hops e i modelli nulli
 
     # Vera efficienza calcolata sul tempo
     E_glob = compute_weighted_global_efficiency(G)
@@ -96,12 +96,12 @@ def compute_small_worldness(G, er_runs=5):
     L_hops = nx.average_shortest_path_length(G_lcc, weight=None)
 
     # --- Modello Nullo: Erdős-Rényi (Random Graph) ---
-    p = (2.0 * M_lcc) / (N_lcc * (N_lcc - 1)) if N_lcc > 1 else 0
+    p_density = (2.0 * M_lcc) / (N_lcc * (N_lcc - 1)) if N_lcc > 1 else 0.0
     rand_L_list = []
     rand_C_list = []
 
     for _ in range(er_runs):
-        G_rand = nx.fast_gnp_random_graph(N_lcc, p, seed=42 + _)
+        G_rand = nx.fast_gnp_random_graph(N_lcc, p_density, seed=42 + _)
         if nx.is_connected(G_rand):
             rand_L_list.append(nx.average_shortest_path_length(G_rand, weight=None))
             rand_C_list.append(nx.average_clustering(G_rand))
@@ -116,7 +116,7 @@ def compute_small_worldness(G, er_runs=5):
                 rand_C_list.append(nx.average_clustering(G_rand))
 
     L_rand = np.mean(rand_L_list) if rand_L_list else 1.0
-    C_rand = np.mean(rand_C_list) if rand_C_list else p
+    C_rand = np.mean(rand_C_list) if rand_C_list else p_density
 
     # --- Modello Nullo: Lattice (Rete Regolare) ---
     avg_k = max(2, int(round(2.0 * M_lcc / N_lcc)))
@@ -127,11 +127,6 @@ def compute_small_worldness(G, er_runs=5):
             G_lat.add_edge(i, (i + j) % N_lcc)
             G_lat.add_edge(i, (i - j) % N_lcc)
 
-    L_lat = (
-        nx.average_shortest_path_length(G_lat, weight=None)
-        if nx.is_connected(G_lat)
-        else float("inf")
-    )
     C_lat = nx.average_clustering(G_lat)
 
     # --- Calcolo Coefficienti Corretti (Hops vs Hops) ---

@@ -27,7 +27,7 @@ def inject_hypothetical_tram(G_base, route_to_upgrade="32"):
             )
 
             # TRASFORMAZIONE IN TRAM: Viaggia alla velocità del tram costante senza subire il traffico dei viali!
-            tram_time_sec = dist_m / TransitConfig.TRAM_SPEED
+            tram_time_sec = dist_m / TransitConfig.TRAM_SPEED + TransitConfig.TRAM_DWELL_TIME
             G_hypo.add_edge(
                 u, v, weight=tram_time_sec, type="tram", route="TRAM_CIRCOLARE_FUTURA"
             )

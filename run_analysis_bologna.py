@@ -113,7 +113,7 @@ def main():
         "Multi": G_multi,
         "Futuro": G_futuro,
     }
-    simulate_targeted_hub_attack(graphs_to_test, top_node_data)
+    simulate_targeted_hub_attack(graphs_to_test, num_steps=5)
 
     print(
         "\nB) Simulazione di Percolazione Globale (Random vs Targeted vs Accidents)..."

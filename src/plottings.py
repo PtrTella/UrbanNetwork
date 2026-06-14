@@ -12,7 +12,7 @@ import networkx as nx
 # Configurazioni di base
 BASE_DIR = Path(__file__).resolve().parent.parent
 PROCESSED_DIR = BASE_DIR / "dataset" / "bologna" / "processed"
-OUTPUT_DIR = BASE_DIR / "data_output" / "bologna" / "figures"
+OUTPUT_DIR = BASE_DIR / "latex" / "figures" / "bologna"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 
@@ -503,5 +503,11 @@ if __name__ == "__main__":
 
     print(" -> Generating static transit map...")
     plot_static_network(G_fused)
+
+    # 4. Optimized vs planned layout
+    print(" -> Generating optimized vs planned layout...")
+    G_planned = load_cached_graph("G_fused")
+    G_opt = load_cached_graph("G_opt_tram")
+    plot_optimized_layout(G_planned, G_opt)
 
     print("✅ All plots generated successfully!")

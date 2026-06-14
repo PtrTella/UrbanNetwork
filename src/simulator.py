@@ -164,10 +164,10 @@ def run_resilience_simulation(G, fractions=None, random_runs=30):
     )
 
 
-def simulate_targeted_hub_attack(graphs_dict, top_node_data):
+def simulate_targeted_hub_attack(graphs_dict, top_node_data=None, num_steps=5):
     """
-    Simula l'attacco mirato a cascata sui Top 5 Hub (Betweenness) su un insieme di grafi.
-    Stampa la tabella dei risultati.
+    Simula l'attacco mirato sequenziale dinamico (ricalcolando la betweenness centrality
+    dopo ogni rimozione) per un numero specificato di step.
     """
     # Copiamo i grafi per non alterare gli originali
     graph_copies = {name: G.copy() for name, G in graphs_dict.items()}
@@ -180,33 +180,50 @@ def simulate_targeted_hub_attack(graphs_dict, top_node_data):
 
     # Intestazione della tabella dinamica
     headers = [f"📉 Crollo {name}" for name in graphs_dict.keys()]
-    header_str = " | ".join(f"{h:<16}" for h in headers)
-    print("-" * (25 + len(headers) * 19))
-    print(f"{'Hub Compromesso':<22} | {header_str}")
-    print("-" * (25 + len(headers) * 19))
+    header_str = " | ".join(f"{h:<22}" for h in headers)
+    print("-" * (25 + len(headers) * 25))
+    print(f"{'Rimozione Step':<22} | {header_str}")
+    print("-" * (25 + len(headers) * 25))
 
     results = []
 
-    for node_id, node_name in top_node_data:
-        drops = {}
+    for step in range(1, num_steps + 1):
+        drops_str_list = []
+        step_results = {"step": step}
+        
         for name, G_copy in graph_copies.items():
-            if G_copy.has_node(node_id):
-                G_copy.remove_node(node_id)
+            if len(G_copy) == 0:
+                step_results[f"drop_{name.lower()}"] = 100.0
+                drops_str_list.append(f"-100.00%{'':<14}")
+                continue
+                
+            # Ricalcola la betweenness centrality pesata sui tempi per trovare il collo di bottiglia corrente
+            bet = nx.betweenness_centrality(G_copy, weight="weight")
+            if bet:
+                top_node = max(bet.items(), key=lambda x: x[1])[0]
+                top_node_name = G_copy.nodes[top_node].get("name", str(top_node))
+            else:
+                top_node = list(G_copy.nodes)[0]
+                top_node_name = str(top_node)
+                
+            # Rimuove il nodo
+            G_copy.remove_node(top_node)
             
             # Calcola il crollo percentuale dell'efficienza
             eff_base = base_efficiencies[name]
             eff_current = compute_weighted_global_efficiency(G_copy)
-            drops[name] = ((eff_base - eff_current) / eff_base * 100) if eff_base > 0 else 0.0
+            drop = ((eff_base - eff_current) / eff_base * 100) if eff_base > 0 else 0.0
+            
+            step_results[f"removed_{name.lower()}"] = top_node_name
+            step_results[f"drop_{name.lower()}"] = drop
+            
+            name_short = top_node_name[:12] + ".." if len(top_node_name) > 12 else top_node_name
+            drops_str_list.append(f"-{drop:.2f}% ({name_short})")
+            
+        drops_str = " | ".join(f"{s:<22}" for s in drops_str_list)
+        print(f"Step {step:<17} | {drops_str}")
+        results.append(step_results)
 
-        name_short = node_name[:20] + ".." if len(node_name) > 20 else node_name
-        drops_str = " | ".join(f"-{drops[name]:.2f}%{'':<10}" for name in graphs_dict.keys())
-        print(f"{name_short:<22} | {drops_str}")
-        
-        node_results = {"node_id": node_id, "node_name": node_name}
-        for name in graphs_dict.keys():
-            node_results[f"drop_{name.lower()}"] = drops[name]
-        results.append(node_results)
-
-    print("-" * (25 + len(headers) * 19))
+    print("-" * (25 + len(headers) * 25))
     return results
 

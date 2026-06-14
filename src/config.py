@@ -31,4 +31,8 @@ class TransitConfig:
     # Penalità cognitiva in secondi per tenere conto dello stress/scomodità del cambio linea
     TRANSFER_COGNITIVE_PENALTY = 180.0  # 3 minuti
 
+    # --- TEMPI DI FERMATA (DWELL TIMES in secondi) ---
+    BUS_DWELL_TIME = 10.0  # Tempo medio fermata bus
+    TRAM_DWELL_TIME = 15.0  # Tempo medio fermata tram
+
 

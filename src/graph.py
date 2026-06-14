@@ -58,7 +58,8 @@ def load_bologna_graph(scenario="bus_only", integration_mode="fused"):
 
             # Calcoliamo i valori medi del segmento tra le due fermate
             avg_traffic_peak = (G.nodes[u]["traffic"] + G.nodes[v]["traffic"]) / 2.0
-            avg_capacity = (G.nodes[u]["capacity"] + G.nodes[v]["capacity"]) / 2.0
+            # Clamp di sicurezza per impedire divisioni per zero se la capacità stradale è nulla
+            avg_capacity = max(1.0, (G.nodes[u]["capacity"] + G.nodes[v]["capacity"]) / 2.0)
 
             # FUNZIONE BPR DINAMICA: Ogni via ha la sua C (avg_capacity)
             # Legge solo ALPHA e BETA da config.py per il comportamento della curva
@@ -70,7 +71,7 @@ def load_bologna_graph(scenario="bus_only", integration_mode="fused"):
             if effective_speed < TransitConfig.MIN_BUS_SPEED:
                 effective_speed = TransitConfig.MIN_BUS_SPEED
 
-            travel_time_sec = dist_m / effective_speed
+            travel_time_sec = dist_m / effective_speed + TransitConfig.BUS_DWELL_TIME
             G.add_edge(
                 u,
                 v,
@@ -151,7 +152,7 @@ def load_bologna_graph(scenario="bus_only", integration_mode="fused"):
                     G.nodes[v]["lon"],
                 )
 
-                tram_time_sec = dist_m / TransitConfig.TRAM_SPEED
+                tram_time_sec = dist_m / TransitConfig.TRAM_SPEED + TransitConfig.TRAM_DWELL_TIME
                 G.add_edge(
                     u,
                     v,
