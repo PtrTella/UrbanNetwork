@@ -93,7 +93,7 @@ def compute_edge_utilities(G_bus, alpha=1.0, beta=1.0, gamma=1.0):
     return utilities
 
 
-def optimize_tram_layout(G_bus, budget_meters=30000, num_seeds=3):
+def optimize_tram_layout(G_bus, budget_meters=25000, num_seeds=3):
     """
     Algoritmo Greedy Corridor Builder:
     Fa crescere le linee tram a partire dai top hub connettendoli

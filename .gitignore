@@ -332,7 +332,7 @@ pythontex-files-*/
 *.pk
 .vscode/
 cache/
-*.csv
-dataset/*
-!dataset/bologna/raw/tram_official.json
-.DS_Store
+*.zip
+*.DS_Store
+!latex/build/NetworkAnalysisReport.pdf
+scratch/

@@ -1,0 +1,318 @@
+{
+    "stations": [
+        {
+            "id": "TR_RB_01",
+            "name": "Michelino-Fiera nord",
+            "node_type": "capolinea"
+        },
+        {
+            "id": "TR_RB_02",
+            "name": "Viale della Fiera-Liceo Copernico",
+            "node_type": "fermata"
+        },
+        {
+            "id": "TR_R_01",
+            "name": "Facoltà di Agraria",
+            "node_type": "capolinea"
+        },
+        {
+            "id": "TR_R_02",
+            "name": "Sighinolfi",
+            "node_type": "fermata"
+        },
+        {
+            "id": "TR_R_03",
+            "name": "Pilastro",
+            "node_type": "fermata"
+        },
+        {
+            "id": "TR_R_04",
+            "name": "Pirandello",
+            "node_type": "fermata"
+        },
+        {
+            "id": "TR_R_05",
+            "name": "Cadriano Bivio",
+            "node_type": "fermata"
+        },
+        {
+            "id": "TR_R_06",
+            "name": "San Donnino",
+            "node_type": "fermata"
+        },
+        {
+            "id": "TR_R_07",
+            "name": "San Donato",
+            "node_type": "fermata"
+        },
+        {
+            "id": "TR_R_08",
+            "name": "Piazza Spadolini",
+            "node_type": "fermata"
+        },
+        {
+            "id": "TR_R_09",
+            "name": "Repubblica",
+            "node_type": "fermata"
+        },
+        {
+            "id": "TR_R_10",
+            "name": "Aldo Moro-Regione-Fiera",
+            "node_type": "intersezione"
+        },
+        {
+            "id": "TR_R_11",
+            "name": "Stalingrado",
+            "node_type": "fermata"
+        },
+        {
+            "id": "TR_R_12",
+            "name": "Zucca",
+            "node_type": "fermata"
+        },
+        {
+            "id": "TR_RV_01",
+            "name": "Piazza dell'Unità",
+            "node_type": "intersezione"
+        },
+        {
+            "id": "TR_RV_02",
+            "name": "Giacomo Matteotti-Stazione AV",
+            "node_type": "intersezione"
+        },
+        {
+            "id": "TR_RV_03",
+            "name": "Stazione Centrale",
+            "node_type": "intersezione"
+        },
+        {
+            "id": "TR_R_13",
+            "name": "Indipendenza-8 Agosto",
+            "node_type": "fermata"
+        },
+        {
+            "id": "TR_R_14",
+            "name": "Piazza Maggiore-San Pietro",
+            "node_type": "fermata"
+        },
+        {
+            "id": "TR_R_15",
+            "name": "Ugo Bassi",
+            "node_type": "fermata"
+        },
+        {
+            "id": "TR_R_16",
+            "name": "Canale di Reno-Lame",
+            "node_type": "fermata"
+        },
+        {
+            "id": "TR_R_17",
+            "name": "Paladozza-Riva Reno",
+            "node_type": "fermata"
+        },
+        {
+            "id": "TR_RC_17",
+            "name": "Paladozza-San Felice",
+            "node_type": "fermata"
+        },
+        {
+            "id": "TR_R_18",
+            "name": "Porta San Felice",
+            "node_type": "fermata"
+        },
+        {
+            "id": "TR_R_19",
+            "name": "Saffi",
+            "node_type": "fermata"
+        },
+        {
+            "id": "TR_R_20",
+            "name": "Ospedale Maggiore",
+            "node_type": "fermata"
+        },
+        {
+            "id": "TR_R_21",
+            "name": "Prati di Caprara",
+            "node_type": "fermata"
+        },
+        {
+            "id": "TR_R_22",
+            "name": "Santa Viola",
+            "node_type": "fermata"
+        },
+        {
+            "id": "TR_R_23",
+            "name": "Pontelungo",
+            "node_type": "fermata"
+        },
+        {
+            "id": "TR_R_24",
+            "name": "Triumvirato",
+            "node_type": "fermata"
+        },
+        {
+            "id": "TR_R_25",
+            "name": "Stazione Borgo  Panigale",
+            "node_type": "fermata"
+        },
+        {
+            "id": "TR_R_26",
+            "name": "Manuzio",
+            "node_type": "fermata"
+        },
+        {
+            "id": "TR_R_27",
+            "name": "Ducati",
+            "node_type": "fermata"
+        },
+        {
+            "id": "TR_R_28",
+            "name": "Villaggio Ina",
+            "node_type": "fermata"
+        },
+        {
+            "id": "TR_R_29",
+            "name": "Emilio Lepido",
+            "node_type": "capolinea"
+        },
+        {
+            "id": "TR_V_01",
+            "name": "Stazione Corticella",
+            "node_type": "capolinea"
+        },
+        {
+            "id": "TR_V_02",
+            "name": "Shakespeare",
+            "node_type": "fermata"
+        },
+        {
+            "id": "TR_V_03",
+            "name": "Sant'Anna-Byron",
+            "node_type": "fermata"
+        },
+        {
+            "id": "TR_V_04",
+            "name": "Teatro Centofiori",
+            "node_type": "fermata"
+        },
+        {
+            "id": "TR_V_05",
+            "name": "Bentini",
+            "node_type": "fermata"
+        },
+        {
+            "id": "TR_V_06",
+            "name": "Lipparini",
+            "node_type": "fermata"
+        },
+        {
+            "id": "TR_V_07",
+            "name": "Don Fiammelli",
+            "node_type": "fermata"
+        },
+        {
+            "id": "TR_V_08",
+            "name": "Pinardi",
+            "node_type": "fermata"
+        },
+        {
+            "id": "TR_V_09",
+            "name": "Croce Coperta",
+            "node_type": "fermata"
+        },
+        {
+            "id": "TR_V_10",
+            "name": "Caserme Rosse",
+            "node_type": "fermata"
+        },
+        {
+            "id": "TR_V_11",
+            "name": "Aldini Valeriani",
+            "node_type": "fermata"
+        },
+        {
+            "id": "TR_V_12",
+            "name": "Ippodromo",
+            "node_type": "fermata"
+        },
+        {
+            "id": "TR_V_13",
+            "name": "Ca' dei Fiori",
+            "node_type": "fermata"
+        },
+        {
+            "id": "TR_V_14",
+            "name": "Mille",
+            "node_type": "capolinea"
+        }
+    ],
+    "routes": {
+        "RED": [
+            [
+                "TR_R_01",
+                "TR_R_02",
+                "TR_R_03",
+                "TR_R_04",
+                "TR_R_05",
+                "TR_R_06",
+                "TR_R_07",
+                "TR_R_08",
+                "TR_R_09",
+                "TR_R_10",
+                "TR_R_11",
+                "TR_R_12",
+                "TR_RV_01",
+                "TR_RV_02",
+                "TR_RV_03",
+                "TR_R_13",
+                "TR_R_14",
+                "TR_R_15",
+                "TR_R_16",
+                "TR_R_17",
+                "TR_R_18",
+                "TR_R_19",
+                "TR_R_20",
+                "TR_R_21",
+                "TR_R_22",
+                "TR_R_23",
+                "TR_R_24",
+                "TR_R_25",
+                "TR_R_26",
+                "TR_R_27",
+                "TR_R_28",
+                "TR_R_29"
+            ],
+            [
+                "TR_RB_01",
+                "TR_RB_02",
+                "TR_R_10"
+            ],
+            [
+                "TR_R_15",
+                "TR_RC_17",
+                "TR_R_18"
+            ]
+        ],
+        "GREEN": [
+            [
+                "TR_V_01",
+                "TR_V_02",
+                "TR_V_03",
+                "TR_V_04",
+                "TR_V_05",
+                "TR_V_06",
+                "TR_V_07",
+                "TR_V_08",
+                "TR_V_09",
+                "TR_V_10",
+                "TR_V_11",
+                "TR_V_12",
+                "TR_V_13",
+                "TR_RV_01",
+                "TR_RV_02",
+                "TR_RV_03",
+                "TR_V_14"
+            ]
+        ]
+    }
+}

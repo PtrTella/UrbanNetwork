@@ -198,7 +198,6 @@ if __name__ == "__main__":
     print("🚀 Running autonomous Network Analysis...")
     G_bus = load_cached_graph("G_bus")
     G_fused = load_cached_graph("G_fused")
-    G_multi = load_cached_graph("G_multiplex")
 
     print(" -> Computing centralities on Bus-Only network...")
     df_cent = compute_centralities(G_bus)
@@ -209,7 +208,6 @@ if __name__ == "__main__":
     print(" -> Computing global small-world metrics...")
     m_bus = compute_small_worldness(G_bus)
     m_fused = compute_small_worldness(G_fused)
-    m_multi = compute_small_worldness(G_multi)
 
     # Rimuoviamo eventuali chiavi duplicate per il CSV pulito
     def clean_metrics(m):
@@ -222,7 +220,6 @@ if __name__ == "__main__":
     df_macro = pd.DataFrame([
         {"Scenario": "Solo Bus", **clean_metrics(m_bus)},
         {"Scenario": "Fused (Bus+Tram)", **clean_metrics(m_fused)},
-        {"Scenario": "Multiplex", **clean_metrics(m_multi)},
     ])
     macro_csv = OUTPUT_DIR / "macroscopic_results.csv"
     df_macro.to_csv(macro_csv, index=False)
