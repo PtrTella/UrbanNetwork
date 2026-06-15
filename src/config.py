@@ -5,7 +5,6 @@ class TransitConfig:
     """Parametri ingegneristici e fisici per il modello di mobilità di Bologna."""
 
     # --- VELOCITÀ COMMERCIALI REALI (Metri al Secondo) ---
-    WALKING_SPEED = 1.1  # ~4 km/h (Trasbordo pedonale medio)
     TRAM_SPEED = 5.5  # ~20 km/h (Tram costante in sede protetta)
     BUS_BASE_SPEED = 4.16  # ~15 km/h (Velocità del bus urbano senza traffico)
     MIN_BUS_SPEED = 1.0  # ~3.6 km/h (Velocità di strisciamento in congestione totale)
@@ -23,10 +22,12 @@ class TransitConfig:
 
     # --- DEMOGRAFIA ---
     # Raggio massimo in metri per associare spazialmente una fermata del grafo alle aree ISTAT
-    DEMOGRAPHIC_SNAPPING_RADIUS = 650.0
-    # Flussi di pendolari aggiuntivi stimati (PUMS / RFI)
-    STAZIONE_CENTRALE_PENDOLARI = 159000 * 0.65 * 0.35
-    AUTOSTAZIONE_PENDOLARI = 14000 * 0.65 * 0.35
+    DEMOGRAPHIC_SNAPPING_RADIUS = 400.0  # Ricalibrato: raggio di catchment realistico (~5 minuti a piedi)
+
+    # --- CAPACITÀ STRADALE E CONFIGURAZIONI TRAM ---
+    DEFAULT_ROAD_CAPACITY = 1000.0  # Capacità stradale standard per corsia urbana
+    OPTIMAL_TRAM_BUDGET_METERS = 25000  # Budget totale per la rete tram ottimale (25 km)
+    OPTIMAL_TRAM_NUM_SEEDS = 3  # Numero di hub seed centrali per l'ottimizzatore
 
     # --- FRIZIONE DI TRASBORDO (MULTIPLEX TRANSFER FRICTION) ---
     # Tempo di attesa medio (secondi) stimato per accedere alla coincidenza (1/2 headway medio)
@@ -40,6 +41,10 @@ class TransitConfig:
     TRAM_BASE_DWELL = 8.0
     # Tempo marginale di incarrozzamento per singolo passeggero potenziale
     DWELL_TIME_PER_CAPITA = 0.015  # secondi
-    # Capacità di assorbimento del mezzo (modera il tempo di dwell)
+    # Capacità nominale massima dei veicoli (passeggeri totali)
+    BUS_MAX_CAPACITY = 90  # Capienza standard di un bus da 12m (seduti + in piedi)
+    TRAM_MAX_CAPACITY = 250  # Capienza nominale di un tram da 32m (es. Stadler Tramlink)
+
+    # Capacità di assorbimento del mezzo (modera il tempo di dwell in base al design delle porte)
     BUS_CAPACITY_FACTOR = 1.0  # Baseline
     TRAM_CAPACITY_FACTOR = 3.0  # Il tram imbarca molto più in fretta grazie a porte multiple ampie e piano ribassato totale

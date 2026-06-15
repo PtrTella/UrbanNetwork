@@ -40,7 +40,7 @@ def load_bologna_graph(scenario="bus_only", integration_mode="fused"):
             lat=row["stop_lat"],
             lon=row["stop_lon"],
             traffic=row.get("nearest_traffic_flow", 0),  # Flusso di picco orario
-            capacity=row.get("road_capacity", 1000),  # Capacità dinamica della via
+            capacity=row.get("road_capacity", TransitConfig.DEFAULT_ROAD_CAPACITY),  # Capacità dinamica della via
             accidents=row.get("accidents_300m", 0),  # Rischio stocastico di incidenti
             type="bus",
         )

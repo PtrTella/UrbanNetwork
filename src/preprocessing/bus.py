@@ -1,9 +1,12 @@
+import sys
 import pandas as pd
 import geopandas as gpd
 from pathlib import Path
 
 # Configurazione Percorsi
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
+sys.path.append(str(BASE_DIR))
+from src.config import TransitConfig
 RAW_DIR = BASE_DIR / "dataset" / "bologna" / "raw"
 GTFS_DIR = RAW_DIR / "gommagtfsbo"
 PROCESSED_DIR = BASE_DIR / "dataset" / "bologna" / "processed"
@@ -215,13 +218,13 @@ def process_bus_network():
             df_stops["nearest_traffic_flow"].fillna(0).round(2)
         )
         df_stops["road_capacity"] = (
-            df_stops["road_capacity"].fillna(1000).round(2)
-        )  # Fallback a 1000 se isolata
+            df_stops["road_capacity"].fillna(TransitConfig.DEFAULT_ROAD_CAPACITY).round(2)
+        )  # Fallback se isolata
 
     except Exception as e:
         print(f"Errore nell'elaborazione del traffico: {e}")
         df_stops["nearest_traffic_flow"] = 0
-        df_stops["road_capacity"] = 1000
+        df_stops["road_capacity"] = TransitConfig.DEFAULT_ROAD_CAPACITY
 
     # [Incidenti]
     try:

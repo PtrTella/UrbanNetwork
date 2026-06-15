@@ -9,6 +9,7 @@ import networkx as nx
 import contextily as ctx
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
+from src.config import TransitConfig
 
 # Configuration
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -471,8 +472,9 @@ def plot_optimized_layout(G_planned, G_opt):
     draw_transit_network(ax2, G_opt, pos_opt, tram_color="#9b59b6")
     finalize_map(fig, ax2, "Optimal Tram")
 
+    budget_km = int(TransitConfig.OPTIMAL_TRAM_BUDGET_METERS / 1000)
     plt.suptitle(
-        "Bologna: Planned vs Optimal Layout Comparison (25 km Budget)",
+        f"Bologna: Planned vs Optimal Layout Comparison ({budget_km} km Budget)",
         fontsize=16,
         fontweight="bold",
         y=0.98,

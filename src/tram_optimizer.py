@@ -93,12 +93,17 @@ def compute_edge_utilities(G_bus, alpha=1.0, beta=1.0, gamma=1.0):
     return utilities
 
 
-def optimize_tram_layout(G_bus, budget_meters=25000, num_seeds=3):
+def optimize_tram_layout(G_bus, budget_meters=None, num_seeds=None):
     """
     Algoritmo Greedy Corridor Builder:
     Fa crescere le linee tram a partire dai top hub connettendoli
     ed espandendosi lungo gli archi con maggior rapporto utilità/metro.
     """
+    if budget_meters is None:
+        budget_meters = TransitConfig.OPTIMAL_TRAM_BUDGET_METERS
+    if num_seeds is None:
+        num_seeds = TransitConfig.OPTIMAL_TRAM_NUM_SEEDS
+
     # 1. Calcola le utilità degli archi
     utilities = compute_edge_utilities(G_bus)
 

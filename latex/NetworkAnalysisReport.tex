@@ -12,6 +12,7 @@
 \usepackage{graphicx}
 \usepackage{float}
 \usepackage{booktabs}
+\usepackage[justification=centering]{caption}
 \usepackage{hyperref}
 
 \author{[Student 1 Name] \\ Digital Humanities and Digital Knowledge, Matricola: [ID 1]
@@ -27,15 +28,15 @@
 \section{Context}
 \label{context}
 
-The emergence of Network Science and Social Network Analysis (SNA) has provided a robust mathematical lexicon and statistical apparatus for studying complex socio-technical systems. Rather than viewing infrastructures as isolated, physical entities, Network Science allows us to abstract and model them as topological graphs where entities are nodes and their relations are edges. While originally developed for social and biological systems, this structural paradigm is increasingly vital in urban planning, transport geography, and digital humanities. It enables the quantitative study of how spatial configurations influence human mobility, municipal accessibility, and system-wide vulnerability.
+The emergence of Network Science and Social Network Analysis (SNA) has provided a robust mathematical lexicon and statistical apparatus for studying complex socio-tech\-ni\-cal systems. Rather than viewing infrastructures as isolated, physical entities, Network Science allows us to abstract and model them as topological graphs where entities are nodes and their relations are edges. While originally developed for social and biological systems, this structural paradigm is increasingly vital in urban planning, transport geography, and digital humanities. It enables the quantitative study of how spatial configurations influence human mobility, municipal accessibility, and system-wide vulnerability.
 
 This study project examines the topological structure of the public transit network of the city of Bologna, Italy. Formulated within the academic context of the Master's program in Digital Humanities and Digital Knowledge (DHDK) at the University of Bologna, this research investigates the structural transition of Bologna's mobility system. Historically reliant on a radial bus network, Bologna is currently implementing a new tram system (including the new Red and Green lines) to serve as the high-capacity backbone of its urban core. 
 
 Our analysis models these transit layers as complex spatial networks across a structured narrative:
 \begin{itemize}
     \item \textbf{Data and Methodology (Baseline Setup)}: Outlining GTFS and OSM data cleaning, mapping neighborhood ISTAT census demographics to stations, and constructing L-Space and P-Space topologies weighted by traffic congestion and population pressure.
-    \item \textbf{Classical Baseline Transit Study}: Analyzing cognitive P-Space clustering, physical L-Space bottlenecks, macroscopic small-world indices, and resilience under random and targeted failures for the Bus Only and planned Planned Tramway.
-    \item \textbf{Future Scenarios Exploration}: Proposing and testing two predictive scenarios: upgrading the circular ring road Line 32/33 into a fast tramway, and designing an optimized tramway from scratch using a multi-criteria greedy algorithm.
+    \item \textbf{Classical Baseline Transit Study}: Analyzing cognitive P-Space clustering, physical L-Space bottlenecks, macroscopic small-world indices, and resilience under random and targeted failures for the Bus Only and Planned Tram networks.
+    \item \textbf{Future Scenarios Exploration}: Proposing and testing two predictive scenarios: upgrading the circular ring road Line 32/33 into a fast tramway, and designing an optimal tramway from scratch using a multi-criteria greedy algorithm.
     \item \textbf{Commuter Shock Analysis}: Stress-testing all four networks under massive commuter injections at the central station to compare local shock absorption.
 \end{itemize}
 
@@ -46,10 +47,10 @@ Urban transit networks are subject to two opposing engineering and geographical 
 
 To address these challenges, we analyze the transit system across three baseline and future configurations:
 \begin{enumerate}
-    \item \textbf{Bus-Only Network}: The baseline radial bus infrastructure.
-    \item \textbf{Fused Bus-Tram Network}: An integrated model representing the planned Planned Tramways (Red and Green lines) where nearby bus and tram stops are merged into single nodes.
-    \item \textbf{Future Tram Upgrade (Circular Line 32/33)}: A predictive scenario upgrading the circular ring road bus Line 32 (clockwise) and Line 33 (counter-clockwise) into a fast, dedicated tramway in addition to the planned tramways to evaluate its capacity to mitigate central bottleneck pressure.
-    \item \textbf{Optimized Tram Network (Optimal TNDP)}: An algorithmically designed tramway network built from scratch under a fixed spatial budget.
+    \item \textbf{Bus Only}: The baseline radial bus infrastructure.
+    \item \textbf{Planned Tram}: An integrated model representing the planned tram lines (Red and Green lines) where nearby bus and tram stops are merged into single nodes.
+    \item \textbf{Circular Tram}: A predictive scenario upgrading the circular ring road bus Line 32 (clockwise) and Line 33 (counter-clockwise) into a fast, dedicated tramway in addition to the planned tramways to evaluate its capacity to mitigate central bottleneck pressure.
+    \item \textbf{Optimal Tram}: An algorithmically designed tramway network built from scratch under a fixed spatial budget.
 \end{enumerate}
 
 Our research design relies on key literature in complex networks:
@@ -65,7 +66,7 @@ The main contribution of this project is a rigorous, data-driven, and reproducib
 
 The data was compiled from multiple open municipal and open-source datasets to ensure reproducibility:
 \begin{enumerate}
-    \item \textbf{GTFS (General Transit Feed Specification)}: Obtained from Planned Tram (Trasporto Passeggeri Emilia-Romagna), the regional transport operator, representing the complete urban bus network of Bologna.
+    \item \textbf{GTFS (General Transit Feed Specification)}: Obtained from TPER (Trasporto Passeggeri Emilia-Romagna), the regional transport operator, representing the complete urban bus network of Bologna.
     \item \textbf{OpenStreetMap (OSM)}: Extracted via the Overpass API using a custom script. We queried railway/construction relations corresponding to the official new tram routes (Line 1/Rossa and Line 2/Verde) of Bologna.
     \item \textbf{Traffic Spire Flows}: Sourced from the Open Data portal of the Municipality of Bologna, capturing vehicle count measurements across induction loops in 2026.
     \item \textbf{Accidents Dataset}: Municipal registry of road accidents, used to calculate localized safety risk indexes within a 300-meter buffer of bus stops.
@@ -84,17 +85,17 @@ In transit network analysis, networks can be modeled in Space L (nodes represent
 
 \subsection{BPR Congestion Weights (Supply Friction)}
 Instead of static geographical distances, edges are weighted by travel times (in seconds):
-$$t_{travel} = \frac{d}{v_{effective}} + t_{dwell}$$
-where $t_{dwell}$ represents the vehicle dwell time at stations. The effective speed $v_{effective}$ is modeled using the standard Bureau of Public Roads (BPR) congestion function:
-$$v_{effective} = \frac{v_{base}}{1 + \alpha \left( \frac{V}{C} \right)^\beta}$$
-where $v_{base}$ is the commercial base speed ($15.0\text{ km/h}$ for buses, $20.0\text{ km/h}$ for trams), $V$ is the hourly traffic volume from municipal loop detectors, $C$ is the road capacity, and $\alpha=0.15, \beta=4.0$ are standard parameters. To prevent division-by-zero errors in case of zero capacity records, $C$ is clamped to a minimum value of $1.0\text{ veh/h}$. This BPR formulation penalizes transit times along highly congested avenues, capturing peak-hour friction (Ryu et al., 2016; Pi et al., 2019). We also adjust $V$ by adding a Passenger Car Unit (PCU) equivalent representing bus dimensions to represent spatial road footprint.
+$$t_{travel} = \frac{d}{v_{effective}} + t_{dwell\_base}$$
+where $t_{dwell\_base}$ represents the baseline vehicle dwell time ($5.0\text{ s}$ for buses, $8.0\text{ s}$ for trams). The effective speed $v_{effective}$ is modeled using the standard Bureau of Public Roads (BPR) congestion function:
+$$v_{effective} = \frac{v_{base}}{1 + \alpha_{bus} \left( \frac{V + PCU_{bus}}{C} \right)^\beta}$$
+where $v_{base}$ is the commercial base speed ($15.0\text{ km/h}$ or $4.16\text{ m/s}$ for buses; $20.0\text{ km/h}$ or $5.5\text{ m/s}$ for trams), $V$ is the hourly traffic volume from municipal loop detectors, and $C$ is the road capacity. Crucially, rather than using a uniform value, $C$ is dynamically estimated for each segment using the nearest loop detector data, defined as $110\%$ of the absolute historical peak traffic flow observed by that sensor (clamped to a minimum threshold of $300\text{ veh/h}$ to avoid mathematical anomalies on secondary streets). For segments without nearby detectors, a standard urban lane capacity of $1000\text{ veh/h}$ ($C_{default}$) is applied as a baseline fallback. The parameter $\alpha_{bus}=0.20$ and exponent $\beta=4.0$ represent standard BPR congestion coefficients, and $PCU_{bus} = 2.5$ is the Passenger Car Unit equivalent representing the physical road occupancy of a standard bus. To prevent total transit gridlock, the effective speed is clamped to a minimum commercial speed of $1.0\text{ m/s}$ ($3.6\text{ km/h}$), representing crawl speed under total congestion.
 
 \subsection{Demographics Snapping \& Baseline Passenger Pressure}
-To realistically represent passenger demand, neighborhood-level resident and commuter demographic data from the ISTAT 2024 census were mapped to physical transit stops. Because GTFS stop names and census tract names do not perfectly match, we implemented a spatial snapping algorithm:
+To realistically represent passenger demand, neighborhood-level resident and commuter demographic data from the ISTAT 2024 census were mapped to physical transit stops. Because GTFS stop names and census tract names do not perfectly match, we implemented a spatial snapping algorithm. We set a realistic pedestrian walkability catchment radius of $400\text{ m}$ (equivalent to a 5-minute walk) to associate stops with their corresponding census demographics. The snapping workflow proceeds as follows:
 \begin{enumerate}
     \item Stops with exact name matches in the census tracts are associated directly.
-    \item Unmatched stops are snapped to the nearest census polygon centroid within a maximum spatial buffer radius of $250\text{ m}$.
-    \item Extra-urban stops or stops beyond the buffer limits are assigned a zero baseline value.
+    \item Unmatched stops are snapped to the nearest census polygon centroid within a maximum spatial buffer radius of $400\text{ m}$.
+    \item Extra-urban stops or stops beyond the catchment limit are assigned a zero baseline value.
 \end{enumerate}
 
 Running this snapping pipeline on the Bologna transit database produced the following results:
@@ -112,7 +113,7 @@ Table~\ref{tab:top_pop_stops} details the top 5 stops with the highest demograph
     \label{tab:top_pop_stops}
     \begin{tabular}{clc}
         \toprule
-        Rank & Stop Name & Snapped Population (Residents + Commuters) \\
+        Rank & Stop Name & \shortstack{Snapped Population\\(Residents + Commuters)} \\
         \midrule
         1 & SAN DONNINO & 2,922 \\
         2 & SCALA & 1,583 \\
@@ -124,8 +125,8 @@ Table~\ref{tab:top_pop_stops} details the top 5 stops with the highest demograph
 \end{table}
 
 This demographic pressure is used directly to scale the baseline dwell times ($t_{dwell}$) on edges incident to each stop. High-population nodes experience larger passenger boarding/alighting rates, inflating the station dwell times dynamically:
-$$t_{dwell} = t_{base\_dwell} \cdot \left( 1 + \gamma \cdot \frac{P_{stop}}{P_{max}} \right)$$
-where $t_{base\_dwell}$ is set to $10.0\text{ s}$ for buses and $15.0\text{ s}$ for trams, and $\gamma=1.0$ is the demand scaling factor. This links physical topology directly to urban demographic demand, allowing us to evaluate baseline bottlenecks under realistic pressure.
+$$t_{dwell} = t_{base\_dwell} + \frac{P_{stop} \cdot \theta}{F_{capacity}}$$
+where $t_{base\_dwell}$ is set to $5.0\text{ s}$ for buses and $8.0\text{ s}$ for trams, $\theta = 0.015\text{ s/capita}$ is the marginal boarding time per passenger, and $F_{capacity}$ is the door capacity boarding factor ($1.0$ for buses and $3.0$ for trams). The nominal vehicle passenger capacities are set to $90$ passengers for a standard $12\text{-m}$ bus ($C_{bus\_max}$) and $250$ passengers for a $32\text{-m}$ tramway ($C_{tram\_max}$). Crucially, the capacity factor $F_{capacity} = 3.0$ represents the boarding speed efficiency of the tram: while a standard bus has $2$-$3$ narrow doors with steps, the tram features $4$-$6$ double-doors and complete low-floor level boarding, which allows three times faster boarding rates. This formulation links physical network topology directly to urban demographic demand, allowing us to evaluate baseline bottlenecks under realistic pressure.
 
 \subsection{Modeling Assumptions and Symmetries}
 Several simplifying modeling assumptions were chosen for tractability:
@@ -141,7 +142,7 @@ To ensure \textbf{reliability} (reproducibility), all stochastic null models and
 \label{measures-results}
 
 \subsection{Classical Baseline Transit Study}
-We executed the complete pipeline on the baseline scenarios (Bus Only and Fused Planned Tram). Figure~\ref{fig:transit_map} illustrates the spatial layout of the integrated network.
+We executed the complete pipeline on the baseline scenarios (Bus Only and Planned Tram). Figure~\ref{fig:transit_map} illustrates the spatial layout of the integrated network.
 
 \begin{figure}[H]
     \centering
@@ -156,7 +157,7 @@ To understand how citizens "use" the network beyond physical distances, we analy
 We evaluated this cognitive topology using two primary measures:
 \begin{itemize}
     \item \textbf{Louvain Community Detection}: Applying the Louvain modularity optimization algorithm to the P-Space network identifies **14 distinct cognitive communities** (Figure~\ref{fig:communities}). Geographically, these clusters represent functional transit basins (e.g., Borgo Panigale in the west, San Donato in the east, and Corticella in the north). Within each community, passengers can travel between any pair of stations using direct, single-line trips (zero transfers). Conversely, travel between different communities represents inter-basin trips that require traversing the historic center or transferring at main central hubs, highlighting the modular division of urban passenger flows.
-    \item \textbf{Degree Assortativity}: We computed the Pearson correlation coefficient of degree between connected nodes ($r$). The baseline Bus Only network exhibits a slightly positive, nearly neutral assortativity of $r = 0.0120$. In P-Space, each transit route forms a fully connected subgraph (clique) where all stops share the same line, which naturally contributes a positive assortative pull since nodes within the same line clique have similar degrees. This effect is counterbalanced by major transfer hubs (such as Stazione Centrale or Piazza Malpighi) that intersect multiple lines of different sizes. When the planned tramway is integrated (Fused network), assortativity increases to $r = 0.0179$. This slight increase is driven by the introduction of long, high-capacity tram routes that act as dominant cliques, reinforcing the hub-to-hub connections along the main radial corridors.
+    \item \textbf{Degree Assortativity}: We computed the Pearson correlation coefficient of degree between connected nodes ($r$). The baseline Bus Only network exhibits a slightly positive, nearly neutral assortativity of $r = 0.0120$. In P-Space, each transit route forms a fully connected subgraph (clique) where all stops share the same line, which naturally contributes a positive assortative pull since nodes within the same line clique have similar degrees. This effect is counterbalanced by major transfer hubs (such as Stazione Centrale or Piazza Malpighi) that intersect multiple lines of different sizes. When the planned tramway is integrated (Planned Tram scenario), assortativity increases to $r = 0.0179$. This slight increase is driven by the introduction of long, high-capacity tram routes that act as dominant cliques, reinforcing the hub-to-hub connections along the main radial corridors.
 \end{itemize}
 
 
@@ -168,17 +169,18 @@ Transitioning to the physical layout (L-Space), we calculated weighted Betweenne
     \centering
     \caption{Top 5 Betweenness Centrality Bottlenecks (Station Nodes)}
     \label{tab:bottlenecks}
+    \setlength{\tabcolsep}{3.5pt}
     \begin{tabular}{clcclc}
         \toprule
         & \multicolumn{2}{c}{\textbf{Bus Only}} & & \multicolumn{2}{c}{\textbf{Planned Tram}} \\
         \cmidrule{2-3} \cmidrule{5-6}
         Rank & Station Name & Score & & Station Name & Score \\
         \midrule
-        1 & FARINI & 0.13472 & & FARINI & 0.13040 \\
-        2 & PIAZZA CAVOUR & 0.11502 & & PIAZZA DELL'UNITA' & 0.12946 \\
-        3 & GARGANELLI & 0.10885 & & MATTEOTTI ALTA VELOCITA' & 0.12344 \\
-        4 & PORTA SANTO STEFANO-ROSA PARKS & 0.10467 & & UGO BASSI & 0.11514 \\
-        5 & MARCONI & 0.10239 & & SAN FELICE & 0.11095 \\
+        1 & FARINI & 0.13499 & & FARINI & 0.13066 \\
+        2 & PIAZZA CAVOUR & 0.11527 & & PIAZZA DELL'UNITA' & 0.12946 \\
+        3 & GARGANELLI & 0.10911 & & \shortstack[l]{MATTEOTTI\\ALTA VELOCITA'} & 0.12344 \\
+        4 & \shortstack[l]{PORTA SANTO STEFANO-\\ROSA PARKS} & 0.10464 & & UGO BASSI & 0.11490 \\
+        5 & MARCONI & 0.10237 & & SAN FELICE & 0.11095 \\
         \bottomrule
     \end{tabular}
 \end{table}
@@ -240,7 +242,7 @@ We computed the average path length (travel time $L$), clustering coefficient ($
         \midrule
         Nodes ($N_{lcc}$) & 1212 & 1283 \\
         Edges ($M_{lcc}$) & 1482 & 1570 \\
-        Avg Travel Time $L$ (sec) & 2164.36 & 2185.48 \\
+        Avg Travel Time $L$ (sec) & 2162.69 & 2183.89 \\
         Clustering Coeff ($C$) & 0.0113 & 0.0124 \\
         Global Efficiency $E_{glob}$ ($\text{s}^{-1}$) & 0.000658 & 0.000690 \\
         Small-World Sigma ($\sigma$) & 2.35 & 4.29 \\
@@ -249,7 +251,7 @@ We computed the average path length (travel time $L$), clustering coefficient ($
     \end{tabular}
 \end{table}
 
-The baseline bus network has a giant component of 1212 nodes. The planned Planned Tramway (Fused scenario) expands the component to 1283 nodes by adding 71 new peripheral or previously disconnected stops.
+The baseline bus network has a giant component of 1212 nodes. The Planned Tram scenario expands the component to 1283 nodes by adding 71 new peripheral or previously disconnected stops.
 The Watts-Strogatz small-world index $\sigma$ is greater than 1 in both scenarios, indicating small-world properties. The collapse of Telesford's Omega ($\omega = 0.00$) is a structural property of Space L transit networks: because public transit lines are linear chains, the average node degree $\langle k \rangle \approx 2.4$. The reference regular lattice generated to match this degree has $k = 2$ (a simple cycle), which has a clustering coefficient $C_{lat} = 0.0$, making the ratio $C/C_{lat}$ in Telesford's formula undefined. Watts-Strogatz's Sigma ($\sigma$) remains a more informative indicator of small-worldness here.
 
 \subsubsection{Resilience Stress-Tests}
@@ -295,7 +297,7 @@ To evaluate "Exogenous Stress", we overlayed demographic population data directl
 \end{figure}
 
 \subsubsection{Interim Baseline Conclusions}
-The baseline study of Bologna's transit network reveals a crucial insight: while the planned radial Planned Tramway (Fused scenario) increases global efficiency $E_{glob}$ from $0.000526$ to $0.000554\text{ s}^{-1}$ (thanks to fast central links), it slightly increases the average travel time $L$ from $2635.49$ to $2644.83\text{ s}$. This is a structural effect of expanding the LCC component (adding 71 new peripheral stops), which increases the number of long peripheral paths and inflates the arithmetic mean. Under targeted attacks, the planned tramway acts as an effective local shock absorber (as shown in Figure~\ref{fig:comparative_resilience}), but does not fully solve the core centrality chokepoints of the historic ring road.
+The baseline study of Bologna's transit network reveals a crucial insight: while the Planned Tram scenario increases global efficiency $E_{glob}$ from $0.000658$ to $0.000690\text{ s}^{-1}$ (thanks to fast central links), it slightly increases the average travel time $L$ from $2162.69$ to $2183.89\text{ s}$. This is a structural effect of expanding the LCC component (adding 71 new peripheral stops), which increases the number of long peripheral paths and inflates the arithmetic mean. Under targeted attacks, the planned tramway acts as an effective local shock absorber (as shown in Figure~\ref{fig:comparative_resilience}), but does not fully solve the core centrality chokepoints of the historic ring road.
 
 \begin{figure}[H]
     \centering
@@ -311,17 +313,17 @@ The baseline study of Bologna's transit network reveals a crucial insight: while
 To explore alternative transit strategies and optimize the planned network, we evaluate two subsequent future scenarios:
 
 \subsubsection{Scenario A: Circular Ring Road Tramway (Lines 32 and 33)}
-This scenario upgrades the circular ring road bus corridor (both Line 32 clockwise and Line 33 counter-clockwise) into a fast, dedicated tramway running along the viali di circonvallazione, in addition to Planned Tram's planned radial layout. The Circular Tram connects major suburban radial lines and bypasses the historic core entirely.
+This scenario upgrades the circular ring road bus corridor (both Line 32 clockwise and Line 33 counter-clockwise) into a fast, dedicated tramway running along the viali di circonvallazione, in addition to the Planned Tram radial layout. The Circular Tram connects major suburban radial lines and bypasses the historic core entirely.
 
 \subsubsection{Scenario B: Algorithmic Optimal Tramway Optimization (TNDP)}
 To support spatial planning from an algorithmic perspective, we implemented a greenfield optimization model to design an optimal new tramway network from scratch under a length budget limit of $25\text{ km}$. This falls under the classical Transit Network Design Problem (TNDP), which is non-convex and NP-hard. The algorithm identifies three central seed hubs (\textit{Stazione Centrale}, \textit{Farini}, \textit{Piazza Cavour}) to ensure radial coverage, and greedily grows line segments by maximizing a normalized multi-criteria edge utility score:
 $$U(e) = \alpha \cdot EB(e) + \beta \cdot \Delta t(e) \cdot EB(e) + \gamma \cdot \text{avg\_pop}(e)$$
-where $\alpha=1.0, \beta=1.0, \gamma=1.0$. Crucially, each component is normalized using Min-Max scaling to a dimensionless scale of $[0, 1]$ across all candidate edges. The optimized spatial layout of this tramway is visualized in Figure~\ref{fig:optimized_layout}.
+where $\alpha=1.0, \beta=1.0, \gamma=1.0$. Crucially, each component is normalized using Min-Max scaling to a dimensionless scale of $[0, 1]$ across all candidate edges. The optimal spatial layout of this tramway is visualized in Figure~\ref{fig:optimized_layout}.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{figures/bologna/bologna_optimized_layout.png}
-    \caption{Optimized Tramway Layout designed by the Optimal TNDP algorithm under a 25 km budget, routing along high-density and high-betweenness corridors.}
+    \caption{Optimal Tramway Layout designed by the Optimal TNDP algorithm under a 25 km budget, routing along high-density and high-betweenness corridors.}
     \label{fig:optimized_layout}
 \end{figure}
 
@@ -332,24 +334,25 @@ Table~\ref{tab:tram_optimization} compares the performance of all four scenarios
     \centering
     \caption{Comparative Performance of Network Scenarios under Demographic Load}
     \label{tab:tram_optimization}
+    \setlength{\tabcolsep}{6pt}
     \begin{tabular}{lccc}
         \toprule
-        Scenario & Avg Travel Time $L$ (sec) & Global Efficiency $E_{glob}$ ($\text{s}^{-1}$) & Tram Population served \\
+        Scenario & \shortstack{Avg Travel Time\\$L$ (sec)} & \shortstack{Global Efficiency\\$E_{glob}$ ($\text{s}^{-1}$)} & \shortstack{Tram Population\\served} \\
         \midrule
-        Bus Only & 2164.36 & 0.000658 & N/D \\
-        Planned Tram & 2185.48 & 0.000690 & 33,106 \\
-        Circular Tram & 2157.51 & 0.000702 & 45,227 \\
-        Optimal Tram & 2167.32 & 0.000646 & 42,563 \\
+        Bus Only & 2162.69 & 0.000658 & N/D \\
+        Planned Tram & 2183.89 & 0.000690 & 33,106 \\
+        Circular Tram & 2155.92 & 0.000702 & 45,227 \\
+        Optimal Tram & 2165.98 & 0.000646 & 42,230 \\
         \bottomrule
     \end{tabular}
 \end{table}
 
-The optimized tramway network achieves the lowest average travel time ($2129.42\text{ s}$), saving $190.57\text{ s}$ ($8.2\%$) against the bus baseline and $207.58\text{ s}$ ($8.9\%$) against Planned Tram layout. Furthermore, the optimized layout serves **$52,295$ residents/commuters** directly at its stations. This represents a **$58\%$ increase** in coverage over Planned Tram layout, which only serves $33,107$ residents.
+The Circular Tram achieves the lowest average travel time ($2155.92\text{ s}$) and highest global efficiency ($0.000702\text{ s}^{-1}$), saving travel time compared to all other scenarios by creating a fast circular bypass. On the other hand, the Optimal Tram network serves **$42,230$ residents/commuters** directly at its stations. This represents a **$27.6\%$ increase** in coverage over the Planned Tram layout, which serves $33,106$ residents. Under our peak-hour congestion model, routing passengers through these high-density nodes triggers significant dwell time penalties, resulting in a slightly higher average travel time ($2165.98\text{ s}$) compared to the circular bypass.
 
 This dramatic performance gap highlights a crucial planning insight: while Planned Tram extends into peripheral radial corridors to maximize municipal coverage, it results in longer routes that are less topologically efficient. In contrast, our greedy optimization algorithm places the $25\text{ km}$ tramway budget precisely along the high-betweenness, high-congestion, and high-density corridors of the inner urban ring and main radial paths. This demonstrates that topology-driven design models can significantly improve both commuter travel times and population coverage per unit of infrastructure built.
 
 \subsubsection{Commuter Shock: Forced Passenger Hub Injection}
-To evaluate how these infrastructures absorb massive commuter congestion, we mapped the planned Planned Tram layout (Figure~\ref{fig:tram_impact_map}) and ran a forced passenger injection simulation at \textit{Stazione Centrale} and the \textit{Autostazione} (our main inter-modal hubs).
+To evaluate how these infrastructures absorb massive commuter congestion, we mapped the Planned Tram layout (Figure~\ref{fig:tram_impact_map}) and ran a forced passenger injection simulation at \textit{Stazione Centrale} and the \textit{Autostazione} (our main inter-modal hubs).
 
 \begin{figure}[H]
     \centering
@@ -380,21 +383,21 @@ By mathematically simulating the simultaneous arrival of up to 100,000 commuters
         \toprule
         Injected Passengers & Bus Only & Planned Tram & Circular Tram & Optimal Tram \\
         \midrule
-        0 & 24.60 & 24.42 & 23.65 & 24.65 \\
-        5,000 & 26.10 & 25.82 & 24.76 & 26.07 \\
-        10,000 & 27.48 & 27.13 & 25.75 & 27.41 \\
-        25,000 & 31.42 & 30.88 & 28.50 & 31.18 \\
-        50,000 & 37.67 & 36.81 & 32.95 & 37.11 \\
-        100,000 & 50.17 & 48.67 & 41.63 & 48.91 \\
+        0 & 24.58 & 24.40 & 23.64 & 24.64 \\
+        5,000 & 26.08 & 25.80 & 24.74 & 26.06 \\
+        10,000 & 27.46 & 27.11 & 25.73 & 27.40 \\
+        25,000 & 31.40 & 30.86 & 28.48 & 31.17 \\
+        50,000 & 37.65 & 36.80 & 32.93 & 37.09 \\
+        100,000 & 50.15 & 48.66 & 41.61 & 48.90 \\
         \bottomrule
     \end{tabular}
 \end{table}
 
 Under a massive commuter shock of 100,000 passengers:
 \begin{itemize}
-    \item The Bus Only, Planned Tram, and Optimal Tram experience extreme congestion, with travel times exploding by nearly $100\%$ (climbing from ~22-24 minutes to ~48 minutes).
-    \item The Circular Tram upgrade (Lines 32/33) mitigates the congestion, maintaining an average travel time of **$39.94$ minutes** (saving **$8.73$ minutes** or $18\%$ over the planned Planned Tram layout).
-    \item \textbf{Physical Analysis}: Since Stazione Centrale and Autostazione lie directly on the historic ring road, upgrading the circular ring (lines 32 and 33) into a fast tramway allows commuters to immediately disperse in both directions (clockwise and counter-clockwise) without entering the congested city core. In contrast, Planned Tram's radial lines (Red and Green) and our Optimal Tram layout route passengers through the historic center, which becomes a bottleneck under high commuter volumes. This shows that circular bypass corridors are essential to absorb passenger shocks originating at central intermodal hubs.
+    \item The Bus Only, Planned Tram, and Optimal Tram experience extreme congestion, with travel times exploding by nearly $100\%$ (climbing from ~23-24 minutes to ~48-50 minutes).
+    \item The Circular Tram mitigates the congestion, maintaining an average travel time of **$41.61$ minutes** (saving **$7.05$ minutes** or $14.5\%$ over the Planned Tram layout).
+    \item \textbf{Physical Analysis}: Since Stazione Centrale and Au\-to\-sta\-zio\-ne lie directly on the historic ring road, upgrading the circular ring (lines 32 and 33) into a fast tramway allows commuters to immediately disperse clockwise and counter-clockwise without entering the congested city core. In contrast, Planned Tram's radial lines (Red and Green) and our Optimal Tram layout route passengers through the historic center, which becomes a bottleneck under high commuter volumes. This shows that circular bypass corridors are essential to absorb passenger shocks originating at central intermodal hubs.
 \end{itemize}
 
 \section{Interpretation of the overall results}
