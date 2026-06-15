@@ -145,19 +145,9 @@ We executed the complete pipeline on the baseline scenarios (Bus Only and Fused 
 
 \begin{figure}[H]
     \centering
-    \begin{minipage}{0.48\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{figures/bologna/bologna_static_network.png}
-        \caption{Topological L-Space map of Bologna's integrated transit network. Grey lines indicate bus routes; the thick red line represents the high-capacity Tramway.}
-        \label{fig:transit_map}
-    \end{minipage}
-    \hfill
-    \begin{minipage}{0.48\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{figures/bologna/bologna_communities_map.png}
-        \caption{SNA Community Detection (Louvain) on the P-Space, showing the 14 socio-geographical transit basins.}
-        \label{fig:communities}
-    \end{minipage}
+    \includegraphics[width=0.85\textwidth]{figures/bologna/bologna_static_network.png}
+    \caption{Topological L-Space map of Bologna's integrated transit network. Grey lines indicate bus routes; the thick red line represents the high-capacity Tramway.}
+    \label{fig:transit_map}
 \end{figure}
 
 \subsubsection{ACT 1: Cognitive Topology (P-Space)}
@@ -197,9 +187,19 @@ These locations represent the narrow historical corridors in the southern part o
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.85\textwidth]{figures/bologna/bologna_bottlenecks_map.png}
-    \caption{Spatial distribution of L-Space Betweenness Centrality. The red markers indicate the top physical bottlenecks (the "jugular veins" of Bologna's traffic).}
-    \label{fig:bottlenecks_map}
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/bologna/bologna_communities_map.png}
+        \caption{SNA Community Detection (Louvain) on the P-Space.}
+        \label{fig:communities}
+    \end{minipage}
+    \hfil
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/bologna/bologna_bottlenecks_map.png}
+        \caption{Spatial distribution of L-Space Betweenness Centrality.}
+        \label{fig:bottlenecks_map}
+    \end{minipage}
 \end{figure}
 
 To further investigate the topological characteristics of these bottlenecks, we analyze the relationship between node degree and betweenness centrality. Figure~\ref{fig:centrality_scatter} shows a regression plot of Betweenness Centrality against Node Degree. Since degree is a discrete metric in Space L (most stations have degree 2 or 4, corresponding to transit lines passing through them), we applied a horizontal jitter of $0.15$ to scatter the points and reveal their true density distribution. 
