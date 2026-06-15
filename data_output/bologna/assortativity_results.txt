@@ -1,0 +1,2 @@
+Assortativity (P-Space Bus): 0.0120
+Assortativity (P-Space Fused): 0.0179

@@ -33,7 +33,7 @@ def compute_edge_utilities(G_bus, alpha=1.0, beta=1.0, gamma=1.0):
 
         # Tempo di viaggio del bus (BPR penalizzato) vs tram veloce
         t_bus = data.get("weight", 0.0)
-        t_tram = dist_m / TransitConfig.TRAM_SPEED + TransitConfig.TRAM_DWELL_TIME
+        t_tram = dist_m / TransitConfig.TRAM_SPEED + TransitConfig.TRAM_BASE_DWELL
         time_saved = max(0.0, t_bus - t_tram)
 
         # Popolazione servita dai nodi adiacenti
@@ -211,7 +211,7 @@ def evaluate_networks():
     for u, v in opt_edges:
         dist_m = G_bus.edges[u, v].get("dist_meters", 100.0)
         tram_time_sec = (
-            dist_m / TransitConfig.TRAM_SPEED + TransitConfig.TRAM_DWELL_TIME
+            dist_m / TransitConfig.TRAM_SPEED + TransitConfig.TRAM_BASE_DWELL
         )
         G_opt.add_edge(
             u, v, weight=tram_time_sec, type="tram", route="TRAM_OTTIMIZZATA"

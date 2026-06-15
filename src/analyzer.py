@@ -58,6 +58,8 @@ def compute_centralities(G):
         data.append({
             "Station_ID": str(node),
             "Station_Name": station_name,
+            "Latitude": attr.get("lat", 0.0),
+            "Longitude": attr.get("lon", 0.0),
             "Degree": degree_dict.get(node, 0),
             "Degree Centrality": deg_cent.get(node, 0),
             "Closeness Centrality": clos_cent.get(node, 0),
@@ -65,6 +67,42 @@ def compute_centralities(G):
             "Coreness": coreness.get(node, 0),
         })
     return pd.DataFrame(data)
+
+def compute_communities(G_pspace):
+    """
+    Esegue l'algoritmo di Louvain per la Community Detection in P-Space.
+    Restituisce un dataframe con l'assegnazione delle community per ogni nodo.
+    """
+    import networkx.algorithms.community as nx_comm
+    
+    # Rimuoviamo loop e archi paralleli per Louvain
+    G_clean = nx.Graph(G_pspace)
+    G_clean.remove_edges_from(nx.selfloop_edges(G_clean))
+    
+    # Louvain
+    communities = nx_comm.louvain_communities(G_clean, seed=42)
+    
+    comm_dict = {}
+    for i, comm in enumerate(communities):
+        for node in comm:
+            comm_dict[node] = i
+            
+    data = []
+    for node, attr in G_pspace.nodes(data=True):
+        data.append({
+            "Station_ID": str(node),
+            "Station_Name": attr.get("name", str(node)),
+            "Latitude": attr.get("lat", 0.0),
+            "Longitude": attr.get("lon", 0.0),
+            "Community_ID": comm_dict.get(node, -1)
+        })
+    return pd.DataFrame(data)
+
+def compute_assortativity(G_pspace):
+    """
+    Calcola l'assortatività di grado. Ritorna un float.
+    """
+    return nx.degree_assortativity_coefficient(G_pspace)
 
 
 def compute_small_worldness(G, er_runs=5):
@@ -189,3 +227,34 @@ if __name__ == "__main__":
     macro_csv = OUTPUT_DIR / "macroscopic_results.csv"
     df_macro.to_csv(macro_csv, index=False)
     print(f"  ✅ Macroscopic results saved to: {macro_csv}")
+
+    print("\n -> Building and Analyzing P-Space (Topologia Trasbordi)...")
+    from src.graph import load_pspace_graph
+    G_pspace_bus = load_pspace_graph("bus_only")
+    G_pspace_fused = load_pspace_graph("fused")
+    
+    if G_pspace_bus and G_pspace_fused:
+        # Assortatività
+        assort_bus = compute_assortativity(G_pspace_bus)
+        assort_fused = compute_assortativity(G_pspace_fused)
+        print(f"  ✅ Assortativity (P-Space Bus): {assort_bus:.4f} (Disassortativa = Hub collegano periferie)")
+        print(f"  ✅ Assortativity (P-Space Fused): {assort_fused:.4f}")
+        
+        # Salviamo i risultati dell'assortatività
+        with open(OUTPUT_DIR / "assortativity_results.txt", "w") as f:
+            f.write(f"Assortativity (P-Space Bus): {assort_bus:.4f}\n")
+            f.write(f"Assortativity (P-Space Fused): {assort_fused:.4f}\n")
+
+        # Community Detection su Bus
+        df_comm = compute_communities(G_pspace_bus)
+        comm_csv = OUTPUT_DIR / "communities_bus.csv"
+        df_comm.to_csv(comm_csv, index=False)
+        print(f"  ✅ Communities detected: {df_comm['Community_ID'].nunique()}. Saved to: {comm_csv}")
+        
+        # Centralities su P-Space (per Degree e Closeness topologica senza tempi)
+        df_cent_pspace = compute_centralities(G_pspace_bus)
+        cent_pspace_csv = OUTPUT_DIR / "centrality_pspace_results.csv"
+        df_cent_pspace.to_csv(cent_pspace_csv, index=False)
+        print(f"  ✅ P-Space Centrality results saved to: {cent_pspace_csv}")
+    else:
+        print("⚠️ Errore nella generazione del P-Space")

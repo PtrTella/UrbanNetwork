@@ -1,3 +1,7 @@
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).resolve().parent.parent))
+
 import networkx as nx
 import numpy as np
 
@@ -65,7 +69,17 @@ def simulate_removal(
     else:
         raise ValueError("Invalid scenario. Scegli tra: random, targeted, accidents.")
 
-    G_temp.remove_nodes_from(nodes_to_remove)
+    # Multiplex Cascading Failure (Interlayer Propagation)
+    # Se un nodo rimosso è connesso tramite "trasbordo_pedonale" a un altro nodo (in un altro layer),
+    # il danno si propaga strutturalmente distruggendo anche il nodo corrispondente.
+    cascading_nodes = set(nodes_to_remove)
+    for n in nodes_to_remove:
+        if n in G_temp:
+            for neighbor in G_temp.neighbors(n):
+                if G_temp[n][neighbor].get("type") == "trasbordo_pedonale":
+                    cascading_nodes.add(neighbor)
+
+    G_temp.remove_nodes_from(cascading_nodes)
 
     if len(G_temp.nodes) == 0:
         return 0.0, 0, 0.0
@@ -226,4 +240,45 @@ def simulate_targeted_hub_attack(graphs_dict, top_node_data=None, num_steps=5):
 
     print("-" * (25 + len(headers) * 25))
     return results
+
+def simulate_hub_injection(G, injection_steps, target_hubs=["STAZIONE CENTRALE", "AUTOSTAZIONE"]):
+    """
+    Simula una iniezione massiccia di passeggeri (pendolari) su determinati hub.
+    Valuta come questo impatta il tempo medio di viaggio (dwell time) per chi parte dagli hub.
+    """
+    import networkx as nx
+    import numpy as np
+    from src.config import TransitConfig
+    
+    # Trova i nodi target nel grafo
+    target_nodes = [n for n, data in G.nodes(data=True) if any(hub in data.get("name", "").upper() for hub in target_hubs)]
+    
+    travel_times = []
+    
+    for injected_pop in injection_steps:
+        # Crea una copia per non sporcare i pesi
+        G_temp = G.copy()
+        
+        # Applica l'aumento di peso su tutti gli archi incidenti ai nodi target
+        for u, v, data in G_temp.edges(data=True):
+            if u in target_nodes or v in target_nodes:
+                if data.get("type") in ["bus", "tram"]:
+                    cap_factor = TransitConfig.BUS_CAPACITY_FACTOR if data["type"] == "bus" else TransitConfig.TRAM_CAPACITY_FACTOR
+                    # Dwell time aggiuntivo causato dalla folla
+                    extra_dwell = (injected_pop * TransitConfig.DWELL_TIME_PER_CAPITA) / cap_factor
+                    data["weight"] += extra_dwell
+                    
+        # Calcola la media dei tempi di viaggio a partire dai nodi target
+        times = []
+        for u in target_nodes:
+            if u not in G_temp: continue
+            lengths = nx.single_source_dijkstra_path_length(G_temp, u, weight="weight")
+            for v, l in lengths.items():
+                if v not in target_nodes and l > 0:
+                    times.append(l)
+                    
+        avg_time = np.mean(times) if times else 0.0
+        travel_times.append(avg_time)
+        
+    return travel_times
 

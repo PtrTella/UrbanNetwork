@@ -6,7 +6,7 @@ sys.path.append(str(Path(__file__).resolve().parent.parent))
 import pandas as pd
 import numpy as np
 from src.config import TransitConfig
-from src.graph import haversine
+from src.graph import haversine, update_dynamic_dwell_times
 
 
 def calculate_demographics_weight(G_full, raw_dir_path):
@@ -102,12 +102,7 @@ def calculate_demographics_weight(G_full, raw_dir_path):
                     peso_pop = df_spatial_lookup["pop_per_stop"].iloc[min_idx]
                     matched_by_space += 1
 
-        # --- INIEZIONE PENDOLARI (Dati Ufficiali RFI / PUMS) ---
-        if node_name == "STAZIONE CENTRALE" or node_name == "MEDAGLIE D'ORO":
-            peso_pop += TransitConfig.STAZIONE_CENTRALE_PENDOLARI
-        if node_name == "AUTOSTAZIONE":
-            peso_pop += TransitConfig.AUTOSTAZIONE_PENDOLARI
-        # -------------------------------------------------------
+
 
         G_full.nodes[n]["population_served"] = peso_pop
 
@@ -131,6 +126,9 @@ def calculate_demographics_weight(G_full, raw_dir_path):
     for name, pop in nodes_pop[:5]:
         print(f"  - {name:<35} {int(pop)} abitanti")
 
+    # Applica i dwell times dinamici agli archi del grafo
+    update_dynamic_dwell_times(G_full)
+
 
 if __name__ == "__main__":
     from src.graph import load_cached_graph
@@ -142,25 +140,75 @@ if __name__ == "__main__":
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
     print("🚀 Running autonomous Demographic Pressure Analysis...")
+    G_bus = load_cached_graph("G_bus")
     G_fused = load_cached_graph("G_fused")
+    G_multi = load_cached_graph("G_multiplex")
 
-    calculate_demographics_weight(G_fused, RAW_DIR)
-
-    # Raccogliamo i risultati in un DataFrame da salvare
-    data = []
-    for n, attr in G_fused.nodes(data=True):
-        data.append({
-            "Station_ID": str(n),
-            "Station_Name": attr.get("name", ""),
-            "Latitude": attr.get("lat", 0.0),
-            "Longitude": attr.get("lon", 0.0),
-            "Type": attr.get("type", "bus"),
-            "Population_Served": attr.get("population_served", 0.0),
+    def process_and_save(G, filename, graph_name):
+        # Ripuliamo/Calcoliamo per il grafo specifico
+        calculate_demographics_weight(G, RAW_DIR)
+        
+        # Salviamo il grafo aggiornato con i dwell times dinamici nella cache
+        import pickle
+        cache_path = OUTPUT_DIR / "graphs" / f"{graph_name}.pkl"
+        with open(cache_path, "wb") as f:
+            pickle.dump(G, f)
+        print(f"  ✅ Grafo {graph_name} aggiornato con dwell times dinamici salvato in {cache_path}")
+        
+        # Raccogliamo i risultati in un DataFrame da salvare
+        data = []
+        for n, attr in G.nodes(data=True):
+            node_type = attr.get("type", "bus")
+            pop = attr.get("population_served", 0.0)
+            
+            # Calcolo Vulnerabilità / Dwell Penalty
+            cap_factor = TransitConfig.BUS_CAPACITY_FACTOR
+            if node_type == "tram":
+                cap_factor = TransitConfig.TRAM_CAPACITY_FACTOR
+                
+            dwell_penalty = (pop * TransitConfig.DWELL_TIME_PER_CAPITA) / cap_factor
+            
+            data.append({
+                "Station_Name": attr.get("name", ""),
+                "Latitude": attr.get("lat", 0.0),
+                "Longitude": attr.get("lon", 0.0),
+                "Type": node_type,
+                "Population_Served": pop,
+                "Dwell_Penalty": dwell_penalty
+            })
+        df_raw = pd.DataFrame(data)
+        
+        # Clustering Spaziale con DBSCAN per estrarre Macro-Zone urbane (eps=0.0035 gradi ~ 400m)
+        from sklearn.cluster import DBSCAN
+        coords = df_raw[["Latitude", "Longitude"]].values
+        db = DBSCAN(eps=0.0035, min_samples=1).fit(coords)
+        df_raw["Macro_Zone_ID"] = db.labels_
+        
+        # Raggruppiamo le paline fisiche in Macro-Zone, tenendo il nome della stazione con la pop massima come label
+        def get_zone_name(group):
+            return group.loc[group["Population_Served"].idxmax(), "Station_Name"]
+            
+        df_demo_res = df_raw.groupby("Macro_Zone_ID", as_index=False).agg({
+            "Latitude": "mean",
+            "Longitude": "mean",
+            "Population_Served": "max",  # La pressione demografica del bacino (sovrapposta, prendiamo il max o la media)
+            "Dwell_Penalty": "mean",     # La vulnerabilità media di questa zona
+            "Type": "first"
         })
-    df_demo_res = pd.DataFrame(data).sort_values(
-        by="Population_Served", ascending=False
-    )
+        
+        # Aggiungiamo i nomi delle stazioni rappresentative per la zona
+        zone_names = df_raw.groupby("Macro_Zone_ID").apply(get_zone_name).reset_index(name="Zone_Name")
+        df_demo_res = df_demo_res.merge(zone_names, on="Macro_Zone_ID")
+        
+        df_demo_res = df_demo_res.sort_values(by="Population_Served", ascending=False)
 
-    out_csv = OUTPUT_DIR / "demographic_pressure_results.csv"
-    df_demo_res.to_csv(out_csv, index=False)
-    print(f"  ✅ Demographic pressure results saved to: {out_csv}")
+        out_csv = OUTPUT_DIR / filename
+        df_demo_res.to_csv(out_csv, index=False)
+        print(f"  ✅ Demographic pressure results saved to: {out_csv}")
+
+    print("\n--- Analisi Rete Solo Bus ---")
+    process_and_save(G_bus, "demographic_bus_results.csv", "G_bus")
+    print("\n--- Analisi Rete Tram (Fused) ---")
+    process_and_save(G_fused, "demographic_tram_results.csv", "G_fused")
+    print("\n--- Analisi Rete Multiplex ---")
+    process_and_save(G_multi, "demographic_multi_results.csv", "G_multiplex")

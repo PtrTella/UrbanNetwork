@@ -62,16 +62,17 @@ def load_bologna_graph(scenario="bus_only", integration_mode="fused"):
             avg_capacity = max(1.0, (G.nodes[u]["capacity"] + G.nodes[v]["capacity"]) / 2.0)
 
             # FUNZIONE BPR DINAMICA: Ogni via ha la sua C (avg_capacity)
-            # Legge solo ALPHA e BETA da config.py per il comportamento della curva
-            bpr_penalty = 1.0 + TransitConfig.BPR_ALPHA * (
-                (avg_traffic_peak / avg_capacity) ** TransitConfig.BPR_BETA
+            # Aggiungiamo BUS_PCU per rappresentare l'ingombro del bus
+            adjusted_traffic = avg_traffic_peak + TransitConfig.BUS_PCU
+            bpr_penalty = 1.0 + TransitConfig.BPR_ALPHA_BUS * (
+                (adjusted_traffic / avg_capacity) ** TransitConfig.BPR_BETA
             )
 
             effective_speed = TransitConfig.BUS_BASE_SPEED / bpr_penalty
             if effective_speed < TransitConfig.MIN_BUS_SPEED:
                 effective_speed = TransitConfig.MIN_BUS_SPEED
 
-            travel_time_sec = dist_m / effective_speed + TransitConfig.BUS_DWELL_TIME
+            travel_time_sec = dist_m / effective_speed + TransitConfig.BUS_BASE_DWELL
             G.add_edge(
                 u,
                 v,
@@ -100,34 +101,11 @@ def load_bologna_graph(scenario="bus_only", integration_mode="fused"):
                         min_dist, closest_bus_id = dist, n
 
             if min_dist <= TransitConfig.SNAPPING_RADIUS:
-                if integration_mode == "fused":
-                    tram_to_bus_map[tram_id] = closest_bus_id
-                    G.nodes[closest_bus_id]["type"] = "intersezione_bus_tram"
-                elif integration_mode == "multiplex":
-                    G.add_node(
-                        tram_id,
-                        name=row["stop_name"],
-                        lat=t_lat,
-                        lon=t_lon,
-                        type="tram",
-                        traffic=0,
-                        accidents=0,
-                    )
-                    tram_to_bus_map[tram_id] = tram_id
-
-                    # Trasbordo Pedonale Multiplex con Frizione (Cammino + Attesa + Penalità Cognitiva)
-                    transfer_time = (
-                        (min_dist / TransitConfig.WALKING_SPEED)
-                        + TransitConfig.TRANSFER_WAITING_TIME
-                        + TransitConfig.TRANSFER_COGNITIVE_PENALTY
-                    )
-                    G.add_edge(
-                        tram_id,
-                        closest_bus_id,
-                        weight=transfer_time,
-                        type="trasbordo_pedonale",
-                    )
+                # Fused mode: stops within snapping radius are merged
+                tram_to_bus_map[tram_id] = closest_bus_id
+                G.nodes[closest_bus_id]["type"] = "intersezione_bus_tram"
             else:
+                # Stops outside the snapping radius remain distinct tram stops
                 G.add_node(
                     tram_id,
                     name=row["stop_name"],
@@ -152,7 +130,7 @@ def load_bologna_graph(scenario="bus_only", integration_mode="fused"):
                     G.nodes[v]["lon"],
                 )
 
-                tram_time_sec = dist_m / TransitConfig.TRAM_SPEED + TransitConfig.TRAM_DWELL_TIME
+                tram_time_sec = dist_m / TransitConfig.TRAM_SPEED + TransitConfig.TRAM_BASE_DWELL
                 G.add_edge(
                     u,
                     v,
@@ -182,8 +160,107 @@ def load_cached_graph(name, scenario=None, integration_mode="fused"):
                 G = pickle.load(f)
             print(f"✅ Caricato grafo cached da: {cache_path}")
             return G
+
         except Exception as e:
-            print(f"⚠️ Errore nel caricamento cache: {e}. Ricostruzione...")
+            print(f"Errore caricamento da cache {name}: {e}")
+            return None
+            
+def load_pspace_graph(scenario="bus_only"):
+    """
+    Costruisce la rete in P-Space (Topologia dei Trasferimenti / Cognitiva).
+    Nodi: Fermate.
+    Archi: Due fermate sono connesse (peso=1) se appartengono alla stessa linea (route).
+    Questa topologia modella i TRASBORDI. Un path lungo 2 significa 1 trasbordo.
+    """
+    print(f"Caricamento Grafo P-SPACE - Scenario: {scenario.upper()}")
+
+    df_bus_nodes = pd.read_csv(PROCESSED_DIR / "bologna_stations.csv")
+    df_bus_edges = pd.read_csv(PROCESSED_DIR / "bologna_connections.csv")
+
+    G = nx.Graph()
+
+    # 1. Carica Nodi Bus
+    for _, row in df_bus_nodes.iterrows():
+        G.add_node(
+            str(row["stop_id"]),
+            name=row["stop_name"],
+            lat=row["stop_lat"],
+            lon=row["stop_lon"],
+            type="bus",
+        )
+
+    # 2. Crea Clique per ogni Linea (Route)
+    # Raggruppiamo tutte le fermate che appartengono alla stessa linea
+    import itertools
+    
+    routes = {}
+    for _, row in df_bus_edges.iterrows():
+        u = str(row["stop_id"])
+        v = str(row["next_stop_id"])
+        r = str(row.get("route_id", "unknown"))
+        if r not in routes:
+            routes[r] = set()
+        routes[r].add(u)
+        routes[r].add(v)
+        
+    for r, stops in routes.items():
+        stops_list = list(stops)
+        # Creiamo un arco tra tutte le coppie di fermate della stessa linea
+        for u, v in itertools.combinations(stops_list, 2):
+            if u in G and v in G:
+                G.add_edge(u, v, weight=1, type="same_route")
+
+    # 3. Carica Tram (se richiesto)
+    if scenario != "bus_only":
+        df_tram_nodes = pd.read_csv(PROCESSED_DIR / "bologna_tram_stations.csv")
+        df_tram_edges = pd.read_csv(PROCESSED_DIR / "bologna_tram_connections.csv")
+        tram_to_bus_map = {}
+
+        for _, row in df_tram_nodes.iterrows():
+            tram_id = str(row["stop_id"])
+            t_lat, t_lon = row["stop_lat"], row["stop_lon"]
+
+            min_dist = float("inf")
+            closest_bus_id = None
+            for n, data in G.nodes(data=True):
+                if data.get("type") == "bus":
+                    dist = haversine(t_lat, t_lon, data["lat"], data["lon"])
+                    if dist < min_dist:
+                        min_dist, closest_bus_id = dist, n
+
+            if min_dist <= TransitConfig.SNAPPING_RADIUS:
+                # Fusione fisica (P-Space Fused)
+                tram_to_bus_map[tram_id] = closest_bus_id
+                G.nodes[closest_bus_id]["type"] = "intersezione_bus_tram"
+            else:
+                G.add_node(
+                    tram_id,
+                    name=row["stop_name"],
+                    lat=t_lat,
+                    lon=t_lon,
+                    type="tram",
+                )
+                tram_to_bus_map[tram_id] = tram_id
+                
+        # Crea clique per la linea Tram
+        tram_routes = {}
+        for _, row in df_tram_edges.iterrows():
+            u = tram_to_bus_map.get(str(row["stop_id"]), str(row["stop_id"]))
+            v = tram_to_bus_map.get(str(row["next_stop_id"]), str(row["next_stop_id"]))
+            r = str(row.get("route_id", "tram_route"))
+            
+            if r not in tram_routes:
+                tram_routes[r] = set()
+            tram_routes[r].add(u)
+            tram_routes[r].add(v)
+            
+        for r, stops in tram_routes.items():
+            stops_list = list(stops)
+            for u, v in itertools.combinations(stops_list, 2):
+                if u != v and u in G and v in G:
+                    G.add_edge(u, v, weight=1, type="same_route_tram")
+                    
+    return G
 
     # Ricostruzione in caso di mancanza cache
     if name == "G_bus":
@@ -207,6 +284,29 @@ def load_cached_graph(name, scenario=None, integration_mode="fused"):
     print(f"✅ Grafo salvato in cache: {cache_path}")
     return G
 
+def update_dynamic_dwell_times(G):
+    """
+    Ricalcola i pesi temporali (travel_time_sec) degli archi in base alla pressione
+    demografica (population_served) assegnata ai nodi (Dwell Time Dinamico).
+    Deve essere chiamata DOPO aver mappato la popolazione demografica sui nodi.
+    """
+    count = 0
+    for u, v, data in G.edges(data=True):
+        if data.get("type") in ["bus", "tram"]:
+            # Il tempo di fermata sull'arco in genere modella l'incarrozzamento alla stazione di destinazione (v)
+            pop = G.nodes[v].get("population_served", 0)
+            
+            if data["type"] == "bus":
+                dynamic_dwell = (pop * TransitConfig.DWELL_TIME_PER_CAPITA) / TransitConfig.BUS_CAPACITY_FACTOR
+                data["weight"] += dynamic_dwell 
+                count += 1
+            elif data["type"] == "tram":
+                dynamic_dwell = (pop * TransitConfig.DWELL_TIME_PER_CAPITA) / TransitConfig.TRAM_CAPACITY_FACTOR
+                data["weight"] += dynamic_dwell
+                count += 1
+    
+    print(f"  ⚡ Dwell Times Dinamici aggiornati su {count} archi in base alla pressione demografica.")
+
 
 if __name__ == "__main__":
     import pickle
@@ -218,13 +318,11 @@ if __name__ == "__main__":
     print("🚀 Loading and saving all graphs to graphs/ directory...")
     G_bus = load_bologna_graph(scenario="bus_only")
     G_fused = load_bologna_graph(scenario="tram", integration_mode="fused")
-    G_multi = load_bologna_graph(scenario="tram", integration_mode="multiplex")
     G_futuro = inject_hypothetical_tram(G_fused, route_to_upgrade="32")
 
     for name, G in [
         ("G_bus", G_bus),
         ("G_fused", G_fused),
-        ("G_multiplex", G_multi),
         ("G_futuro", G_futuro),
     ]:
         path = OUTPUT_DIR / f"{name}.pkl"
