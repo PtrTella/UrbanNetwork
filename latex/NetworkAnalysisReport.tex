@@ -88,7 +88,7 @@ Instead of static geographical distances, edges are weighted by travel times (in
 $$t_{travel} = \frac{d}{v_{effective}} + t_{dwell\_base}$$
 where $t_{dwell\_base}$ represents the baseline vehicle dwell time ($5.0\text{ s}$ for buses, $8.0\text{ s}$ for trams). The effective speed $v_{effective}$ is modeled using the standard Bureau of Public Roads (BPR) congestion function:
 $$v_{effective} = \frac{v_{base}}{1 + \alpha_{bus} \left( \frac{V + PCU_{bus}}{C} \right)^\beta}$$
-where $v_{base}$ is the commercial base speed ($15.0\text{ km/h}$ or $4.16\text{ m/s}$ for buses; $20.0\text{ km/h}$ or $5.5\text{ m/s}$ for trams), $V$ is the hourly traffic volume from municipal loop detectors, and $C$ is the road capacity. Crucially, rather than using a uniform value, $C$ is dynamically estimated for each segment using the nearest loop detector data, defined as $110\%$ of the absolute historical peak traffic flow observed by that sensor (clamped to a minimum threshold of $300\text{ veh/h}$ to avoid mathematical anomalies on secondary streets). For segments without nearby detectors, a standard urban lane capacity of $1000\text{ veh/h}$ ($C_{default}$) is applied as a baseline fallback. The parameter $\alpha_{bus}=0.20$ and exponent $\beta=4.0$ represent standard BPR congestion coefficients, and $PCU_{bus} = 2.5$ is the Passenger Car Unit equivalent representing the physical road occupancy of a standard bus. To prevent total transit gridlock, the effective speed is clamped to a minimum commercial speed of $1.0\text{ m/s}$ ($3.6\text{ km/h}$), representing crawl speed under total congestion.
+where $v_{base}$ is the commercial base speed ($15.0\text{ km/h}$ or $4.16\text{ m/s}$ for buses; $20.0\text{ km/h}$ or $5.5\text{ m/s}$ for trams), $V$ is the hourly traffic volume from municipal loop detectors, and $C$ is the road capacity. Crucially, rather than using a uniform value, $C$ is dynamically estimated for each segment using the nearest loop detector data, defined as $110\%$ of the absolute historical peak traffic flow observed by that sensor (clamped to a minimum threshold of $300\text{ veh/h}$ to avoid mathematical anomalies on secondary streets). For segments without nearby detectors, a standard urban lane capacity of $800\text{ veh/h}$ ($C_{default}$) is applied as a baseline fallback. The parameter $\alpha_{bus}=0.20$ and exponent $\beta=4.0$ represent standard BPR congestion coefficients, and $PCU_{bus} = 2.5$ is the Passenger Car Unit equivalent representing the physical road occupancy of a standard bus. To prevent total transit gridlock, the effective speed is clamped to a minimum commercial speed of $1.0\text{ m/s}$ ($3.6\text{ km/h}$), representing crawl speed under total congestion.
 
 \subsection{Demographics Snapping \& Baseline Passenger Pressure}
 To realistically represent passenger demand, neighborhood-level resident and commuter demographic data from the ISTAT 2024 census were mapped to physical transit stops. Because GTFS stop names and census tract names do not perfectly match, we implemented a spatial snapping algorithm. We set a realistic pedestrian walkability catchment radius of $400\text{ m}$ (equivalent to a 5-minute walk) to associate stops with their corresponding census demographics. The snapping workflow proceeds as follows:
@@ -169,7 +169,7 @@ Transitioning to the physical layout (L-Space), we calculated weighted Betweenne
     \centering
     \caption{Top 5 Betweenness Centrality Bottlenecks (Station Nodes)}
     \label{tab:bottlenecks}
-    \setlength{\tabcolsep}{3.5pt}
+    \setlength{\tabcolsep}{2.5pt}
     \begin{tabular}{clcclc}
         \toprule
         & \multicolumn{2}{c}{\textbf{Bus Only}} & & \multicolumn{2}{c}{\textbf{Planned Tram}} \\
@@ -316,7 +316,7 @@ To explore alternative transit strategies and optimize the planned network, we e
 This scenario upgrades the circular ring road bus corridor (both Line 32 clockwise and Line 33 counter-clockwise) into a fast, dedicated tramway running along the viali di circonvallazione, in addition to the Planned Tram radial layout. The Circular Tram connects major suburban radial lines and bypasses the historic core entirely.
 
 \subsubsection{Scenario B: Algorithmic Optimal Tramway Optimization (TNDP)}
-To support spatial planning from an algorithmic perspective, we implemented a greenfield optimization model to design an optimal new tramway network from scratch under a length budget limit of $25\text{ km}$. This falls under the classical Transit Network Design Problem (TNDP), which is non-convex and NP-hard. The algorithm identifies three central seed hubs (\textit{Stazione Centrale}, \textit{Farini}, \textit{Piazza Cavour}) to ensure radial coverage, and greedily grows line segments by maximizing a normalized multi-criteria edge utility score:
+To support spatial planning from an algorithmic perspective, we implemented a greenfield optimization model to design an optimal new tramway network from scratch under a length budget limit of $25\text{ km}$. This falls under the classical Transit Network Design Problem (TNDP), which is non-convex and NP-hard. The algorithm identifies two central seed hubs (\textit{Stazione Centrale} and \textit{Farini}) to ensure radial coverage, and greedily grows line segments by maximizing a normalized multi-criteria edge utility score:
 $$U(e) = \alpha \cdot EB(e) + \beta \cdot \Delta t(e) \cdot EB(e) + \gamma \cdot \text{avg\_pop}(e)$$
 where $\alpha=1.0, \beta=1.0, \gamma=1.0$. Crucially, each component is normalized using Min-Max scaling to a dimensionless scale of $[0, 1]$ across all candidate edges. The optimal spatial layout of this tramway is visualized in Figure~\ref{fig:optimized_layout}.
 
@@ -334,7 +334,7 @@ Table~\ref{tab:tram_optimization} compares the performance of all four scenarios
     \centering
     \caption{Comparative Performance of Network Scenarios under Demographic Load}
     \label{tab:tram_optimization}
-    \setlength{\tabcolsep}{6pt}
+    \setlength{\tabcolsep}{5pt}
     \begin{tabular}{lccc}
         \toprule
         Scenario & \shortstack{Avg Travel Time\\$L$ (sec)} & \shortstack{Global Efficiency\\$E_{glob}$ ($\text{s}^{-1}$)} & \shortstack{Tram Population\\served} \\
@@ -342,12 +342,12 @@ Table~\ref{tab:tram_optimization} compares the performance of all four scenarios
         Bus Only & 2162.69 & 0.000658 & N/D \\
         Planned Tram & 2183.89 & 0.000690 & 33,106 \\
         Circular Tram & 2155.92 & 0.000702 & 45,227 \\
-        Optimal Tram & 2165.98 & 0.000646 & 42,230 \\
+        Optimal Tram & 2164.74 & 0.000647 & 42,230 \\
         \bottomrule
     \end{tabular}
 \end{table}
 
-The Circular Tram achieves the lowest average travel time ($2155.92\text{ s}$) and highest global efficiency ($0.000702\text{ s}^{-1}$), saving travel time compared to all other scenarios by creating a fast circular bypass. On the other hand, the Optimal Tram network serves **$42,230$ residents/commuters** directly at its stations. This represents a **$27.6\%$ increase** in coverage over the Planned Tram layout, which serves $33,106$ residents. Under our peak-hour congestion model, routing passengers through these high-density nodes triggers significant dwell time penalties, resulting in a slightly higher average travel time ($2165.98\text{ s}$) compared to the circular bypass.
+The Circular Tram achieves the lowest average travel time ($2155.92\text{ s}$) and highest global efficiency ($0.000702\text{ s}^{-1}$), saving travel time compared to all other scenarios by creating a fast circular bypass. On the other hand, the Optimal Tram network serves **$42,230$ residents/commuters** directly at its stations. This represents a **$27.6\%$ increase** in coverage over the Planned Tram layout, which serves $33,106$ residents. Under our peak-hour congestion model, routing passengers through these high-density nodes triggers significant dwell time penalties, resulting in a slightly higher average travel time ($2164.74\text{ s}$) compared to the circular bypass.
 
 This dramatic performance gap highlights a crucial planning insight: while Planned Tram extends into peripheral radial corridors to maximize municipal coverage, it results in longer routes that are less topologically efficient. In contrast, our greedy optimization algorithm places the $25\text{ km}$ tramway budget precisely along the high-betweenness, high-congestion, and high-density corridors of the inner urban ring and main radial paths. This demonstrates that topology-driven design models can significantly improve both commuter travel times and population coverage per unit of infrastructure built.
 
@@ -383,12 +383,12 @@ By mathematically simulating the simultaneous arrival of up to 100,000 commuters
         \toprule
         Injected Passengers & Bus Only & Planned Tram & Circular Tram & Optimal Tram \\
         \midrule
-        0 & 24.58 & 24.40 & 23.64 & 24.64 \\
-        5,000 & 26.08 & 25.80 & 24.74 & 26.06 \\
-        10,000 & 27.46 & 27.11 & 25.73 & 27.40 \\
-        25,000 & 31.40 & 30.86 & 28.48 & 31.17 \\
-        50,000 & 37.65 & 36.80 & 32.93 & 37.09 \\
-        100,000 & 50.15 & 48.66 & 41.61 & 48.90 \\
+        0 & 24.58 & 24.40 & 23.64 & 24.62 \\
+        5,000 & 26.08 & 25.80 & 24.74 & 26.04 \\
+        10,000 & 27.46 & 27.11 & 25.73 & 27.38 \\
+        25,000 & 31.40 & 30.86 & 28.48 & 31.16 \\
+        50,000 & 37.65 & 36.80 & 32.93 & 37.08 \\
+        100,000 & 50.15 & 48.66 & 41.61 & 48.88 \\
         \bottomrule
     \end{tabular}
 \end{table}

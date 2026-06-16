@@ -160,10 +160,42 @@ def load_cached_graph(name, scenario=None, integration_mode="fused"):
                 G = pickle.load(f)
             print(f"✅ Caricato grafo cached da: {cache_path}")
             return G
-
         except Exception as e:
             print(f"Errore caricamento da cache {name}: {e}")
-            return None
+
+    # Ricostruzione in caso di mancanza cache
+    if name == "G_bus":
+        G = load_bologna_graph(scenario="bus_only")
+    elif name == "G_fused":
+        G = load_bologna_graph(scenario="tram", integration_mode="fused")
+    elif name == "G_multiplex":
+        G = load_bologna_graph(scenario="tram", integration_mode="multiplex")
+    elif name == "G_futuro":
+        from src.scenarios import inject_hypothetical_tram
+        G_f = load_cached_graph("G_fused")
+        G = inject_hypothetical_tram(G_f, route_to_upgrade="32")
+    elif name == "G_opt_tram":
+        from src.tram_optimizer import optimize_tram_layout
+        G_b = load_cached_graph("G_bus")
+        from src.demographic import calculate_demographics_weight
+        calculate_demographics_weight(G_b, BASE_DIR / "dataset" / "bologna" / "raw")
+        opt_edges, opt_length = optimize_tram_layout(G_b)
+        G = G_b.copy()
+        for u, v in opt_edges:
+            dist_m = G_b.edges[u, v].get("dist_meters", 100.0)
+            tram_time_sec = dist_m / TransitConfig.TRAM_SPEED + TransitConfig.TRAM_BASE_DWELL
+            G.add_edge(u, v, weight=tram_time_sec, type="tram", route="TRAM_OTTIMIZZATA")
+            G.nodes[u]["type"] = "intersezione_bus_tram"
+            G.nodes[v]["type"] = "intersezione_bus_tram"
+    else:
+        G = load_bologna_graph(scenario=scenario, integration_mode=integration_mode)
+
+    # Salva in cache
+    cache_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(cache_path, "wb") as f:
+        pickle.dump(G, f)
+    print(f"✅ Grafo salvato in cache: {cache_path}")
+    return G
             
 def load_pspace_graph(scenario="bus_only"):
     """
@@ -260,28 +292,6 @@ def load_pspace_graph(scenario="bus_only"):
                 if u != v and u in G and v in G:
                     G.add_edge(u, v, weight=1, type="same_route_tram")
                     
-    return G
-
-    # Ricostruzione in caso di mancanza cache
-    if name == "G_bus":
-        G = load_bologna_graph(scenario="bus_only")
-    elif name == "G_fused":
-        G = load_bologna_graph(scenario="tram", integration_mode="fused")
-    elif name == "G_multiplex":
-        G = load_bologna_graph(scenario="tram", integration_mode="multiplex")
-    elif name == "G_futuro":
-        from src.scenarios import inject_hypothetical_tram
-
-        G_f = load_cached_graph("G_fused")
-        G = inject_hypothetical_tram(G_f, route_to_upgrade="32")
-    else:
-        G = load_bologna_graph(scenario=scenario, integration_mode=integration_mode)
-
-    # Salva in cache
-    cache_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(cache_path, "wb") as f:
-        pickle.dump(G, f)
-    print(f"✅ Grafo salvato in cache: {cache_path}")
     return G
 
 def update_dynamic_dwell_times(G):

@@ -25,9 +25,9 @@ class TransitConfig:
     DEMOGRAPHIC_SNAPPING_RADIUS = 400.0  # Ricalibrato: raggio di catchment realistico (~5 minuti a piedi)
 
     # --- CAPACITÀ STRADALE E CONFIGURAZIONI TRAM ---
-    DEFAULT_ROAD_CAPACITY = 1000.0  # Capacità stradale standard per corsia urbana
+    DEFAULT_ROAD_CAPACITY = 800.0  # Ricalibrato per Bologna: capacità stradale standard per corsia urbana ridotta
     OPTIMAL_TRAM_BUDGET_METERS = 25000  # Budget totale per la rete tram ottimale (25 km)
-    OPTIMAL_TRAM_NUM_SEEDS = 3  # Numero di hub seed centrali per l'ottimizzatore
+    OPTIMAL_TRAM_NUM_SEEDS = 2  # Ricalibrato: 2 hub seed centrali per riflettere le 2 linee tranviarie principali (Rossa e Verde)
 
     # --- FRIZIONE DI TRASBORDO (MULTIPLEX TRANSFER FRICTION) ---
     # Tempo di attesa medio (secondi) stimato per accedere alla coincidenza (1/2 headway medio)
