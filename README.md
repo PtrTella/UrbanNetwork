@@ -1,126 +1,132 @@
-### *The Topology of Urban Resilience: Small-World Analysis, Bottlenecks, and Structural Vulnerability in the Metro Network of [City of Your Choice]*
+# The Topology of Urban Resilience: Network Analysis, Vulnerability, and Greenfield Optimization of Bologna’s Transit System
+
+This repository contains the complete codebase, data processing pipelines, and analytical models used to study the structural resilience and optimization of the public transit network of **Bologna, Italy**. 
+
+Using a complex networks framework (Network Science / Social Network Analysis), the project evaluates Bologna's current bus-dominated transit network and models the impact of integrating planned high-capacity tramways. Furthermore, it implements an algorithmic solution to the **Transit Network Design Problem (TNDP)** to design a demographically optimized greenfield tram network under budget constraints.
 
 ---
 
-### 1. Academic Reference Literature (The Background)
+## 🚀 Project Overview & Core Architecture
 
-First of all, your project must rest on solid scientific foundations. You will begin the report by citing and contextualizing these key papers in order to justify your “Research Design”:
+The study models the transit network through two topological representations:
+1. **L-Space (Physical Graph):** Stops represent nodes, and edges represent physical, adjacent connections between consecutive stops. Edge weights are defined by passenger travel times (in seconds) adjusted for passenger dwell times and localized congestion.
+2. **P-Space (Cognitive Graph):** Nodes represent stops, and a cognitive edge connects any two stops if they share at least one transit line, representing a zero-transfer journey.
 
-- **The theoretical foundation:** _Is the Boston subway a small-world network?_ (Latora & Marchiori, 2002). This is the paper recommended by the course. It demonstrates how transportation networks, despite being “spatial networks” (and therefore constrained by real-world geography), still exhibit small-world characteristics. It introduces the crucial concept of “transport efficiency” to overcome the limitations of classical models.
-    
-- **Complexity and Resilience:** _The complexity and robustness of metro networks_ (Derrible & Kennedy, 2010). This study on 33 metro systems worldwide is essential. It demonstrates that urban networks are often _Scale-Free_ systems dominated by “transfer hubs” (interchange stations). This will provide the theoretical basis to explain why the network is resistant to random failures but extremely vulnerable when a hub is targeted.
-    
-- **L-Space vs P-Space Topology:** In contemporary research, transportation networks are modeled according to two logical spaces. You will need to cite the so-called _Space L_ (where nodes are stations and edges represent a direct physical connection between adjacent stations) and _Space P_ (where an edge exists between two nodes if they belong to the same line, indicating the possibility of traveling without transfers). Your study will focus on _Space L_in order to map the real infrastructure.
-    
-
----
-
-### 2. Data and Technical Tools (The Tech Stack)
-
-You will not waste time manually mapping stations. Instead, you will adopt an automated approach:
-
-- **Data Acquisition:** You will use the remarkable Python library `OSMnx`. With a single line of code, this library can extract and model the infrastructural network of any city directly from the open OpenStreetMap database, returning a ready-to-use theoretical graph. Alternatively, you may import open transportation data in _GTFS_ format.
-    
-- **Mathematical Engine:** `NetworkX` (in Python) for adjacency matrix ingestion and the immediate computation of all the metrics studied during the course (Centrality, Shortest Paths, Triad Census).
-    
+### Exogenous Stress & Demographic Pressure
+Rather than analyzing a purely topological network, our pipeline snaps **ISTAT census tract data** (population density) within a 400m catchment buffer of each stop. Station dwell times are scaled dynamically based on demographic pressure:
+$$t_{dwell} = t_{base\_dwell} + \frac{P_{stop} \cdot \theta}{F_{capacity}}$$
+where $t_{base\_dwell}$ is 5.0s for buses and 8.0s for trams, $\theta = 0.015\text{ s/capita}$ is the boarding time coefficient, and $F_{capacity}$ represents boarding door efficiency (1.0 for buses, 3.0 for low-floor trams).
 
 ---
 
-### 3. Operational Work Plan: What to Apply and Demonstrate
+## 📈 Key Analytical Findings
 
-You will divide the work into 4 precise experimental phases, which will comprehensively cover more than 60% of the evaluation rubric (methodological rigor).
+### 1. Macroscopic Topology & Small-Worldness
+Under baseline conditions, the L-Space network displays distinct small-world properties, balancing local clustering with short path lengths.
 
----
+| Metric | Bus Only (Baseline) | Planned Tram (TPER) |
+| :--- | :---: | :---: |
+| **Nodes ($N_{lcc}$)** | 1212 | 1283 |
+| **Edges ($M_{lcc}$)** | 1482 | 1570 |
+| **Avg Travel Time $L$** | 2162.69 sec | 2183.89 sec |
+| **Clustering Coefficient ($C$)** | 0.0113 | 0.0124 |
+| **Global Efficiency ($E_{glob}$)** | $0.000658\text{ s}^{-1}$ | $0.000690\text{ s}^{-1}$ |
+| **Small-World Sigma ($\sigma$)** | 2.35 | 4.29 |
+| **Small-World Omega ($\omega$)** | 0.00 | 0.00 |
 
-#### Phase A: Network Construction
+*Note: The collapse of Telesford's Omega ($\omega = 0.00$) is a structural property of Space L transit networks, where the low average degree ($\langle k \rangle \approx 2.4$) yields undefined ratio comparisons with regular lattices.*
 
-You will extract the metro or tram network (e.g., Milan, Paris, or Tokyo). You will model the network as an undirected graph in _Space L_ format (stations as nodes, tracks as edges). The physical distances in meters between stations will constitute the edge “weights” for distance evaluations.
+### 2. Physical Bottlenecks (L-Space Betweenness Centrality)
+We computed weighted Betweenness Centrality based on shortest travel times to locate municipal chokepoints.
 
----
+1. **Farini** (Bus: 0.13499 | Tram: 0.13066)
+2. **Piazza Cavour** (Bus: 0.11527) / **Piazza dell'Unità** (Tram: 0.12946)
+3. **Garganelli** (Bus: 0.10911) / **Matteotti Alta Velocità** (Tram: 0.12344)
+4. **Porta Santo Stefano** (Bus: 0.10464) / **Ugo Bassi** (Tram: 0.11490)
+5. **Marconi** (Bus: 0.10237) / **San Felice** (Tram: 0.11095)
 
-#### Phase B: Microscopic Autopsy (Searching for the Gatekeepers)
+*These locations represent the narrow historical corridors and city gates of Bologna, which control the global flow of passengers across the network.*
 
-You will apply the microscopic algorithms studied in Lecture 5:
+### 3. Resilience Stress-Tests (Percolation Analysis)
+We simulated systemic attacks by removing nodes and measuring the decay of global efficiency:
+* **Random Failures & Accidents:** Highly tolerated due to topological redundancy. At 5% removal, global efficiency drops by only ~14%.
+* **Sequential Targeted Attacks:** Extremely damaging. Removing the top 5% highest-betweenness nodes causes global efficiency to crash by **27.43%**, forcing passengers onto long, circuitous detours even before the network physically fragments.
 
-- _Degree Centrality:_ You will identify the obvious interchange hubs.
-    
-- _Betweenness Centrality:_ This is the “Holy Grail” of your project. You will identify the stations that, despite not having many intersecting lines, act as vital bottlenecks for shortest paths between opposite sides of the city.
-    
-- _Closeness Centrality:_ To compute the average travel efficiency and determine the most “central” station in the system.
-    
+### 4. Greenfield Tramway Optimization (TNDP)
+We implemented a greenfield greedy optimization algorithm to layout a new 25 km tramway starting at *Stazione Centrale* and *Farini*, maximizing a multi-criteria edge utility:
+$$U(e) = \alpha \cdot EB(e) + \beta \cdot \Delta t(e) \cdot EB(e) + \gamma \cdot \text{avg\_pop}(e)$$
 
----
+| Scenario | Avg Travel Time $L$ (sec) | Global Efficiency $E_{glob}$ ($\text{s}^{-1}$) | Tram Population Served |
+| :--- | :---: | :---: | :---: |
+| **Bus Only** | 2162.69 | 0.000658 | N/D |
+| **Planned Tram (TPER)** | 2183.89 | 0.000690 | 33,106 |
+| **Circular Tram (Ring)** | 2155.92 | 0.000702 | 45,227 |
+| **Optimal Tram (TNDP)** | 2164.74 | 0.000647 | **42,230** |
 
-#### Phase C: Macroscopic Autopsy (Testing Small-Worldness)
+*Our algoritmically designed **Optimal Tram** achieves a **27.6% increase in demographic coverage** over the Planned TPER layout by routing along high-density and high-betweenness corridors.*
 
-You will need to numerically demonstrate whether the analyzed city qualifies as a “Small-World” network (Lecture 6).
-
-- You will compute the Average Path Length ($L$) and the Global Clustering Coefficient ($C$).
-    
-- You will generate two comparison networks: a regular lattice and an Erdős-Rényi stochastic graph ($G(n,p)$) with the same number of nodes and the same density as your city network.
-    
-- By computing the structural coefficients $\sigma$ and $\omega$, you will demonstrate whether the city architecture balances high local clustering with surprisingly short global distances.
-    
-
----
-
-#### Phase D: Resilience Stress Test (The “Wow Effect” for the Top Grade)
-
-This is the dynamic simulation that will conclude the research (Lecture 6):
-
-1. _Random Failure:_ You will write a Python loop that virtually “shuts down” 5%, 10%, and 20% of the stations in a purely random way (e.g., scattered electrical blackouts). You will measure how much the system’s _Connectedness_metric decreases.
-    
-2. _Targeted Attack:_ Starting again from the intact network, you will shut down only 5% of the stations, but beginning with those having the highest _Betweenness Centrality_ identified in Phase B (e.g., a targeted strike or flooding of a critical interchange).
-    
-3. _Conclusion:_ You will graphically demonstrate how, consistently with Derrible & Kennedy’s theory on urban networks, public transportation tolerates random events quite well, but immediately fragments and loses cohesion under surgical attacks.
-    
-
----
-
-### 4. What You Must Study Thoroughly (Preparation Focus)
-
-To write a rigorous essay and correctly interpret the data (the remaining 20% of the grade), you must master the following theoretical concepts from the course:
-
-1. **The Mathematics of Small-World Networks:** Do not simply output the value of $\sigma$. You must be able to explain _why_ you compute the coefficient relative to the Erdős-Rényi random graph $G(n,p)$ and what the Average Path Length represents in terms of passenger transit times.
-    
-2. **Betweenness vs Degree:** The professor will try to assess whether you truly understand the semantic distinction between these measures. You must explain that Degree Centrality identifies the major stations (such as Roma Termini in Rome or Milano Centrale in Milan), whereas Betweenness Centrality identifies vulnerable structural “bridges” (perhaps a small peripheral station that nevertheless represents the only access route to an entire district).
-    
-3. **The Spatial Paradox:** Unlike the Internet (which can behave as an almost pure scale-free network), metro systems are physically anchored to the terrain. There is a physical limit to how many tracks can intersect within a station (network planarity). This means that node degrees can never reach the extreme levels observed in networks such as Spotify, thereby modifying the tail of the distribution. Correctly interpreting this factor will guarantee excellence.
+### 5. Commuter Shock: Forced Hub Passenger Injection
+We simulated a massive commuter shock (up to 100,000 incoming passengers) at *Stazione Centrale* and *Autostazione* to test network absorption capacity:
+* **Planned & Optimal Tramways** route passengers directly through the historic core, causing average travel times to inflate from ~24 to **~48.8 minutes** (+100%).
+* **Circular Tramway (Lines 32/33)** acts as a fast bypass, allowing commuters to disperse along the ring road, saving **7.05 minutes** (-14.5%) compared to the planned radial lines.
 
 ---
 
-### 5. Reproducing the Study and Dataset Generation
+## 📁 Repository Structure
 
-To ensure transparency and reproducibility, all datasets in `dataset/bologna/` are generated from real-world OpenStreetMap data using python scripts included in this repository.
-
-#### A. Download Raw OSM Data
-Run the following script to query the Overpass API for Bologna's bus and trolleybus routes and save the raw JSON:
-```bash
-python scripts/download_raw_osm.py
 ```
-This script fetches relations for lines `11A/B/C`, `13`, `14`, `19`, `20`, `27`, `32`, `33`, `35`, and `37` in the Bologna bounding box and saves it to `dataset/bologna/raw_bologna_osm.json`.
-
-#### B. Process and Generate Datasets
-Run the parsing and clustering script to process the raw JSON and build the structured CSV files:
-```bash
-python scripts/parse_and_build_dataset.py
-```
-This script:
-1. Clusters physical bus stops within 120 meters into single consolidated stations.
-2. Greedily maps UNIBO campuses and key tram hubs to distinct nearest stations, ensuring a 100% connected L-space network with no isolated nodes.
-3. Computes travel times and generates stop-to-stop connections.
-4. Allocates demographic population densities and UNIBO student attraction factors.
-5. Saves `bologna_stations.csv`, `bologna_connections.csv`, `bologna_lines.csv`, and `bologna_demographics.csv` to `dataset/bologna/`.
-
-#### C. Compile Jupyter Notebooks
-To compile the Jupyter notebooks containing the detailed analysis and visualizations:
-```bash
-python scripts/build_notebooks.py
+├── run_analysis_bologna.py      # Main pipeline script (Act 1 to Act 4)
+├── src/
+│   ├── graph.py                 # Graph building, Space L & Space P parsers
+│   ├── analyzer.py              # Centralities, small-worldness & assortativity
+│   ├── simulator.py             # Percolation and targeted attack simulations
+│   ├── demographic.py           # Census tract spatial snapping & BPR formulas
+│   ├── tram_optimizer.py        # Greenfield TNDP greedy optimization
+│   ├── plottings.py             # Visualizations, maps, and comparative plots
+│   └── config.py                # Hyperparameters, capacities, and file paths
+├── dataset/
+│   └── bologna/
+│       ├── raw/                 # Raw GTFS, census demographics, and OSM stops
+│       └── processed/           # Processed CSV nodes, edges, and graphs
+├── data_output/                 # Exported metrics (CSV) and runtime logs
+└── latex/
+    ├── NetworkAnalysisReport.tex # Main academic LaTeX paper
+    ├── references.bib           # BibTeX academic references
+    └── figures/                 # Generated plots injected into the report
 ```
 
-#### D. Run the Complete Analysis Pipeline
-Run the main script to compute all network metrics, run the resilience simulations, and generate the plots:
+---
+
+## ⚙️ How to Run
+
+### 1. Requirements
+Ensure you have Python 3.9+ installed. We recommend using a virtual environment:
+
+```bash
+# Create and activate virtual environment
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+```
+*(Dependencies include: `networkx`, `pandas`, `numpy`, `matplotlib`, `seaborn`, `scipy`)*
+
+### 2. Execution
+Run the complete analysis pipeline (centrality calculations, null model comparisons, resilience percolations, future scenario tests, and plot exports):
+
 ```bash
 python run_analysis_bologna.py
 ```
-This script exports all centralities, GraphML files, and plots directly to `data_output/` and `latex/figures/bologna/`.
+
+All plots will be generated and saved directly to the `data_output/` and `latex/figures/bologna/` directories.
+
+---
+
+## 📚 Academic References
+
+The mathematical formulations and research design are grounded in the following literature:
+* **Small-World in Transit:** Latora, V. & Marchiori, M. (2002). *Is the Boston subway a small-world network?* Physica A.
+* **Urban Complexity & Resilience:** Derrible, S. & Kennedy, C. (2010). *The complexity and robustness of metro networks.* Physica A.
+* **Global Efficiency:** Latora, V. & Marchiori, M. (2001). *Efficient behavior of small-world networks.* Physical Review Letters.
+* **Demand-Centrality Correlation:** Šfiligoj, T. et al. (2025). *Node importance corresponds to passenger demand in public transport networks.* Physica A.
