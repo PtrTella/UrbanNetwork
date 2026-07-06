@@ -60,7 +60,7 @@ def finalize_map(fig, ax, title):
             ax, crs="EPSG:4326", source=ctx.providers.CartoDB.Positron, alpha=0.85
         )
     except Exception as e:
-        print(f"⚠️ Background map error: {e}")
+        print(f" Background map error: {e}")
     ax.set_xlim(xlim)
     ax.set_ylim(ylim)
 
@@ -194,7 +194,7 @@ def plot_resilience_curves():
     output_path = OUTPUT_DIR / "bologna_resilience_curves.png"
     plt.savefig(output_path, dpi=300, bbox_inches="tight")
     plt.close()
-    print(f"✅ Resilience curves saved to: {output_path}")
+    print(f" Resilience curves saved to: {output_path}")
 
 
 def plot_centrality_analysis(df_cent_bus=None, df_cent_tram=None):
@@ -332,7 +332,7 @@ def plot_centrality_analysis(df_cent_bus=None, df_cent_tram=None):
     output_path_scatter = OUTPUT_DIR / "bologna_centrality_scatter.png"
     plt.savefig(output_path_scatter, dpi=300, bbox_inches="tight")
     plt.close()
-    print(f"✅ Centrality scatter plot saved to: {output_path_scatter}")
+    print(f" Centrality scatter plot saved to: {output_path_scatter}")
 
     # 2. HISTOGRAM
     fig, ax = plt.subplots(figsize=(8, 5))
@@ -369,7 +369,7 @@ def plot_centrality_analysis(df_cent_bus=None, df_cent_tram=None):
     output_path_hist = OUTPUT_DIR / "bologna_betweenness_hist.png"
     plt.savefig(output_path_hist, dpi=300, bbox_inches="tight")
     plt.close()
-    print(f"✅ Betweenness histogram saved to: {output_path_hist}")
+    print(f" Betweenness histogram saved to: {output_path_hist}")
 
 
 def plot_static_network(G):
@@ -457,7 +457,7 @@ def plot_static_network(G):
     output_path = OUTPUT_DIR / "bologna_static_network.png"
     plt.savefig(output_path, dpi=300, bbox_inches="tight")
     plt.close()
-    print(f"✅ Static network map saved to: {output_path}")
+    print(f" Static network map saved to: {output_path}")
 
 
 def plot_optimized_layout(G_planned, G_opt):
@@ -493,14 +493,14 @@ def plot_optimized_layout(G_planned, G_opt):
     output_path = OUTPUT_DIR / "bologna_optimized_layout.png"
     plt.savefig(output_path, dpi=300, bbox_inches="tight")
     plt.close()
-    print(f"✅ Layout comparison map saved to: {output_path}")
+    print(f" Layout comparison map saved to: {output_path}")
 
 
 def plot_demographic_pressure_maps():
     """Generates the demographic pressure KDE density map (light theme)."""
     csv_tram = BASE_DIR / "data_output" / "bologna" / "demographic_tram_results.csv"
     if not csv_tram.exists():
-        print("⚠️ Demographic results not found.")
+        print(" Demographic results not found.")
         return
 
     df_tram = pd.read_csv(csv_tram)
@@ -535,13 +535,13 @@ def plot_demographic_pressure_maps():
     output_path = OUTPUT_DIR / "bologna_demographic_pressure_map.png"
     plt.savefig(output_path, dpi=300, bbox_inches="tight")
     plt.close()
-    print(f"✅ Demographic pressure map saved to: {output_path}")
+    print(f" Demographic pressure map saved to: {output_path}")
 
 
 def plot_communities_map():
     csv_comm = BASE_DIR / "data_output" / "bologna" / "communities_bus.csv"
     if not csv_comm.exists():
-        print("⚠️ communities_bus.csv not found.")
+        print(" communities_bus.csv not found.")
         return
 
     df_comm = pd.read_csv(csv_comm)
@@ -566,7 +566,7 @@ def plot_communities_map():
     output_path = OUTPUT_DIR / "bologna_communities_map.png"
     plt.savefig(output_path, dpi=300, bbox_inches="tight")
     plt.close()
-    print(f"✅ Communities map saved to: {output_path}")
+    print(f" Communities map saved to: {output_path}")
 
 
 def plot_bottlenecks_map(df_bus=None, df_tram=None):
@@ -710,7 +710,7 @@ def plot_bottlenecks_map(df_bus=None, df_tram=None):
     output_path = OUTPUT_DIR / "bologna_bottlenecks_map.png"
     plt.savefig(output_path, dpi=300, bbox_inches="tight")
     plt.close()
-    print(f"✅ Bottlenecks comparison map saved to: {output_path}")
+    print(f" Bottlenecks comparison map saved to: {output_path}")
 
 
 def plot_comparative_resilience():
@@ -783,7 +783,7 @@ def plot_comparative_resilience():
     out_path = OUTPUT_DIR / "bologna_resilience_comparison.png"
     plt.savefig(out_path, dpi=300, bbox_inches="tight")
     plt.close()
-    print(f"✅ Comparative resilience plot saved to: {out_path}")
+    print(f" Comparative resilience plot saved to: {out_path}")
 
 
 def plot_tram_impact_map():
@@ -839,7 +839,7 @@ def plot_tram_impact_map():
     out_path = OUTPUT_DIR / "bologna_tram_impact_map.png"
     plt.savefig(out_path, dpi=300, bbox_inches="tight")
     plt.close()
-    print(f"✅ Tram overlay map saved to: {out_path}")
+    print(f" Tram overlay map saved to: {out_path}")
 
 
 def plot_forced_injection_shock(
@@ -897,14 +897,14 @@ def plot_forced_injection_shock(
     out_path = OUTPUT_DIR / "bologna_forced_injection_shock.png"
     plt.savefig(out_path, dpi=300, bbox_inches="tight")
     plt.close()
-    print(f"✅ Forced Injection Shock curve saved to: {out_path}")
+    print(f" Forced Injection Shock curve saved to: {out_path}")
 
 
 if __name__ == "__main__":
     from src.graph import load_cached_graph
     from src.analyzer import compute_centralities
 
-    print("📊 Generating all light-theme plots...")
+    print(" Generating all light-theme plots...")
     plot_resilience_curves()
 
     G_bus = load_cached_graph("G_bus")
@@ -922,4 +922,4 @@ if __name__ == "__main__":
     plot_comparative_resilience()
     plot_tram_impact_map()
 
-    print("✅ All light-theme plots generated successfully!")
+    print(" All light-theme plots generated successfully!")

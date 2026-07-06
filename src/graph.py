@@ -141,7 +141,7 @@ def load_bologna_graph(scenario="bus_only", integration_mode="fused"):
                 )
 
     print(
-        f"✅ Grafo Integrato ({integration_mode}): {G.number_of_nodes()} Nodi, {G.number_of_edges()} Archi. (Pesi Temporali Rigorosi BPR)"
+        f" Grafo Integrato ({integration_mode}): {G.number_of_nodes()} Nodi, {G.number_of_edges()} Archi. (Pesi Temporali Rigorosi BPR)"
     )
     return G
 
@@ -158,7 +158,7 @@ def load_cached_graph(name, scenario=None, integration_mode="fused"):
         try:
             with open(cache_path, "rb") as f:
                 G = pickle.load(f)
-            print(f"✅ Caricato grafo cached da: {cache_path}")
+            print(f" Caricato grafo cached da: {cache_path}")
             return G
         except Exception as e:
             print(f"Errore caricamento da cache {name}: {e}")
@@ -198,7 +198,7 @@ def load_cached_graph(name, scenario=None, integration_mode="fused"):
     cache_path.parent.mkdir(parents=True, exist_ok=True)
     with open(cache_path, "wb") as f:
         pickle.dump(G, f)
-    print(f"✅ Grafo salvato in cache: {cache_path}")
+    print(f" Grafo salvato in cache: {cache_path}")
     return G
             
 def load_pspace_graph(scenario="bus_only"):
@@ -319,7 +319,7 @@ def update_dynamic_dwell_times(G):
                 data["weight"] += dynamic_dwell
                 count += 1
     
-    print(f"  ⚡ Dwell Times Dinamici aggiornati su {count} archi in base alla pressione demografica.")
+    print(f"   Dwell Times Dinamici aggiornati su {count} archi in base alla pressione demografica.")
 
 
 if __name__ == "__main__":
@@ -329,7 +329,7 @@ if __name__ == "__main__":
     OUTPUT_DIR = BASE_DIR / "data_output" / "bologna" / "graphs"
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-    print("🚀 Loading and saving all graphs to graphs/ directory...")
+    print("Loading and saving all graphs to graphs/ directory...")
     G_bus = load_bologna_graph(scenario="bus_only")
     G_fused = load_bologna_graph(scenario="tram", integration_mode="fused")
     G_futuro = inject_hypothetical_tram(G_fused, route_to_upgrade="32")
@@ -342,4 +342,4 @@ if __name__ == "__main__":
         path = OUTPUT_DIR / f"{name}.pkl"
         with open(path, "wb") as f:
             pickle.dump(G, f)
-        print(f"  ✅ Saved {name} to {path}")
+        print(f"   Saved {name} to {path}")

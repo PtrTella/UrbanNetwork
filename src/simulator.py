@@ -193,7 +193,7 @@ def simulate_targeted_hub_attack(graphs_dict, top_node_data=None, num_steps=5):
     }
 
     # Intestazione della tabella dinamica
-    headers = [f"📉 Crollo {name}" for name in graphs_dict.keys()]
+    headers = [f"Crollo {name}" for name in graphs_dict.keys()]
     header_str = " | ".join(f"{h:<22}" for h in headers)
     print("-" * (25 + len(headers) * 25))
     print(f"{'Rimozione Step':<22} | {header_str}")

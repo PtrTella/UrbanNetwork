@@ -170,14 +170,14 @@ def optimize_tram_layout(G_bus, budget_meters=None, num_seeds=None):
         total_length += dist
 
     print(
-        f" ✅ Ottimizzazione completata! Estensione totale: {total_length / 1000.0:.2f} km | Archi tram: {len(selected_edges)}"
+        f" Ottimizzazione completata! Estensione totale: {total_length / 1000.0:.2f} km | Archi tram: {len(selected_edges)}"
     )
     return selected_edges, total_length
 
 
 def evaluate_networks():
     print("\n" + "=" * 80)
-    print("📊 COMPARATIVE TRAM NETWORK OPTIMIZATION".center(80))
+    print("COMPARATIVE TRAM NETWORK OPTIMIZATION".center(80))
     print("=" * 80 + "\n")
 
     # 1. Carica i grafi di baseline e pianificati
@@ -192,7 +192,7 @@ def evaluate_networks():
         or sum(nx.get_node_attributes(G_bus, "population_served").values()) == 0
     ):
         print(
-            " ⚠️ Popolazione non trovata o pari a zero in G_bus. Esecuzione pesatura demografica..."
+            " Popolazione non trovata o pari a zero in G_bus. Esecuzione pesatura demografica..."
         )
         calculate_demographics_weight(G_bus, BASE_DIR / "dataset" / "bologna" / "raw")
 
@@ -202,7 +202,7 @@ def evaluate_networks():
         or sum(nx.get_node_attributes(G_planned, "population_served").values()) == 0
     ):
         print(
-            " ⚠️ Popolazione non trovata o pari a zero in G_planned (TPER). Esecuzione pesatura demografica..."
+            " Popolazione non trovata o pari a zero in G_planned (TPER). Esecuzione pesatura demografica..."
         )
         calculate_demographics_weight(
             G_planned, BASE_DIR / "dataset" / "bologna" / "raw"
@@ -291,13 +291,13 @@ def evaluate_networks():
     )
     print("-" * 85)
     print(
-        f"{'🚌 Solo Bus (Baseline)':<28} | {l_bus:<22.2f} | {eff_bus:<18.6f} | {'N/D':<19}"
+        f"{'Solo Bus (Baseline)':<28} | {l_bus:<22.2f} | {eff_bus:<18.6f} | {'N/D':<19}"
     )
     print(
-        f"{'🔗 Tram Pianificato (TPER)':<28} | {l_planned:<22.2f} | {eff_planned:<18.6f} | {int(pop_planned):<19}"
+        f"{'Tram Pianificato (TPER)':<28} | {l_planned:<22.2f} | {eff_planned:<18.6f} | {int(pop_planned):<19}"
     )
     print(
-        f"{'🔮 Tram Ottimizzato (Greedy)':<28} | {l_opt:<22.2f} | {eff_opt:<18.6f} | {int(pop_opt):<19}"
+        f"{'Tram Ottimizzato (Greedy)':<28} | {l_opt:<22.2f} | {eff_opt:<18.6f} | {int(pop_opt):<19}"
     )
     print("-" * 85)
 
@@ -324,7 +324,7 @@ def evaluate_networks():
     ])
     df_results.to_csv(OUTPUT_DIR / "tram_optimization_comparison.csv", index=False)
     print(
-        f"\n📊 Risultati comparativi salvati in: {OUTPUT_DIR / 'tram_optimization_comparison.csv'}"
+        f"\n Risultati comparativi salvati in: {OUTPUT_DIR / 'tram_optimization_comparison.csv'}"
     )
 
     # Salviamo la rete ottimizzata in formato pickle.

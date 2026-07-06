@@ -34,14 +34,14 @@ def download_ods_csv(dataset_id, output_path):
         with open(output_path, "wb") as f:
             for chunk in response.iter_content(chunk_size=8192):
                 f.write(chunk)
-        print(f"✅ Salvato: {output_path}")
+        print(f" Salvato: {output_path}")
     except requests.exceptions.RequestException as e:
-        print(f"❌ Errore durante il download di {dataset_id}: {e}")
+        print(f" Errore durante il download di {dataset_id}: {e}")
 
 
 def download_osm_tram_stops(output_path):
     """Estrae le fermate del tram da OSM e le salva in un CSV raw per eventuale pulizia manuale."""
-    print("🌍 Scaricando fermate Tram da OpenStreetMap (Overpass API)...")
+    print(" Scaricando fermate Tram da OpenStreetMap (Overpass API)...")
     overpass_url = "https://overpass-api.de/api/interpreter"
     headers = {"User-Agent": "UrbanNetworkAnalysis_Bologna_Thesis/1.0"}
 
@@ -81,12 +81,12 @@ def download_osm_tram_stops(output_path):
 
         df = pd.DataFrame(rows)
         df.to_csv(output_path, index=False)
-        print(f"✅ Salvato: {output_path} ({len(df)} fermate OSM)")
+        print(f" Salvato: {output_path} ({len(df)} fermate OSM)")
         print(
             "   -> Puoi modificare a mano i 'stop_name' in questo CSV per allinearli al tuo JSON."
         )
     except Exception as e:
-        print(f"❌ Errore API Overpass: {e}")
+        print(f" Errore API Overpass: {e}")
 
 
 if __name__ == "__main__":
@@ -98,13 +98,13 @@ if __name__ == "__main__":
         if not os.path.exists(file_path):
             download_ods_csv(dataset_id, file_path)
         else:
-            print(f"⏭️ {filename} già presente in locale, salto il download.")
+            print(f"  {filename} già presente in locale, salto il download.")
 
     # 2. Download OpenStreetMap Tram
     osm_file_path = os.path.join(RAW_DIR, "osm_tram_stops.csv")
     if not os.path.exists(osm_file_path):
         download_osm_tram_stops(osm_file_path)
     else:
-        print("⏭️ osm_tram_stops.csv già presente in locale, salto il download.")
+        print("  osm_tram_stops.csv già presente in locale, salto il download.")
 
     print("\n--- Fase 1 (Data Fetching) Completata! ---")

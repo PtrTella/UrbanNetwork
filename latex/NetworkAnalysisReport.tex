@@ -17,10 +17,10 @@
 
 % NOTE: course rules require groups of 3-5 students; list every member as
 % "Name Surname, Degree Programme, ID number (matricola)" per the official template.
-\author{[Pietro Tellarini], Master's Degree in Artificial Intelligence, [0001145761]
-\\ {[Kawsar Farooq]}, Master's Degree in Artificial Intelligence, [0001157200]}
+\author{[Pietro Tellarini]\\ Master's Degree in Artificial Intelligence, [0001145761] \\[1.5ex]
+{[Kawsar Farooq]}\\ Master's Degree in Artificial Intelligence, [0001157200]}
 \date{}
-\title{The Topology of Urban Resilience: Small-World Analysis, Bottlenecks, and Structural Vulnerability in the Integrated Transit Network of Bologna}
+\title{The Topology of Urban Resilience:\\ Small-World Analysis, Bottlenecks,\\ and Structural Vulnerability in the\\ Integrated Transit Network of Bologna}
 
 
 \begin{document}
@@ -29,7 +29,7 @@
 \section{Introduction}
 \label{introduction}
 
-The emergence of Network Science and Social Network Analysis (SNA) has provided a robust mathematical lexicon and statistical apparatus for studying complex socio-technical systems~\cite{newman}. Rather than viewing infrastructures as isolated physical entities, Network Science allows us to abstract and model them as topological graphs in which entities are nodes and their relations are edges. Although originally developed for social and biological systems, this structural paradigm has become increasingly important in urban planning, transport geography, and infrastructure engineering, where it enables the quantitative study of how spatial configurations influence human mobility, municipal accessibility, and system-wide vulnerability.
+The emergence of Network Science and Social Network Analysis (SNA) has provided a robust mathematical lexicon and statistical apparatus for studying complex socio-tech\-ni\-cal systems~\cite{newman}. Rather than viewing infrastructures as isolated physical entities, Network Science allows us to abstract and model them as topological graphs in which entities are nodes and their relations are edges. Although originally developed for social and biological systems, this structural paradigm has become increasingly important in urban planning, transport geography, and infrastructure engineering, where it enables the quantitative study of how spatial configurations influence human mobility, municipal accessibility, and system-wide vulnerability.
 
 This project examines the topological structure of the public transit network of Bologna, Italy. Developed within the Master's Degree in Artificial Intelligence at the University of Bologna, the study investigates the structural transition of Bologna's mobility system. Historically reliant on a radial bus network, Bologna is currently implementing a new tram system (including the new Red and Green lines) intended to serve as the high-capacity backbone of its urban core.
 
@@ -136,7 +136,7 @@ Several simplifying modeling assumptions were adopted for tractability:
 \begin{itemize}
     \item \textbf{Undirected Graph Symmetry}: The network is modeled as an undirected graph (\texttt{nx.Graph}) to allow the calculation of standard global efficiency metrics. In reality, passenger flows can be asymmetric, and transit systems are increasingly modeled as multiplex or multilayer graphs to capture modal switches and transfers~\cite{dedomenico}.
     \item \textbf{Unified Bus-Lane Congestion}: BPR congestion is applied on the basis of overall road capacity, representing corridors where bus lanes merge with general traffic.
-    \item \textbf{Dynamic Targeted Attacks}: In real-world failures, traffic dynamically redistributes. We therefore implemented a \textbf{dynamic (sequential) targeted attack} in which betweenness centrality is recalculated after every node removal~\cite{albert}, in addition to the static-ranking percolation analysis.
+    \item \textbf{Dynamic Targeted Attacks}: In real-world failures, traffic redistributes dynamically. We therefore implemented a \textbf{dynamic (sequential) targeted attack} in which betweenness centrality is recalculated after every node removal~\cite{albert}, in addition to the static-ranking percolation analysis.
     \item \textbf{Omitted Measures}: We omit the triad census, which is designed for directed networks; in our undirected graphs, triadic structure is already captured by the clustering coefficient. Positional equivalence analysis is likewise omitted, as L-space roles are dominated by trivial chain positions (degree-2 stops).
 \end{itemize}
 
@@ -318,7 +318,7 @@ This scenario upgrades the circular ring-road bus corridor (Line 32 clockwise an
 \subsubsection{Scenario B: Algorithmic Optimal Tramway (TNDP)}
 To support spatial planning from an algorithmic perspective, we implemented a greenfield optimization model that designs a new tramway network from scratch under a total length budget of $25\text{ km}$. This falls under the classical Transit Network Design Problem (TNDP), which is non-convex and NP-hard~\cite{fan, jha}. The algorithm selects two central seed hubs --- \textit{Farini} and \textit{Piazza Cavour}, the two highest-scoring nodes by combined betweenness and demographic weight --- and greedily grows tram segments from the active network by repeatedly converting the adjacent bus edge with the best utility-per-metre ratio, where the multi-criteria edge utility is
 $$U(e) = \alpha \cdot EB(e) + \beta \cdot \Delta t(e) \cdot EB(e) + \gamma \cdot \text{avg\_pop}(e)$$
-with $\alpha=\beta=\gamma=1$. Here $EB(e)$ is the edge betweenness, $\Delta t(e)$ the travel-time saving from tram conversion, and $\text{avg\_pop}(e)$ the average population served by the edge's endpoints; each component is normalized to $[0, 1]$ by Min--Max scaling across all edges to guarantee dimensional consistency. The resulting layout, a single 24.85 km corridor network through the densest and most central axes, is shown in Figure~\ref{fig:optimized_layout}.
+with $\alpha=\beta=\gamma=1$, assuming an equal baseline weighting for topological importance, travel-time savings, and demographic coverage. Here $EB(e)$ is the edge betweenness, $\Delta t(e)$ the travel-time saving from tram conversion, and $\text{avg\_pop}(e)$ the average population served by the edge's endpoints; each component is normalized to $[0, 1]$ by Min--Max scaling across all edges to guarantee dimensional consistency. The resulting layout, a single 24.85 km corridor network through the densest and most central axes, is shown in Figure~\ref{fig:optimized_layout}.
 
 \begin{figure}[H]
     \centering

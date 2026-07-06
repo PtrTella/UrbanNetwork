@@ -60,7 +60,7 @@ def consolidate_bidirectional_stops(df_nodes, df_edges):
     raggruppa per nome e prende banalmente il primo record utile per ID e Coordinate.
     """
     print(
-        f"\n🔧 Consolidamento. Nodi iniziali: {len(df_nodes)} | Archi: {len(df_edges)}"
+        f"\n Consolidamento. Nodi iniziali: {len(df_nodes)} | Archi: {len(df_edges)}"
     )
 
     # Prendi la prima occorrenza per ogni stazione (metodo ultra-semplificato)
@@ -89,7 +89,7 @@ def consolidate_bidirectional_stops(df_nodes, df_edges):
     )
 
     print(
-        f"✅ Semplificazione fatta! Nodi unici: {len(df_merged_nodes)} | Archi finali: {len(df_edges)}"
+        f" Semplificazione fatta! Nodi unici: {len(df_merged_nodes)} | Archi finali: {len(df_edges)}"
     )
     return df_merged_nodes, df_edges
 
@@ -98,7 +98,7 @@ def process_tram_network():
     print("--- PREPROCESSING RETE TRAM (EXACT CSV -> BUS -> GPS) ---")
 
     if not INPUT_JSON.exists():
-        print(f"❌ Errore: {INPUT_JSON.name} non trovato.")
+        print(f" Errore: {INPUT_JSON.name} non trovato.")
         return
 
     with open(INPUT_JSON, "r", encoding="utf-8") as f:
@@ -110,7 +110,7 @@ def process_tram_network():
         df_osm = pd.read_csv(OSM_RAW_CSV)
         for _, row in df_osm.iterrows():
             osm_stops_dict[normalize_name(row["stop_name"])] = (row["lat"], row["lon"])
-        print(f"✅ Caricate {len(osm_stops_dict)} fermate dal CSV OSM.")
+        print(f" Caricate {len(osm_stops_dict)} fermate dal CSV OSM.")
 
     # 2. Carica CSV Bus per il primo Fallback
     bus_csv_path = PROCESSED_DIR / "bologna_stations.csv"
@@ -122,11 +122,11 @@ def process_tram_network():
                 row["stop_lat"],
                 row["stop_lon"],
             )
-        print(f"✅ Caricate {len(bus_coords_dict)} fermate dal CSV BUS (Fallback).")
+        print(f" Caricate {len(bus_coords_dict)} fermate dal CSV BUS (Fallback).")
 
     tram_nodes_csv = []
 
-    print("\n🔍 Fusione Geografica in corso...")
+    print("\n Fusione Geografica in corso...")
     for stop in tram_data["stations"]:
         json_id = stop["id"]
         original_name = stop["name"]
@@ -140,26 +140,26 @@ def process_tram_network():
         # OVERRIDE COORDINATE MANUALE
         if original_name in COORDINATE_OVERRIDES:
             lat, lon = COORDINATE_OVERRIDES[original_name]
-            print(f"  🎯 [MANUAL OVERRIDE] {name_upper}")
+            print(f"   [MANUAL OVERRIDE] {name_upper}")
 
         # TENTATIVO 1: Exact Match su OSM CSV
         elif name_upper in osm_stops_dict:
             lat, lon = osm_stops_dict[name_upper]
-            print(f"  ✅ [OSM CSV] {name_upper}")
+            print(f"   [OSM CSV] {name_upper}")
 
         # TENTATIVO 2: Exact Match su BUS CSV
         elif name_upper in bus_coords_dict:
             lat, lon = bus_coords_dict[name_upper]
-            print(f"  🚌 [Bus Match] {name_upper}")
+            print(f"   [Bus Match] {name_upper}")
 
         # TENTATIVO 3: Fallback Geopy API
         else:
             lat, lon = get_coordinates(original_name)
             if lat and lon:
-                print(f"  🌐 [Geopy API] {name_upper}")
+                print(f"   [Geopy API] {name_upper}")
             else:
                 lat, lon = 44.4949, 11.3426
-                print(f"  ❌ [Fallito] '{name_upper}' -> Assegnato Centro di Bologna.")
+                print(f"   [Fallito] '{name_upper}' -> Assegnato Centro di Bologna.")
 
         tram_nodes_csv.append(
             {
@@ -195,7 +195,7 @@ def process_tram_network():
     df_tram_nodes.to_csv(PROCESSED_DIR / "bologna_tram_stations.csv", index=False)
     df_tram_edges.to_csv(PROCESSED_DIR / "bologna_tram_connections.csv", index=False)
 
-    print("\n🎉 Topologia L-Space Salvata!")
+    print("\n Topologia L-Space Salvata!")
 
 
 if __name__ == "__main__":

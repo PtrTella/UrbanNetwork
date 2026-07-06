@@ -13,7 +13,7 @@ def generate_bottlenecks_map():
     print(" -> Generazione Mappa Bottleneck Fisici (Act 2)...")
     cent_csv = BASE_DIR / "data_output" / "bologna" / "centrality_results.csv"
     if not cent_csv.exists():
-        print("⚠️ centrality_results.csv non trovato!")
+        print(" centrality_results.csv non trovato!")
         return
 
     df = pd.read_csv(cent_csv)
@@ -65,7 +65,7 @@ def generate_bottlenecks_map():
     output_path = OUTPUT_DIR / "bologna_bottlenecks_map.png"
     plt.savefig(output_path, dpi=300, bbox_inches="tight", facecolor=fig.get_facecolor())
     plt.close()
-    print(f"✅ Mappa Bottleneck salvata: {output_path}")
+    print(f" Mappa Bottleneck salvata: {output_path}")
 
 def generate_comparative_resilience():
     print(" -> Generazione Confronto Resilienza Bus vs Tram (Act 3)...")
@@ -78,7 +78,7 @@ def generate_comparative_resilience():
     G_fused = load_cached_graph("G_fused")
     
     if not G_bus or not G_fused:
-        print("⚠️ Impossibile caricare i grafi per la resilienza.")
+        print(" Impossibile caricare i grafi per la resilienza.")
         return
         
     fractions = np.linspace(0, 0.4, 20)
@@ -123,7 +123,7 @@ def generate_comparative_resilience():
     out_path = OUTPUT_DIR / "bologna_resilience_comparison.png"
     plt.savefig(out_path, dpi=300, bbox_inches="tight")
     plt.close()
-    print(f"✅ Confronto Resilienza salvato: {out_path}")
+    print(f" Confronto Resilienza salvato: {out_path}")
 
 if __name__ == "__main__":
     generate_bottlenecks_map()

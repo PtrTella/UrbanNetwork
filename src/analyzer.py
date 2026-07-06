@@ -195,7 +195,7 @@ if __name__ == "__main__":
     OUTPUT_DIR = BASE_DIR / "data_output" / "bologna"
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-    print("🚀 Running autonomous Network Analysis...")
+    print("Running Network Analysis...")
     G_bus = load_cached_graph("G_bus")
     G_fused = load_cached_graph("G_fused")
 
@@ -212,7 +212,7 @@ if __name__ == "__main__":
     df_cent = compute_centralities(G_bus)
     cent_csv = OUTPUT_DIR / "centrality_results.csv"
     df_cent.to_csv(cent_csv, index=False)
-    print(f"  ✅ Centrality results saved to: {cent_csv}")
+    print(f"   Centrality results saved to: {cent_csv}")
 
     print(" -> Computing global small-world metrics...")
     m_bus = compute_small_worldness(G_bus)
@@ -232,7 +232,7 @@ if __name__ == "__main__":
     ])
     macro_csv = OUTPUT_DIR / "macroscopic_results.csv"
     df_macro.to_csv(macro_csv, index=False)
-    print(f"  ✅ Macroscopic results saved to: {macro_csv}")
+    print(f"   Macroscopic results saved to: {macro_csv}")
 
     print("\n -> Building and Analyzing P-Space (Topologia Trasbordi)...")
     from src.graph import load_pspace_graph
@@ -243,8 +243,8 @@ if __name__ == "__main__":
         # Assortatività
         assort_bus = compute_assortativity(G_pspace_bus)
         assort_fused = compute_assortativity(G_pspace_fused)
-        print(f"  ✅ Assortativity (P-Space Bus): {assort_bus:.4f} (Disassortativa = Hub collegano periferie)")
-        print(f"  ✅ Assortativity (P-Space Fused): {assort_fused:.4f}")
+        print(f"   Assortativity (P-Space Bus): {assort_bus:.4f} (Disassortativa = Hub collegano periferie)")
+        print(f"   Assortativity (P-Space Fused): {assort_fused:.4f}")
         
         # Salviamo i risultati dell'assortatività
         with open(OUTPUT_DIR / "assortativity_results.txt", "w") as f:
@@ -255,12 +255,12 @@ if __name__ == "__main__":
         df_comm = compute_communities(G_pspace_bus)
         comm_csv = OUTPUT_DIR / "communities_bus.csv"
         df_comm.to_csv(comm_csv, index=False)
-        print(f"  ✅ Communities detected: {df_comm['Community_ID'].nunique()}. Saved to: {comm_csv}")
+        print(f"   Communities detected: {df_comm['Community_ID'].nunique()}. Saved to: {comm_csv}")
         
         # Centralities su P-Space (per Degree e Closeness topologica senza tempi)
         df_cent_pspace = compute_centralities(G_pspace_bus)
         cent_pspace_csv = OUTPUT_DIR / "centrality_pspace_results.csv"
         df_cent_pspace.to_csv(cent_pspace_csv, index=False)
-        print(f"  ✅ P-Space Centrality results saved to: {cent_pspace_csv}")
+        print(f"   P-Space Centrality results saved to: {cent_pspace_csv}")
     else:
-        print("⚠️ Errore nella generazione del P-Space")
+        print(" Errore nella generazione del P-Space")

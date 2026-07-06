@@ -269,7 +269,7 @@ def process_bus_network():
     df_stops[col_finali].to_csv(PROCESSED_DIR / "bologna_stations.csv", index=False)
     df_edges.to_csv(PROCESSED_DIR / "bologna_connections.csv", index=False)
 
-    print("✅ Pipeline Completata con Successo (White-List)!")
+    print(" Pipeline Completata con Successo (White-List)!")
     print(f"   - Nodi (Fermate Bologna Urbana): {len(df_stops)}")
     print(f"   - Archi (Connessioni Topologiche): {len(df_edges)}")
 

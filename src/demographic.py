@@ -129,7 +129,6 @@ def calculate_demographics_weight(G_full, raw_dir_path):
     # Applica i dwell times dinamici agli archi del grafo
     update_dynamic_dwell_times(G_full)
 
-
 if __name__ == "__main__":
     from src.graph import load_cached_graph
     from pathlib import Path
@@ -139,7 +138,7 @@ if __name__ == "__main__":
     OUTPUT_DIR = BASE_DIR / "data_output" / "bologna"
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-    print(" Running autonomous Demographic Pressure Analysis...")
+    print(" Running Demographic Pressure Analysis...")
     G_bus = load_cached_graph("G_bus")
     G_fused = load_cached_graph("G_fused")
     G_multi = load_cached_graph("G_multiplex")
@@ -200,7 +199,7 @@ if __name__ == "__main__":
 
         out_csv = OUTPUT_DIR / filename
         df_demo_res.to_csv(out_csv, index=False)
-        print(f"  ✅ Demographic pressure results saved to: {out_csv}")
+        print(f"   Demographic pressure results saved to: {out_csv}")
 
     print("\n--- Analisi Rete Solo Bus ---")
     process_and_save(G_bus, "demographic_bus_results.csv", "G_bus")

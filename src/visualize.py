@@ -146,7 +146,7 @@ def generate_interactive_map():
 
     OUTPUT_MAP.parent.mkdir(parents=True, exist_ok=True)
     m.save(str(OUTPUT_MAP))
-    print(f"✅ Mappa salvata con successo in: {OUTPUT_MAP}")
+    print(f" Mappa salvata con successo in: {OUTPUT_MAP}")
 
 
 if __name__ == "__main__":

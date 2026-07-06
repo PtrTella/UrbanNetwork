@@ -44,6 +44,6 @@ def inject_hypothetical_tram(G_base, route_to_upgrade="32"):
             archi_upgradati += 1
 
     print(
-        f"🔮 Scenario Predittivo: Convertiti {archi_upgradati} archi bus in linee Tram ad alta velocità (Linee {', '.join(routes_to_upgrade)})."
+        f" Scenario Predittivo: Convertiti {archi_upgradati} archi bus in linee Tram ad alta velocità (Linee {', '.join(routes_to_upgrade)})."
     )
     return G_hypo

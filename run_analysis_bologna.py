@@ -49,18 +49,18 @@ def get_tram_coverage(G):
 
 def main():
     print("\n" + "=" * 110)
-    print("🚀 MASTER PIPELINE: BOLOGNA TRANSIT NETWORK SNA ANALYSIS 🚀".center(110))
+    print("MASTER PIPELINE: BOLOGNA TRANSIT NETWORK SNA ANALYSIS".center(110))
     print("=" * 110 + "\n")
 
     # Caricamento dei grafi in L-Space
-    print("📥 Loading L-Space networks...")
+    print("Loading L-Space networks...")
     G_bus = load_cached_graph("G_bus")
     G_fused = load_cached_graph("G_fused")
     G_futuro = load_cached_graph("G_futuro")
     G_opt = load_cached_graph("G_opt_tram")
     
     # Assicuriamoci che tutti i grafi L-Space abbiano pesi demografici e dwell times aggiornati
-    print("📊 Ensuring demographics are snapped and L-Space travel times are loaded...")
+    print("Ensuring demographics are snapped and L-Space travel times are loaded...")
     calculate_demographics_weight(G_bus, RAW_DIR)
     calculate_demographics_weight(G_fused, RAW_DIR)
     calculate_demographics_weight(G_futuro, RAW_DIR)
@@ -69,7 +69,7 @@ def main():
 
     # --- ACT 1: COGNITIVE TOPOLOGY (P-SPACE) ---
     print("\n" + "=" * 110)
-    print("🎭 ACT 1: COGNITIVE TOPOLOGY (P-SPACE) ANALYSIS".center(110))
+    print("ACT 1: COGNITIVE TOPOLOGY (P-SPACE) ANALYSIS".center(110))
     print("=" * 110)
     
     print(" -> Loading P-Space networks...")
@@ -80,7 +80,7 @@ def main():
     assort_bus = compute_assortativity(G_pspace_bus)
     assort_fused = compute_assortativity(G_pspace_fused)
     
-    print("\n📈 Act 1 Metrics and Comparisons:")
+    print("\nAct 1 Metrics and Comparisons:")
     print(f"  - Bus-Only P-Space: {G_pspace_bus.number_of_nodes()} stops, {G_pspace_bus.number_of_edges()} cognitive edges.")
     print(f"  - Planned Tram P-Space: {G_pspace_fused.number_of_nodes()} stops, {G_pspace_fused.number_of_edges()} cognitive edges.")
     print(f"  - Degree Assortativity (Bus Only):  r = {assort_bus:.4f}")
@@ -105,7 +105,7 @@ def main():
 
     # --- ACT 2: PHYSICAL BOTTLENECKS (L-SPACE) ---
     print("\n" + "=" * 110)
-    print("🏭 ACT 2: L-SPACE PHYSICAL BOTTLENECKS & CENTRALITY CORRELATIONS".center(110))
+    print("ACT 2: L-SPACE PHYSICAL BOTTLENECKS & CENTRALITY CORRELATIONS".center(110))
     print("=" * 110)
     
     print(" -> Computing Betweenness Centrality on travel times...")
@@ -116,7 +116,7 @@ def main():
     df_cent_bus.to_csv(OUTPUT_DIR / "centrality_results.csv", index=False)
     
     # Stampa Tabella Comparativa Bottleneck (Table 2 nel Report)
-    print("\n🏆 Top 5 L-Space Betweenness Centrality Bottlenecks Comparison:")
+    print("\nTop 5 L-Space Betweenness Centrality Bottlenecks Comparison:")
     print("-" * 110)
     print(f"{'Rank':<5} | {'Bus Only (Baseline) Station':<35} | {'Score':<10} | {'Planned Tram (TPER) Station':<35} | {'Score':<10}")
     print("-" * 110)
@@ -134,7 +134,7 @@ def main():
 
     # --- L-SPACE MACROSCOPIC METRICS ---
     print("\n" + "=" * 110)
-    print("🌐 L-SPACE MACROSCOPIC METRICS & NULL-MODEL COMPARISON (TABLE 3)".center(110))
+    print("L-SPACE MACROSCOPIC METRICS & NULL-MODEL COMPARISON (TABLE 3)".center(110))
     print("=" * 110)
     
     print(" -> Computing macroscopic metrics (Small-Worldness & Efficiency)...")
@@ -142,7 +142,7 @@ def main():
     macro_fused = compute_small_worldness(G_fused, er_runs=5)
     
     # Stampiamo la Tabella 3 del Report
-    print("\n📊 Table 3: Macroscopic Network Metrics (Loaded Travel Times):")
+    print("\nTable 3: Macroscopic Network Metrics (Loaded Travel Times):")
     print("-" * 80)
     print(f"{'Metric':<40} | {'Bus Only (Baseline)':<18} | {'Planned Tram (TPER)':<18}")
     print("-" * 80)
@@ -164,7 +164,7 @@ def main():
 
     # --- ACT 3: RESILIENCE STRESS-TESTS ---
     print("\n" + "=" * 110)
-    print("🛡️ ACT 3: RESILIENCE STRESS-TESTS & PERCOLATION ANALYSIS".center(110))
+    print("ACT 3: RESILIENCE STRESS-TESTS & PERCOLATION ANALYSIS".center(110))
     print("=" * 110)
     
     print(" -> Running sequential targeted attack drops (Table 4 in Report)...")
@@ -194,7 +194,7 @@ def main():
 
     # --- ACT 4: FUTURE SCENARIOS & SHOCK INJECTION ---
     print("\n" + "=" * 110)
-    print("🚄 ACT 4: FUTURE SCENARIOS COMPARATIVE PERFORMANCE & SHOCK INJECTION".center(110))
+    print("ACT 4: FUTURE SCENARIOS COMPARATIVE PERFORMANCE & SHOCK INJECTION".center(110))
     print("=" * 110)
     
     # Calcolo metriche per i 4 scenari futuristici
@@ -227,7 +227,7 @@ def main():
         eff_opt = 0.0
         pop_opt = 0
         
-    print("\n🏆 Table 5: Comparative Performance under Demographic Load:")
+    print("\nTable 5: Comparative Performance under Demographic Load:")
     print("-" * 95)
     print(f"{'Scenario':<28} | {'Avg Travel Time L (sec)':<25} | {'Global Efficiency E_glob (s^-1)':<32} | {'Tram Pop Served':<15}")
     print("-" * 95)
@@ -257,7 +257,7 @@ def main():
     opt_shock = simulate_hub_injection(G_opt, injection_steps) if G_opt else None
 
     # Stampiamo la Tabella 6
-    print("\n🏆 Table 6: Travel Times under Commuter Shock (in minutes):")
+    print("\nTable 6: Travel Times under Commuter Shock (in minutes):")
     print("-" * 95)
     print(f"{'Shock Population':<18} | {'Bus Only (min)':<16} | {'Planned Tram (min)':<18} | {'Circular Tram (min)':<19} | {'Optimal Tram (min)':<18}")
     print("-" * 95)
@@ -282,7 +282,7 @@ def main():
     print("\n -> Generating planned vs optimized layouts map...")
     plot_optimized_layout(G_fused, G_opt)
 
-    print("\n✅ Master Pipeline execution completed successfully! All data files saved and plots updated.")
+    print("\nMaster Pipeline execution completed successfully! All data files saved and plots updated.")
 
 if __name__ == "__main__":
     main()
