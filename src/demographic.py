@@ -115,14 +115,14 @@ def calculate_demographics_weight(G_full, raw_dir_path):
 
     nodes_pop = sorted(unique_hubs.items(), key=lambda x: x[1], reverse=True)
 
-    print("📊 Associazione Demografica Completata:")
+    print(" Associazione Demografica Completata:")
     print(f"   - Match esatti per Nome: {matched_by_name}")
     print(f"   - Match per Snapping Spaziale: {matched_by_space}")
     print(
         f"   - Fermate senza dati (extraurbane/non trovate): {len(G_full) - (matched_by_name + matched_by_space)}"
     )
 
-    print("\nTop 5 Hub per Pressione Demografica (Residenti + Pendolari):")
+    print("\nTop 5 Hub per Pressione Demografica (Residenti):")
     for name, pop in nodes_pop[:5]:
         print(f"  - {name:<35} {int(pop)} abitanti")
 
@@ -139,22 +139,18 @@ if __name__ == "__main__":
     OUTPUT_DIR = BASE_DIR / "data_output" / "bologna"
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-    print("🚀 Running autonomous Demographic Pressure Analysis...")
+    print(" Running autonomous Demographic Pressure Analysis...")
     G_bus = load_cached_graph("G_bus")
     G_fused = load_cached_graph("G_fused")
     G_multi = load_cached_graph("G_multiplex")
 
     def process_and_save(G, filename, graph_name):
         # Ripuliamo/Calcoliamo per il grafo specifico
+        # NOTA: il grafo caricato NON va risalvato nella cache pickle. La cache deve
+        # contenere solo i pesi base BPR: la pipeline applica i dwell demografici a
+        # runtime, e un grafo già "caricato" in cache subirebbe un doppio conteggio.
         calculate_demographics_weight(G, RAW_DIR)
-        
-        # Salviamo il grafo aggiornato con i dwell times dinamici nella cache
-        import pickle
-        cache_path = OUTPUT_DIR / "graphs" / f"{graph_name}.pkl"
-        with open(cache_path, "wb") as f:
-            pickle.dump(G, f)
-        print(f"  ✅ Grafo {graph_name} aggiornato con dwell times dinamici salvato in {cache_path}")
-        
+
         # Raccogliamo i risultati in un DataFrame da salvare
         data = []
         for n, attr in G.nodes(data=True):

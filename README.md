@@ -13,7 +13,7 @@ The study models the transit network through two topological representations:
 2. **P-Space (Cognitive Graph):** Nodes represent stops, and a cognitive edge connects any two stops if they share at least one transit line, representing a zero-transfer journey.
 
 ### Exogenous Stress & Demographic Pressure
-Rather than analyzing a purely topological network, our pipeline snaps **ISTAT census tract data** (population density) within a 400m catchment buffer of each stop. Station dwell times are scaled dynamically based on demographic pressure:
+Rather than analyzing a purely topological network, our pipeline snaps **municipal resident population statistics (2024, by statistical area)** within a 400m catchment buffer of each stop. Station dwell times are scaled dynamically based on demographic pressure:
 $$t_{dwell} = t_{base\_dwell} + \frac{P_{stop} \cdot \theta}{F_{capacity}}$$
 where $t_{base\_dwell}$ is 5.0s for buses and 8.0s for trams, $\theta = 0.015\text{ s/capita}$ is the boarding time coefficient, and $F_{capacity}$ represents boarding door efficiency (1.0 for buses, 3.0 for low-floor trams).
 
@@ -22,7 +22,7 @@ where $t_{base\_dwell}$ is 5.0s for buses and 8.0s for trams, $\theta = 0.015\te
 ## 📈 Key Analytical Findings
 
 ### 1. Macroscopic Topology & Small-Worldness
-Under baseline conditions, the L-Space network displays distinct small-world properties, balancing local clustering with short path lengths.
+Under demographically loaded travel times (dynamic dwell times applied), the L-Space network displays distinct small-world properties, balancing local clustering with short path lengths.
 
 | Metric | Bus Only (Baseline) | Planned Tram (TPER) |
 | :--- | :---: | :---: |
@@ -53,7 +53,7 @@ We simulated systemic attacks by removing nodes and measuring the decay of globa
 * **Sequential Targeted Attacks:** Extremely damaging. Removing the top 5% highest-betweenness nodes causes global efficiency to crash by **27.43%**, forcing passengers onto long, circuitous detours even before the network physically fragments.
 
 ### 4. Greenfield Tramway Optimization (TNDP)
-We implemented a greenfield greedy optimization algorithm to layout a new 25 km tramway starting at *Stazione Centrale* and *Farini*, maximizing a multi-criteria edge utility:
+We implemented a greenfield greedy optimization algorithm to layout a new 25 km tramway starting at the seed hubs *Farini* and *Piazza Cavour* (the two highest-scoring nodes by combined betweenness and demographic weight), maximizing a multi-criteria edge utility:
 $$U(e) = \alpha \cdot EB(e) + \beta \cdot \Delta t(e) \cdot EB(e) + \gamma \cdot \text{avg\_pop}(e)$$
 
 | Scenario | Avg Travel Time $L$ (sec) | Global Efficiency $E_{glob}$ ($\text{s}^{-1}$) | Tram Population Served |
@@ -61,13 +61,13 @@ $$U(e) = \alpha \cdot EB(e) + \beta \cdot \Delta t(e) \cdot EB(e) + \gamma \cdot
 | **Bus Only** | 2162.69 | 0.000658 | N/D |
 | **Planned Tram (TPER)** | 2183.89 | 0.000690 | 33,106 |
 | **Circular Tram (Ring)** | 2155.92 | 0.000702 | 45,227 |
-| **Optimal Tram (TNDP)** | 2164.74 | 0.000647 | **42,230** |
+| **Optimal Tram (TNDP)** | 2060.40 | 0.000688 | **42,230** |
 
-*Our algoritmically designed **Optimal Tram** achieves a **27.6% increase in demographic coverage** over the Planned TPER layout by routing along high-density and high-betweenness corridors.*
+*Our algorithmically designed **Optimal Tram** achieves the lowest average travel time and a **27.6% increase in demographic coverage** over the Planned TPER layout by routing along high-density and high-betweenness corridors.*
 
 ### 5. Commuter Shock: Forced Hub Passenger Injection
 We simulated a massive commuter shock (up to 100,000 incoming passengers) at *Stazione Centrale* and *Autostazione* to test network absorption capacity:
-* **Planned & Optimal Tramways** route passengers directly through the historic core, causing average travel times to inflate from ~24 to **~48.8 minutes** (+100%).
+* **Planned & Optimal Tramways** route passengers directly through the historic core, causing average travel times to roughly double (from ~23-24 to **~48-49 minutes**).
 * **Circular Tramway (Lines 32/33)** acts as a fast bypass, allowing commuters to disperse along the ring road, saving **7.05 minutes** (-14.5%) compared to the planned radial lines.
 
 ---
@@ -120,6 +120,8 @@ python run_analysis_bologna.py
 ```
 
 All plots will be generated and saved directly to the `data_output/` and `latex/figures/bologna/` directories.
+
+> **Note on execution order (full rebuild from raw data):** the master pipeline consumes cached graphs and intermediate CSVs. To rebuild everything from scratch, run in order: `src/preprocessing/download.py` → `src/preprocessing/bus.py` → `src/preprocessing/tram.py` → `src/graph.py` (builds and caches the base graphs) → `src/analyzer.py` (exports P-Space communities) → `src/demographic.py` (exports demographic pressure CSVs) → `run_analysis_bologna.py`. The graph cache in `data_output/bologna/graphs/` always stores **base BPR travel times**; demographic dwell times are applied at runtime by the pipeline.
 
 ---
 

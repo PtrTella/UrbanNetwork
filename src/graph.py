@@ -178,8 +178,12 @@ def load_cached_graph(name, scenario=None, integration_mode="fused"):
         from src.tram_optimizer import optimize_tram_layout
         G_b = load_cached_graph("G_bus")
         from src.demographic import calculate_demographics_weight
-        calculate_demographics_weight(G_b, BASE_DIR / "dataset" / "bologna" / "raw")
-        opt_edges, opt_length = optimize_tram_layout(G_b)
+        # Le utilità dell'ottimizzatore vanno calcolate sui pesi caricati (dwell demografici),
+        # ma la cache deve contenere SOLO i pesi base BPR: altrimenti la pipeline
+        # riapplicherebbe i dwell una seconda volta (doppio conteggio) solo su questo grafo.
+        G_work = G_b.copy()
+        calculate_demographics_weight(G_work, BASE_DIR / "dataset" / "bologna" / "raw")
+        opt_edges, opt_length = optimize_tram_layout(G_work)
         G = G_b.copy()
         for u, v in opt_edges:
             dist_m = G_b.edges[u, v].get("dist_meters", 100.0)

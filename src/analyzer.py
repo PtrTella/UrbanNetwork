@@ -199,6 +199,15 @@ if __name__ == "__main__":
     G_bus = load_cached_graph("G_bus")
     G_fused = load_cached_graph("G_fused")
 
+    # Applichiamo la pesatura demografica come fa la pipeline principale: le metriche
+    # L-Space del report sono calcolate sui tempi di viaggio CARICATI (dwell dinamici).
+    # Senza questo passo, rilanciare questo modulo dopo la pipeline sovrascriverebbe
+    # centrality_results.csv / macroscopic_results.csv con valori non caricati.
+    from src.demographic import calculate_demographics_weight
+    RAW_DIR = BASE_DIR / "dataset" / "bologna" / "raw"
+    calculate_demographics_weight(G_bus, RAW_DIR)
+    calculate_demographics_weight(G_fused, RAW_DIR)
+
     print(" -> Computing centralities on Bus-Only network...")
     df_cent = compute_centralities(G_bus)
     cent_csv = OUTPUT_DIR / "centrality_results.csv"

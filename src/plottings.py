@@ -14,8 +14,27 @@ from src.config import TransitConfig
 # Configuration
 BASE_DIR = Path(__file__).resolve().parent.parent
 PROCESSED_DIR = BASE_DIR / "dataset" / "bologna" / "processed"
+RAW_DIR = BASE_DIR / "dataset" / "bologna" / "raw"
 OUTPUT_DIR = BASE_DIR / "latex" / "figures" / "bologna"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def build_bottlenecks_legend(top_5_bus, top_5_tram):
+    """Builds the bottleneck legend text dynamically from the actual top-5 dataframes,
+    so the labels can never drift out of sync with the highlighted nodes."""
+    bus_lines = "\n".join(
+        f"  B{i + 1}: {row['Station_Name']}"
+        for i, (_, row) in enumerate(top_5_bus.iterrows())
+    )
+    tram_lines = "\n".join(
+        f"  T{i + 1}: {row['Station_Name']}"
+        for i, (_, row) in enumerate(top_5_tram.iterrows())
+    )
+    return (
+        "Top Bottlenecks Legend\n\n"
+        f"Bus Only:\n{bus_lines}\n\n"
+        f"Planned Tram:\n{tram_lines}"
+    )
 
 
 # Helper functions for DRY styling
@@ -181,12 +200,17 @@ def plot_resilience_curves():
 def plot_centrality_analysis(df_cent_bus=None, df_cent_tram=None):
     from src.graph import load_cached_graph
     from src.analyzer import compute_centralities
+    from src.demographic import calculate_demographics_weight
 
+    # In modalità standalone ricalcoliamo le centralità sugli stessi tempi di viaggio
+    # CARICATI (dwell demografici applicati) usati dalla pipeline e dal report.
     if df_cent_bus is None:
         G_bus = load_cached_graph("G_bus")
+        calculate_demographics_weight(G_bus, RAW_DIR)
         df_cent_bus = compute_centralities(G_bus)
     if df_cent_tram is None:
         G_fused = load_cached_graph("G_fused")
+        calculate_demographics_weight(G_fused, RAW_DIR)
         df_cent_tram = compute_centralities(G_fused)
 
     sns.set_theme(style="whitegrid", context="paper", font_scale=1.2)
@@ -281,22 +305,8 @@ def plot_centrality_analysis(df_cent_bus=None, df_cent_tram=None):
             ),
         )
 
-    # Add descriptive legend box
-    legend_text = (
-        "Bottlenecks Legend\n\n"
-        "Bus Only:\n"
-        "  B1: FARINI\n"
-        "  B2: PIAZZA CAVOUR\n"
-        "  B3: GARGANELLI\n"
-        "  B4: PORTA SANTO STEFANO\n"
-        "  B5: MARCONI\n\n"
-        "Planned Tram:\n"
-        "  T1: FARINI\n"
-        "  T2: PIAZZA DELL'UNITA'\n"
-        "  T3: MATTEOTTI A.V.\n"
-        "  T4: UGO BASSI\n"
-        "  T5: SAN FELICE"
-    )
+    # Add descriptive legend box (derived from the actual top-5 rankings)
+    legend_text = build_bottlenecks_legend(top_5_bus, top_5_tram)
     ax.text(
         0.65,
         0.20,
@@ -520,7 +530,7 @@ def plot_demographic_pressure_maps():
         ax=ax,
     )
 
-    finalize_map(fig, ax, "Exogenous Stress: Demographic Pressure Density (ISTAT)")
+    finalize_map(fig, ax, "Exogenous Stress: Demographic Pressure Density (Municipal Open Data)")
     plt.tight_layout()
     output_path = OUTPUT_DIR / "bologna_demographic_pressure_map.png"
     plt.savefig(output_path, dpi=300, bbox_inches="tight")
@@ -559,15 +569,21 @@ def plot_communities_map():
     print(f"✅ Communities map saved to: {output_path}")
 
 
-def plot_bottlenecks_map():
+def plot_bottlenecks_map(df_bus=None, df_tram=None):
     from src.graph import load_cached_graph
     from src.analyzer import compute_centralities
+    from src.demographic import calculate_demographics_weight
 
-    G_bus = load_cached_graph("G_bus")
-    G_fused = load_cached_graph("G_fused")
-
-    df_bus = compute_centralities(G_bus)
-    df_tram = compute_centralities(G_fused)
+    # Se i dataframe non vengono passati dalla pipeline, ricostruiamo le centralità
+    # sugli stessi tempi di viaggio CARICATI (dwell demografici applicati) usati
+    # nella Tabella 2 del report, per evitare ranking incoerenti con la legenda.
+    if df_bus is None or df_tram is None:
+        G_bus = load_cached_graph("G_bus")
+        G_fused = load_cached_graph("G_fused")
+        calculate_demographics_weight(G_bus, RAW_DIR)
+        calculate_demographics_weight(G_fused, RAW_DIR)
+        df_bus = compute_centralities(G_bus)
+        df_tram = compute_centralities(G_fused)
 
     df_bus = df_bus[df_bus["Betweenness Centrality"] > 0]
     df_tram = df_tram[df_tram["Betweenness Centrality"] > 0]
@@ -669,21 +685,8 @@ def plot_bottlenecks_map():
         )
 
     # Add a nice, clean legend panel at the bottom-left corner of the map
-    legend_text = (
-        "Top Bottlenecks Legend\n\n"
-        "Bus Only:\n"
-        "  B1: FARINI\n"
-        "  B2: PIAZZA CAVOUR\n"
-        "  B3: GARGANELLI\n"
-        "  B4: PORTA SANTO STEFANO\n"
-        "  B5: MARCONI\n\n"
-        "Planned Tram:\n"
-        "  T1: FARINI\n"
-        "  T2: PIAZZA DELL'UNITA'\n"
-        "  T3: MATTEOTTI A.V.\n"
-        "  T4: UGO BASSI\n"
-        "  T5: SAN FELICE"
-    )
+    # (derived from the actual top-5 rankings)
+    legend_text = build_bottlenecks_legend(top_5_bus, top_5_tram)
     ax.text(
         0.02,
         0.02,
@@ -713,12 +716,16 @@ def plot_bottlenecks_map():
 def plot_comparative_resilience():
     from src.graph import load_cached_graph
     from src.simulator import simulate_removal, compute_weighted_global_efficiency
+    from src.demographic import calculate_demographics_weight
     import numpy as np
 
     G_bus = load_cached_graph("G_bus")
     G_fused = load_cached_graph("G_fused")
     if not G_bus or not G_fused:
         return
+    # Stessi tempi di viaggio CARICATI usati dal CSV di percolazione e dal report
+    calculate_demographics_weight(G_bus, RAW_DIR)
+    calculate_demographics_weight(G_fused, RAW_DIR)
 
     fractions = np.linspace(0, 0.4, 20)
     eff_bus_base = compute_weighted_global_efficiency(G_bus) or 1.0

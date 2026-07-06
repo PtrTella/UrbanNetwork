@@ -161,7 +161,7 @@ def optimize_tram_layout(G_bus, budget_meters=None, num_seeds=None):
         dist = data["dist_meters"]
 
         if total_length + dist > budget_meters:
-            # Opzionale: aggiunge l'ultimo arco anche se sfora leggermente per completare il segmento
+            # L'arco migliore sforerebbe il budget: fermiamo la crescita della rete
             break
 
         selected_edges.add((u, v))
@@ -211,18 +211,23 @@ def evaluate_networks():
     # 2. Esegui l'ottimizzatore
     opt_edges, opt_length = optimize_tram_layout(G_bus)
 
-    # 3. Costruisci il grafo Ottimizzato
-    G_opt = G_bus.copy()
+    # 3. Costruisci il grafo Ottimizzato partendo da una base PULITA (pesi BPR),
+    # poi riapplica la pesatura demografica una sola volta: così le metriche dei
+    # tre scenari sono confrontabili (tutte con dwell dinamici applicati 1 volta).
+    G_opt_clean = load_cached_graph("G_bus")
     for u, v in opt_edges:
         dist_m = G_bus.edges[u, v].get("dist_meters", 100.0)
         tram_time_sec = (
             dist_m / TransitConfig.TRAM_SPEED + TransitConfig.TRAM_BASE_DWELL
         )
-        G_opt.add_edge(
+        G_opt_clean.add_edge(
             u, v, weight=tram_time_sec, type="tram", route="TRAM_OTTIMIZZATA"
         )
-        G_opt.nodes[u]["type"] = "intersezione_bus_tram"
-        G_opt.nodes[v]["type"] = "intersezione_bus_tram"
+        G_opt_clean.nodes[u]["type"] = "intersezione_bus_tram"
+        G_opt_clean.nodes[v]["type"] = "intersezione_bus_tram"
+
+    G_opt = G_opt_clean.copy()
+    calculate_demographics_weight(G_opt, BASE_DIR / "dataset" / "bologna" / "raw")
 
     # 4. Calcolo Metriche
     print("\n -> Calcolo efficienza delle 3 reti...")
@@ -322,14 +327,16 @@ def evaluate_networks():
         f"\n📊 Risultati comparativi salvati in: {OUTPUT_DIR / 'tram_optimization_comparison.csv'}"
     )
 
-    # Salviamo la rete ottimizzata in formato pickle
+    # Salviamo la rete ottimizzata in formato pickle.
+    # IMPORTANTE: salviamo la versione PULITA (pesi base BPR, senza dwell demografici),
+    # perché la cache deve sempre contenere pesi base: la pipeline applica i dwell a runtime.
     graphs_dir = OUTPUT_DIR / "graphs"
     graphs_dir.mkdir(parents=True, exist_ok=True)
     import pickle
 
     with open(graphs_dir / "G_opt_tram.pkl", "wb") as f:
-        pickle.dump(G_opt, f)
-    print(f"💾 Grafo ottimizzato salvato in: {graphs_dir / 'G_opt_tram.pkl'}")
+        pickle.dump(G_opt_clean, f)
+    print(f" Grafo ottimizzato salvato in: {graphs_dir / 'G_opt_tram.pkl'}")
 
     return G_opt
 

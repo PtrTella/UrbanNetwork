@@ -85,6 +85,15 @@ def main():
     print(f"  - Planned Tram P-Space: {G_pspace_fused.number_of_nodes()} stops, {G_pspace_fused.number_of_edges()} cognitive edges.")
     print(f"  - Degree Assortativity (Bus Only):  r = {assort_bus:.4f}")
     print(f"  - Degree Assortativity (Planned Tram): r = {assort_fused:.4f}")
+
+    # Coesione e struttura core-periferia (densita' e k-core, citate nel report)
+    dens_lspace = nx.density(G_bus)
+    dens_pspace = nx.density(G_pspace_bus)
+    core_pspace = nx.core_number(G_pspace_bus)
+    k_max = max(core_pspace.values())
+    inner_core_size = sum(1 for v in core_pspace.values() if v == k_max)
+    print(f"  - Density: L-Space (bus) = {dens_lspace:.5f} | P-Space (bus) = {dens_pspace:.4f}")
+    print(f"  - P-Space k-core (bus): {len(set(core_pspace.values()))} shells, innermost k = {k_max} with {inner_core_size} stops")
     
     # Salviamo i risultati dell'assortatività
     with open(OUTPUT_DIR / "assortativity_results.txt", "w") as f:
@@ -121,7 +130,7 @@ def main():
     
     print("\n -> Generating comparative centrality plots (overlaid scatter, hist, map)...")
     plot_centrality_analysis(df_cent_bus, df_cent_tram)
-    plot_bottlenecks_map()
+    plot_bottlenecks_map(df_cent_bus, df_cent_tram)
 
     # --- L-SPACE MACROSCOPIC METRICS ---
     print("\n" + "=" * 110)
