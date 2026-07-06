@@ -17,8 +17,8 @@
 
 % NOTE: course rules require groups of 3-5 students; list every member as
 % "Name Surname, Degree Programme, ID number (matricola)" per the official template.
-\author{Pietro Tellarini\\ Master's Degree in Artificial Intelligence, 0001145761 \\
-Kawsar Farooq\\ Master's Degree in Artificial Intelligence, 0001157200}
+\author{Pietro Tellarini, Master's Degree in Artificial Intelligence, 0001145761 \\
+Kawsar Farooq, Master's Degree in Artificial Intelligence, 0001157200}
 \date{}
 \title{Network Analysis of the Bologna Transit System: Bottlenecks and Resilience}
 
@@ -155,7 +155,7 @@ We executed the complete pipeline on the baseline scenarios (Bus Only and Planne
     \label{fig:transit_map}
 \end{figure}
 
-\subsubsection{ACT 1: Cognitive Topology (P-space)}
+\subsubsection{Cognitive Topology (P-space)}
 To understand how citizens ``use'' the network beyond physical distances, we analyzed the P-space, where stops are nodes and an undirected edge connects any two stops sharing at least one transit line. The resulting graph is highly dense: the Bus Only P-space consists of 1,253 nodes and 78,277 cognitive edges, while the Planned Tram P-space contains 1,283 nodes and 78,957 cognitive edges.
 
 We evaluated this cognitive topology using two primary measures:
@@ -165,7 +165,7 @@ We evaluated this cognitive topology using two primary measures:
     \item \textbf{Core--Periphery ($k$-core decomposition)}: We use the $k$-core decomposition to expose core--periphery structure, which in P-space captures how deeply each stop is embedded in the mesh of direct-connection cliques. The Bus Only P-space spans 34 coreness shells, from $k=16$ on peripheral branches up to $k=136$: the innermost core contains 137 pairwise-connected stops --- the imprint of the longest trunk routes, centred on multi-line corridor hubs such as Amendola, Piazza dei Martiri, and Marconi (P-space degrees 663, 660, and 626, respectively, against a median of 115). In L-space this measure is uninformative --- the chain-like topology confines every node to shells $k \le 2$ --- which is precisely why core--periphery structure must be read in P-space.
 \end{itemize}
 
-\subsubsection{ACT 2: L-space Physical Bottlenecks \& Centrality Correlations}
+\subsubsection{L-space Physical Bottlenecks \& Centrality Correlations}
 Turning to the physical layout (L-space), we calculated weighted betweenness centrality~\cite{brandes} using travel times (seconds) as edge weights, to identify structural bottlenecks and critical junctions~\cite{kopsidas} (Table~\ref{tab:bottlenecks}).
 
 \begin{table}[H]
