@@ -14,8 +14,12 @@ The study models the transit network through two topological representations:
 
 ### Exogenous Stress & Demographic Pressure
 Rather than analyzing a purely topological network, our pipeline snaps **municipal resident population statistics (2024, by statistical area)** within a 400 m catchment buffer of each stop. Station dwell times are scaled dynamically based on demographic pressure:
-$$t_{dwell} = t_{base\_dwell} + \frac{P_{stop} \cdot \theta}{F_{capacity}}$$
-where $t_{base\_dwell}$ is 5.0 s for buses and 8.0 s for trams, $\theta = 0.015\text{ s/capita}$ is the boarding time coefficient, and $F_{capacity}$ represents boarding door efficiency (1.0 for buses, 3.0 for low-floor trams).
+
+```text
+t_dwell = t_base_dwell + (P_stop * theta) / F_capacity
+```
+
+where `t_base_dwell` is 5.0 s for buses and 8.0 s for trams, `theta = 0.015 s/capita` is the boarding time coefficient, and `F_capacity` represents boarding door efficiency (1.0 for buses, 3.0 for low-floor trams).
 
 ---
 
@@ -26,21 +30,21 @@ Under demographically loaded travel times (dynamic dwell times applied), the L-s
 
 | Metric | Bus Only (Baseline) | Planned Tram (TPER) |
 | :--- | :---: | :---: |
-| **Nodes ($N_{lcc}$)** | 1212 | 1283 |
-| **Edges ($M_{lcc}$)** | 1482 | 1570 |
-| **Avg Travel Time $L$** | 2162.69 sec | 2183.89 sec |
-| **Clustering Coefficient ($C$)** | 0.0113 | 0.0124 |
-| **Global Efficiency ($E_{glob}$)** | $0.000658\text{ s}^{-1}$ | $0.000690\text{ s}^{-1}$ |
-| **Small-World Sigma ($\sigma$)** | 2.35 | 4.29 |
-| **Small-World Omega ($\omega$)** | 0.00 | 0.00 |
+| **Nodes (`N_lcc`)** | 1212 | 1283 |
+| **Edges (`M_lcc`)** | 1482 | 1570 |
+| **Avg Travel Time (`L`)** | 2162.69 sec | 2183.89 sec |
+| **Clustering Coefficient (`C`)** | 0.0113 | 0.0124 |
+| **Global Efficiency (`E_glob`, s^-1)** | 0.000658 | 0.000690 |
+| **Small-World Sigma (`sigma`)** | 2.35 | 4.29 |
+| **Small-World Omega (`omega`)** | 0.00 | 0.00 |
 
-*Note: The collapse of Telesford's Omega ($\omega = 0.00$) is a structural property of L-space transit networks, where the low average degree ($\langle k \rangle \approx 2.4$) yields undefined ratio comparisons with regular lattices.*
+*Note: The collapse of Telesford's Omega (`omega = 0.00`) is a structural property of L-space transit networks, where the low average degree (`<k> approx. 2.4`) yields undefined ratio comparisons with regular lattices.*
 
 ### 1b. Cognitive Topology (P-space)
 Analyzing the transfer-based P-space (nodes = stops, edge = shared line) reveals how passengers experience the network:
 * **Communities:** Louvain detection finds **10 transit basins** (e.g. Borgo Panigale W, San Donato E, Corticella N) — within a basin, most trips need no transfer.
-* **Assortativity:** near-neutral degree correlation ($r = 0.0120$ bus → $0.0179$ with tram).
-* **Core–Periphery:** the P-space is dense (≈0.10 vs ≈0.002 in L-space) and spans **34 k-core shells**, with a 137-stop innermost core at $k = 136$ — the imprint of the longest trunk lines (max degree 663 at Amendola).
+* **Assortativity:** near-neutral degree correlation (`r = 0.0120` bus → `0.0179` with tram).
+* **Core–Periphery:** the P-space is dense (approx. 0.10 vs approx. 0.002 in L-space) and spans **34 k-core shells**, with a 137-stop innermost core at `k = 136` — the imprint of the longest trunk lines (max degree 663 at Amendola).
 
 ### 2. Physical Bottlenecks (L-space Betweenness Centrality)
 We computed weighted Betweenness Centrality based on shortest travel times to locate municipal chokepoints.
@@ -61,9 +65,12 @@ We simulated systemic attacks by removing nodes and measuring the decay of globa
 
 ### 4. Greenfield Tramway Optimization (TNDP)
 We implemented a greenfield greedy optimization algorithm to lay out a new 25 km tramway starting at the seed hubs *Farini* and *Piazza Cavour* (the two highest-scoring nodes by combined betweenness and demographic weight), maximizing a multi-criteria edge utility:
-$$U(e) = \alpha \cdot EB(e) + \beta \cdot \Delta t(e) \cdot EB(e) + \gamma \cdot \text{avg\_pop}(e)$$
 
-| Scenario | Avg Travel Time $L$ (sec) | Global Efficiency $E_{glob}$ ($\text{s}^{-1}$) | Tram Population Served |
+```text
+U(e) = alpha * EB(e) + beta * delta_t(e) * EB(e) + gamma * avg_pop(e)
+```
+
+| Scenario | Avg Travel Time `L` (sec) | Global Efficiency `E_glob` (s^-1) | Tram Population Served |
 | :--- | :---: | :---: | :---: |
 | **Bus Only** | 2162.69 | 0.000658 | N/A |
 | **Planned Tram (TPER)** | 2183.89 | 0.000690 | 33,106 |
@@ -139,7 +146,6 @@ python run_analysis_bologna.py
 
 All plots are generated and saved directly to the `data_output/` and `latex/figures/bologna/` directories.
 
-> **Note on execution order (full rebuild from raw data):** the master pipeline consumes cached graphs and intermediate CSVs. To rebuild everything from scratch, run in order: `src/preprocessing/download.py` → `src/preprocessing/bus.py` → `src/preprocessing/tram.py` → `src/graph.py` (builds and caches the base graphs) → `src/analyzer.py` (exports P-space communities) → `src/demographic.py` (exports demographic pressure CSVs) → `run_analysis_bologna.py`. The graph cache in `data_output/bologna/graphs/` always stores **base BPR travel times**; demographic dwell times are applied at runtime by the pipeline.
 
 ### 3. Interactive Map (optional)
 For a browsable, layer-toggle map of all bus and tram lines:
@@ -148,5 +154,3 @@ For a browsable, layer-toggle map of all bus and tram lines:
 python -m src.visualize
 ```
 Output: `data_output/bologna/bologna_interactive_map.html` (open in any browser).
-
----
