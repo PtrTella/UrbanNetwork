@@ -14,25 +14,33 @@
 \usepackage{booktabs}
 \usepackage[justification=centering,font=small,labelfont=bf]{caption}
 \usepackage{hyperref}
-\setlength{\parskip}{2.5pt plus 1.0pt minus 0.5pt}
+\setlength{\parskip}{3.0pt plus 1.0pt minus 0.5pt}
 \setlength{\abovedisplayskip}{4pt plus 2pt minus 1pt}
 \setlength{\belowdisplayskip}{4pt plus 2pt minus 1pt}
 \setlength{\abovedisplayshortskip}{2pt}
 \setlength{\belowdisplayshortskip}{2pt}
-\renewcommand{\arraystretch}{0.80}
+\renewcommand{\arraystretch}{0.85}
+
+% Compress bibliography spacing
+\let\oldbibliography\thebibliography
+\renewcommand{\thebibliography}[1]{%
+  \oldbibliography{#1}%
+  \setlength{\itemsep}{0pt}%
+  \setlength{\parskip}{0pt}%
+}
 
 % Section spacing adjustments (native LaTeX)
 \makeatletter
 \renewcommand\section{\@startsection {section}{1}{\z@}%
-                                   {-1.5ex \@plus -0.3ex \@minus -.1ex}%
-                                   {0.5ex \@plus.1ex}%
+                                   {-1.3ex \@plus -0.2ex \@minus -.1ex}%
+                                   {0.4ex \@plus.1ex}%
                                    {\normalfont\Large\bfseries}}
 \renewcommand\subsection{\@startsection{subsection}{2}{\z@}%
-                                     {-1.0ex\@plus -0.2ex \@minus -.1ex}%
+                                     {-0.9ex\@plus -0.1ex \@minus -.1ex}%
                                      {0.3ex \@plus .1ex}%
                                      {\normalfont\large\bfseries}}
 \renewcommand\subsubsection{\@startsection{subsubsection}{3}{\z@}%
-                                     {-0.8ex\@plus -0.1ex \@minus -.1ex}%
+                                     {-0.7ex\@plus -0.1ex \@minus -.1ex}%
                                      {0.2ex \@plus .1ex}%
                                      {\normalfont\normalsize\bfseries}}
 \makeatother
@@ -114,7 +122,7 @@ Our research design relies on key literature in complex networks:
     \item \textbf{Robustness under Attack}: Derrible and Kennedy~\cite{derrible} analyzed 33 metro systems globally, showing that transit networks are often scale-free-like structures dominated by major transfer hubs. This topology exhibits high resistance to random failures but extreme fragility under targeted attacks.
 \end{itemize}
 
-The main contribution of this project is a data-driven, reproducible analysis pipeline for Bologna. The complete source code and generated datasets are open source and available on GitHub in the \href{https://github.com/PtrTella/UrbanNetwork/tree/feature/bologna-transit-analysis}{\texttt{feature/bologna-transit-analysis}} branch. It models traffic congestion via the Bureau of Public Roads (BPR) function, maps municipal population data onto the network, and simulates structural percolation.
+The main contribution of this project is a data-driven, reproducible analysis pipeline for Bologna. The complete source code and generated datasets are open source and available on GitHub at \href{https://github.com/PtrTella/UrbanNetwork}{\texttt{PtrTella/UrbanNetwork}}. It models traffic congestion via the Bureau of Public Roads (BPR) function, maps municipal population data onto the network, and simulates structural percolation.
 
 \section{Datasets}
 \label{datasets}
@@ -136,7 +144,7 @@ We used the Python library \texttt{GeoPandas} for spatial data processing (inclu
 To guarantee the \textbf{validity} of our model (how closely it mirrors the real physical system), we developed a hybrid network--physical framework. Rather than restricting the study to a purely topological analysis, we overlaid a geographical and transportation-engineering engine implementing the following core components.
 
 \subsection{L-space vs. P-space Representation}
-In transit network analysis, networks can be modeled in L-space (nodes represent physical stops, edges denote consecutive adjacent service hops) or P-space (edges connect any two stops sharing a transit line). We selected L-space as the primary representation because it preserves the physical layout of roads and rails. This is a prerequisite for studying infrastructural vulnerability, localized road congestion, and detour routing~\cite{derrible}. The P-space representation is used in Act~1 to study transfer-free travel and community structure.
+In transit network analysis, networks can be modeled in L-space (nodes represent physical stops, edges denote consecutive adjacent service hops) or P-space (edges connect any two stops sharing a transit line). We selected L-space as the primary representation because it preserves the physical layout of roads and rails. This is a prerequisite for studying infrastructural vulnerability, localized road congestion, and detour routing~\cite{derrible}. The P-space representation is instead used to study transfer-free travel and community structure.
 
 \subsection{BPR Congestion Weights (Supply Friction)}
 Instead of static geographical distances, edges are weighted by travel times (in seconds):
@@ -146,42 +154,27 @@ $$v_{effective} = \frac{v_{base}}{1 + \alpha_{bus} \left( \frac{V + PCU_{bus}}{C
 where $v_{base}$ is the commercial base speed ($15.0\text{ km/h}$, i.e.\ $4.16\text{ m/s}$, for buses; $20.0\text{ km/h}$, i.e.\ $5.5\text{ m/s}$, for trams, which run on protected right-of-way and are therefore exempt from the congestion term), $V$ is the hourly traffic volume from municipal loop detectors, and $C$ is the road capacity. Crucially, rather than using a uniform value, $C$ is estimated for each segment from the nearest loop detector, defined as $110\%$ of the absolute historical peak flow observed by that sensor (clamped to a minimum of $300\text{ veh/h}$ to avoid mathematical anomalies on minor streets). Segments without usable detector data fall back to a standard urban lane capacity of $800\text{ veh/h}$. The coefficient $\alpha_{bus}=0.20$ and exponent $\beta=4.0$ are standard BPR congestion parameters, and $PCU_{bus} = 2.5$ is the Passenger Car Unit equivalent representing the road occupancy of a standard bus. To prevent total gridlock in the model, the effective speed is clamped to a minimum commercial speed of $1.0\text{ m/s}$ ($3.6\text{ km/h}$), representing crawl speed under total congestion.
 
 \subsection{Demographic Snapping \& Baseline Passenger Pressure}
-To realistically represent passenger demand, neighbourhood-level resident population data (2024 municipal statistics) were mapped to physical transit stops. Because GTFS stop names and the municipal stop registry do not match perfectly, we implemented a hybrid matching algorithm with a pedestrian catchment radius of $400\text{ m}$ (roughly a 5-minute walk). The population of each statistical area is divided equally among the stops located within it, and the resulting per-stop weights are assigned as follows:
-\begin{enumerate}
-    \item Stops with an exact (normalized) name match in the municipal stop registry are associated directly.
-    \item Unmatched stops are snapped to the nearest georeferenced stop record with a known statistical area, within a maximum radius of $400\text{ m}$.
-    \item Extra-urban stops, and stops beyond the catchment limit, are assigned a zero baseline value.
-\end{enumerate}
+To realistically represent passenger demand, neighbourhood-level resident population data (2024 municipal statistics) were mapped to physical transit stops. Because GTFS stop names and the municipal stop registry do not match perfectly, we implemented a hybrid matching algorithm with a pedestrian catchment radius of $400\text{ m}$ (roughly a 5-minute walk). The population of each statistical area is divided equally among the stops located within it. Using this approach, we successfully mapped demographic data to 1,082 urban stops (via exact name or spatial snapping), while 201 extra-urban stops received a zero baseline weight.
 
-Running this snapping pipeline on the integrated Planned Tram network (1,283 stops) produced the following results:
-\begin{itemize}
-    \item \textbf{Exact matches by name}: 1,017 stops.
-    \item \textbf{Spatial snaps (catchment buffer $\le 400\text{ m}$)}: 65 stops.
-    \item \textbf{Unassociated/extra-urban stops}: 201 stops.
-\end{itemize}
-
-Table~\ref{tab:top_pop_stops} lists the five stops with the highest demographic passenger pressure. Note that ranks 2--5 are tied: these stops belong to the same statistical area (Borgo Panigale), whose population is divided equally among its stops.
-
-\begin{table}[!htbp]
-    \centering
-    \footnotesize
-    \caption{Top 5 Transit Stops by Snapped Demographic Population}
-    \label{tab:top_pop_stops}
-    \begin{tabular}{clc}
-        \toprule
-        Rank & Stop Name & \shortstack{Snapped Population\\(Residents)} \\
-        \midrule
-        1 & SAN DONNINO & 2,922 \\
-        2 & SCALA & 1,583 \\
-        3 & CHIESA BORGO PANIGALE & 1,583 \\
-        4 & BORGO PANIGALE - MUSEO DUCATI & 1,583 \\
-        5 & BORGO PANIGALE CIMITERO & 1,583 \\
-        \bottomrule
-    \end{tabular}
-\end{table}
-
-This demographic pressure directly scales the station dwell times: each edge inherits an additional boarding-time penalty proportional to the population served by its downstream stop, so high-population stops dynamically inflate travel times on their incident edges:
+This demographic pressure directly scales the station dwell times: each edge inherits an additional boarding-time penalty proportional to the population served by its downstream stop, so high-population stops dynamically inflate travel times on their incident edges (see Figure~\ref{fig:demographic_pressure}):
 $$t_{dwell} = t_{base\_dwell} + \frac{P_{stop} \cdot \theta}{F_{capacity}}$$
+
+\begin{figure}[!htbp]
+    \centering
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth,height=4.8cm,keepaspectratio]{figures/bologna/bologna_demographic_pressure_map.png}
+        \caption{Demographic pressure density overlaid on the integrated transit network. Node size and color represent snapped resident population.}
+        \label{fig:demographic_pressure}
+    \end{minipage}%
+    \hfill
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth,height=4.8cm,keepaspectratio]{figures/bologna/bologna_static_network.png}
+        \caption{Topological L-space map of Bologna's integrated transit network. Grey lines indicate bus routes; the thick red and green lines represent the planned high-capacity tramway (Line 1/Rossa and Line 2/Verde).}
+        \label{fig:transit_map}
+    \end{minipage}
+\end{figure}
 where $t_{base\_dwell}$ is $5.0\text{ s}$ for buses and $8.0\text{ s}$ for trams, $\theta = 0.015\text{ s/capita}$ is the marginal boarding time per potential passenger, and $F_{capacity}$ is a door-capacity boarding factor ($1.0$ for buses, $3.0$ for trams). The factor $F_{capacity} = 3.0$ reflects the boarding-speed advantage of modern trams: while a standard bus has 2--3 narrow doors with steps, a tram offers 4--6 wide double-doors and full low-floor level boarding, allowing roughly three times faster passenger exchange. This formulation links physical network topology directly to urban demographic demand, in line with recent empirical evidence that node importance correlates strongly with passenger demand in urban public transport systems~\cite{sfiligoj}, and allows us to evaluate bottlenecks under realistic pressure.
 
 \subsection{Modeling Assumptions and Symmetries}
@@ -201,12 +194,7 @@ To ensure \textbf{reliability} (reproducibility), all stochastic null models and
 \subsection{Classical Baseline Transit Study}
 We executed the complete pipeline on the baseline scenarios (Bus Only and Planned Tram). Figure~\ref{fig:transit_map} illustrates the spatial layout of the integrated network.
 
-\begin{figure}[!htbp]
-    \centering
-    \includegraphics[width=0.45\textwidth,height=4.2cm,keepaspectratio]{figures/bologna/bologna_static_network.png}
-    \caption{Topological L-space map of Bologna's integrated transit network. Grey lines indicate bus routes; the thick red and green lines represent the planned high-capacity tramway (Line 1/Rossa and Line 2/Verde).}
-    \label{fig:transit_map}
-\end{figure}
+
 
 \subsubsection{Cognitive Topology (P-space)}
 To understand how citizens navigate the network, we analyzed the P-space, where an edge connects any two stops sharing a transit line. This creates a highly dense graph of ``transfer-free'' trips: the Bus Only P-space contains 1,253 nodes and 78,277 edges, while the Planned Tram P-space contains 1,283 nodes and 78,957 edges.
@@ -248,14 +236,14 @@ These locations correspond to the narrow historical corridors in the southern pa
     \centering
     \begin{minipage}{0.48\textwidth}
         \centering
-        \includegraphics[width=\textwidth,height=3.2cm,keepaspectratio]{figures/bologna/bologna_communities_map.png}
+        \includegraphics[width=\textwidth,height=3.6cm,keepaspectratio]{figures/bologna/bologna_communities_map.png}
         \caption{Community detection (Louvain) on the Bus Only P-space.}
         \label{fig:communities}
     \end{minipage}%
     \hfill
     \begin{minipage}{0.48\textwidth}
         \centering
-        \includegraphics[width=\textwidth,height=3.2cm,keepaspectratio]{figures/bologna/bologna_bottlenecks_map.png}
+        \includegraphics[width=\textwidth,height=3.6cm,keepaspectratio]{figures/bologna/bologna_bottlenecks_map.png}
         \caption{Spatial distribution of L-space betweenness centrality.}
         \label{fig:bottlenecks_map}
     \end{minipage}
@@ -264,14 +252,14 @@ These locations correspond to the narrow historical corridors in the southern pa
     
     \begin{minipage}{0.48\textwidth}
         \centering
-        \includegraphics[width=\textwidth,height=3.2cm,keepaspectratio]{figures/bologna/bologna_centrality_scatter.png}
+        \includegraphics[width=\textwidth,height=3.6cm,keepaspectratio]{figures/bologna/bologna_centrality_scatter.png}
         \caption{Degree vs betweenness centrality (jitter applied).}
         \label{fig:centrality_scatter}
     \end{minipage}%
     \hfill
     \begin{minipage}{0.48\textwidth}
         \centering
-        \includegraphics[width=\textwidth,height=3.2cm,keepaspectratio]{figures/bologna/bologna_betweenness_hist.png}
+        \includegraphics[width=\textwidth,height=3.6cm,keepaspectratio]{figures/bologna/bologna_betweenness_hist.png}
         \caption{Betweenness distribution (values $>0$) with a KDE curve.}
         \label{fig:betweenness_hist}
     \end{minipage}
@@ -342,38 +330,20 @@ We first simulated a \textbf{dynamic targeted attack} in which centralities are 
 
 We then performed a global percolation simulation on the baseline network comparing three ``operative stress'' scenarios: random failure, accidents (removal probabilities weighted by historical accident counts), and targeted attack (removing nodes in decreasing order of initial betweenness centrality). Figure~\ref{fig:resilience} shows the percolation curves.
 
-To evaluate the ``exogenous stress'' dimension, we overlaid the demographic population data directly onto the network topology, adjusting station dwell times dynamically according to passenger pressure (Figure~\ref{fig:demographic_pressure}).
-
 \begin{figure}[!htbp]
     \centering
     \begin{minipage}{0.48\textwidth}
         \centering
-        \includegraphics[width=\textwidth,height=3.2cm,keepaspectratio]{figures/bologna/bologna_resilience_curves.png}
+        \includegraphics[width=\textwidth,height=4.4cm,keepaspectratio]{figures/bologna/bologna_resilience_curves.png}
         \caption{Operative stress: percolation curves (Left: size, Right: efficiency).}
         \label{fig:resilience}
     \end{minipage}%
     \hfill
     \begin{minipage}{0.48\textwidth}
         \centering
-        \includegraphics[width=\textwidth,height=3.2cm,keepaspectratio]{figures/bologna/bologna_demographic_pressure_map.png}
-        \caption{Exogenous stress: demographic pressure density overlaid.}
-        \label{fig:demographic_pressure}
-    \end{minipage}
-    
-    \vspace{0.8em}
-    
-    \begin{minipage}{0.48\textwidth}
-        \centering
-        \includegraphics[width=\textwidth,height=3.2cm,keepaspectratio]{figures/bologna/bologna_resilience_comparison.png}
+        \includegraphics[width=\textwidth,height=4.4cm,keepaspectratio]{figures/bologna/bologna_resilience_comparison.png}
         \caption{Comparative resilience under targeted attack (Bus vs Planned Tram).}
         \label{fig:comparative_resilience}
-    \end{minipage}%
-    \hfill
-    \begin{minipage}{0.48\textwidth}
-        \centering
-        \includegraphics[width=\textwidth,height=3.2cm,keepaspectratio]{figures/bologna/bologna_optimized_layout.png}
-        \caption{Optimal tramway layout designed by the greedy TNDP algorithm.}
-        \label{fig:optimized_layout}
     \end{minipage}
 \end{figure}
 
@@ -397,7 +367,12 @@ To support spatial planning from an algorithmic perspective, we implemented a gr
 $$U(e) = \alpha \cdot EB(e) + \beta \cdot \Delta t(e) \cdot EB(e) + \gamma \cdot \text{avg\_pop}(e)$$
 with $\alpha=\beta=\gamma=1$, assuming an equal baseline weighting for topological importance, travel-time savings, and demographic coverage. Here $EB(e)$ is the edge betweenness, $\Delta t(e)$ the travel-time saving from tram conversion, and $\text{avg\_pop}(e)$ the average population served by the edge's endpoints; each component is normalized to $[0, 1]$ by Min--Max scaling across all edges to guarantee dimensional consistency. The resulting layout, a single 24.85 km corridor network through the densest and most central axes, is shown in Figure~\ref{fig:optimized_layout}.
 
-% Comparative resilience comparison and optimal layout map are combined above with resilience curves and demographic pressure map
+\begin{figure}[!htbp]
+    \centering
+    \includegraphics[width=0.75\textwidth,height=7cm,keepaspectratio]{figures/bologna/bologna_optimized_layout.png}
+    \caption{Optimal tramway layout designed by the greedy TNDP algorithm, focusing on central density and betweenness.}
+    \label{fig:optimized_layout}
+\end{figure}
 
 \subsubsection{Comparative Performance under Demographic Load}
 Table~\ref{tab:tram_optimization} compares the performance of the four scenarios. All metrics are computed under the same demographic load as Table~\ref{tab:macroscopic} (dynamic dwell times applied uniformly), so the four rows are directly comparable.
@@ -431,7 +406,7 @@ To evaluate how these infrastructures absorb massive commuter congestion, we ran
     \centering
     \begin{minipage}{0.48\textwidth}
         \centering
-        \includegraphics[width=\textwidth,height=3.8cm,keepaspectratio]{figures/bologna/bologna_forced_injection_shock.png}
+        \includegraphics[width=\textwidth,height=4.8cm,keepaspectratio]{figures/bologna/bologna_forced_injection_shock.png}
         \caption{Average travel time from the injection hubs as a function of the injected commuter volume.}
         \label{fig:forced_injection}
     \end{minipage}%
@@ -485,7 +460,6 @@ Several limitations of the present pipeline should be acknowledged:
 
 Despite these limitations, the study demonstrates the value of Network Science for evaluating urban transport interventions, suggesting that the Bologna tramway can substantially improve city-wide mobility, particularly if radial lines are complemented by an orbital bypass corridor.
 
-\clearpage
 \begin{multicols}{2}[\section*{\refname}]
 \makeatletter
 \renewcommand{\section}[2]{}
