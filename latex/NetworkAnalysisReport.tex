@@ -14,7 +14,7 @@
 \usepackage{booktabs}
 \usepackage[justification=centering,font=small,labelfont=bf]{caption}
 \usepackage{hyperref}
-\setlength{\parskip}{3.0pt plus 1.0pt minus 0.5pt}
+\setlength{\parskip}{2.4pt plus 1.0pt minus 0.5pt}
 \setlength{\abovedisplayskip}{4pt plus 2pt minus 1pt}
 \setlength{\belowdisplayskip}{4pt plus 2pt minus 1pt}
 \setlength{\abovedisplayshortskip}{2pt}
@@ -96,7 +96,7 @@ This project examines the topological structure of the public transit network of
 Our analysis models these transit layers as complex spatial networks across a structured narrative:
 \begin{itemize}
     \item \textbf{Data and Methodology (Baseline Setup)}: GTFS and OpenStreetMap data cleaning, mapping of municipal population statistics to stations, and construction of L-space and P-space topologies weighted by traffic congestion and population pressure.
-    \item \textbf{Classical Baseline Transit Study}: Analysis of cognitive P-space communities, physical L-space bottlenecks, macroscopic small-world indices, and resilience under random and targeted failures for the Bus Only and Planned Tram networks.
+    \item \textbf{Baseline Transit Study}: Analysis of cognitive P-space communities, physical L-space bottlenecks, macroscopic small-world indices, and resilience under random and targeted failures for the Bus Only and Planned Tram networks.
     \item \textbf{Future Scenarios Exploration}: Two predictive scenarios: upgrading the circular ring-road Lines 32/33 into a fast tramway, and designing an optimal tramway from scratch with a multi-criteria greedy algorithm.
     \item \textbf{Commuter Shock Analysis}: Stress-testing all four networks under massive commuter injections at the central station hubs to compare local shock absorption.
 \end{itemize}
@@ -129,7 +129,7 @@ The main contribution of this project is a data-driven, reproducible analysis pi
 
 The data was compiled from multiple open municipal and open-source datasets to ensure reproducibility:
 \begin{enumerate}
-    \item \textbf{GTFS (General Transit Feed Specification)}: Obtained from TPER (Trasporto Passeggeri Emilia-Romagna), the regional transport operator. The feed was filtered through a curated white-list of urban routes, so that the resulting graph represents the urban bus network of Bologna (radial, tangential, and city-centre shuttle lines).
+    \item \textbf{GTFS Feed}: Obtained from TPER (Trasporto Passeggeri Emilia-Romagna), the regional transport operator. The feed was filtered through a curated white-list of urban routes, so that the resulting graph represents the urban bus network of Bologna (radial, tangential, and city-centre shuttle lines).
     \item \textbf{OpenStreetMap (OSM)}: Tram stop locations (existing, under construction, and proposed) were extracted via the Overpass API using a custom script. The stop sequences and branch topology of the new tram routes (Line 1/Rossa and Line 2/Verde) were curated in a structured JSON file and geocoded against the OSM extract, with fallbacks on GTFS bus-stop coordinates and the Nominatim geocoder.
     \item \textbf{Traffic Spire Flows}: Sourced from the Open Data portal of the Municipality of Bologna, capturing vehicle counts measured by induction-loop detectors in 2026.
     \item \textbf{Accidents Dataset}: Municipal registry of road accidents, used to compute a localized risk index within a 300-metre buffer of each bus stop.
@@ -230,7 +230,7 @@ Turning to the physical layout (L-space), we calculated weighted betweenness cen
     \end{tabular}
 \end{table}
 
-These locations correspond to the narrow historical corridors in the southern part of Bologna's centre (e.g., Via Farini, Piazza Cavour), acting as crucial bridge points between different sectors of the city. Figure~\ref{fig:bottlenecks_map} maps these physical chokepoints geographically.
+These locations correspond to narrow historical corridors in the southern part of Bologna's centre (e.g., Via Farini, Piazza Cavour), acting as bridge points between sectors. Figure~\ref{fig:bottlenecks_map} maps these chokepoints geographically.
 
 \begin{figure}[!htbp]
     \centering
@@ -274,7 +274,7 @@ The regression lines capture the general positive trend. Crucially, the top-5 ph
 Figure~\ref{fig:betweenness_hist} presents the probability density of betweenness centrality values greater than zero. The distribution is highly right-skewed and heavy-tailed: the vast majority of nodes have negligible betweenness, whereas a tiny elite of bottlenecks controls the transit flows across the municipal area.
 
 \subsubsection{Macroscopic Analysis: Small-Worldness and Efficiency}
-We computed the average shortest-path travel time ($L$), the clustering coefficient ($C$, calculated on the giant component for mathematical consistency), the global efficiency ($E_{glob}$)~\cite{latora}, the small-world index $\sigma$ (Watts--Strogatz-type comparison against Erd\H{o}s--R\'enyi null models of matched size and density), and Telesford's small-world index $\omega$~\cite{telesford} for the two baseline scenarios (Table~\ref{tab:macroscopic}). All metrics are computed on demographically loaded travel times, i.e.\ with the dynamic dwell-time penalties of Section~\ref{validity-and-reliability} applied uniformly; the topological indices $\sigma$ and $\omega$ are computed on the unweighted topology (hop distances) of the giant component.
+We calculated the average shortest-path travel time ($L$), clustering coefficient ($C$, on the giant component), global efficiency ($E_{glob}$)~\cite{latora}, small-world index $\sigma$ (compared to Erd\H{o}s--R\'enyi null models), and Telesford's $\omega$~\cite{telesford} (Table~\ref{tab:macroscopic}). All metrics use the demographically loaded travel times of Section~\ref{validity-and-reliability}; the topological indices $\sigma$ and $\omega$ are computed on the unweighted hop distances of the giant component.
 
 % Table 3 is combined below with Table 4
 
@@ -328,7 +328,7 @@ We first simulated a \textbf{dynamic targeted attack} in which centralities are 
     \end{minipage}
 \end{table}
 
-We then performed a global percolation simulation on the baseline network comparing three ``operative stress'' scenarios: random failure, accidents (removal probabilities weighted by historical accident counts), and targeted attack (removing nodes in decreasing order of initial betweenness centrality). Figure~\ref{fig:resilience} shows the percolation curves.
+We performed a global percolation simulation on the baseline network comparing three stress scenarios: random failure, accidents (removal weighted by accident history), and targeted attack (removing nodes by decreasing betweenness centrality). Figure~\ref{fig:resilience} shows the percolation curves.
 
 \begin{figure}[!htbp]
     \centering
@@ -369,7 +369,7 @@ with $\alpha=\beta=\gamma=1$, assuming an equal baseline weighting for topologic
 
 \begin{figure}[!htbp]
     \centering
-    \includegraphics[width=0.75\textwidth,height=7cm,keepaspectratio]{figures/bologna/bologna_optimized_layout.png}
+    \includegraphics[width=0.75\textwidth,height=6cm,keepaspectratio]{figures/bologna/bologna_optimized_layout.png}
     \caption{Optimal tramway layout designed by the greedy TNDP algorithm, focusing on central density and betweenness.}
     \label{fig:optimized_layout}
 \end{figure}
@@ -400,13 +400,13 @@ The Circular Tram achieves the highest global efficiency ($0.000702\text{ s}^{-1
 This performance gap highlights a crucial planning insight: the Planned Tram extends into peripheral radial corridors, maximizing municipal reach but adding long routes that inflate average travel times. In contrast, the optimization concentrates the $25\text{ km}$ budget precisely along the high-betweenness, high-congestion, and high-density corridors of the inner urban ring and main radial paths. Topology-driven design models can therefore improve both commuter travel times and population coverage per unit of infrastructure built.
 
 \subsubsection{Commuter Shock: Forced Passenger Hub Injection}
-To evaluate how these infrastructures absorb massive commuter congestion, we ran a forced passenger injection simulation at \textit{Stazione Centrale} and the \textit{Autostazione}, Bologna's main inter-modal hubs.
+To evaluate how these systems handle massive commuter congestion, we simulated a passenger injection at Bologna's main hubs, \textit{Stazione Centrale} and \textit{Autostazione}.
 
 \begin{figure}[!htbp]
     \centering
     \begin{minipage}{0.48\textwidth}
         \centering
-        \includegraphics[width=\textwidth,height=4.8cm,keepaspectratio]{figures/bologna/bologna_forced_injection_shock.png}
+        \includegraphics[width=\textwidth,height=4.2cm,keepaspectratio]{figures/bologna/bologna_forced_injection_shock.png}
         \caption{Average travel time from the injection hubs as a function of the injected commuter volume.}
         \label{fig:forced_injection}
     \end{minipage}%
@@ -440,7 +440,7 @@ Under a massive commuter shock of 100,000 passengers:
 \begin{itemize}
     \item The Bus Only, Planned Tram, and Optimal Tram networks experience extreme congestion, with average travel times roughly doubling (from about 23--25 minutes to about 48--50 minutes).
     \item The Circular Tram mitigates the congestion, maintaining an average travel time of \textbf{41.61 minutes}, saving \textbf{7.05 minutes} ($14.5\%$) compared to the Planned Tram layout.
-    \item \textbf{Physical interpretation}: Since Stazione Centrale and Autostazione lie directly on the historic ring road, upgrading the circular corridor (Lines 32/33) into a fast tramway lets commuters disperse immediately clockwise and counter-clockwise without entering the congested core. In contrast, the radial Planned Tram lines (Red and Green) and the Optimal Tram layout route passengers through the historic centre, which becomes a bottleneck under high commuter volumes. Circular bypass corridors are therefore essential to absorb passenger shocks originating at central inter-modal hubs.
+    \item \textbf{Physical Interpretation}: Since the two hubs lie on the historic ring road, upgrading the circular bypass (Lines 32/33) to a fast tramway lets commuters disperse immediately along the ring without entering the congested core. In contrast, radial plans (Planned and Optimal Trams) route passengers through the historic centre, creating bottlenecks under high volume. Circular bypasses are therefore key to absorbing hub commuter shocks.
 \end{itemize}
 
 \section{Conclusion}
@@ -452,7 +452,7 @@ The analysis shows that transit networks are highly sensitive to spatial chokepo
 \label{critique}
 
 Several limitations of the present pipeline should be acknowledged:
-\begin{enumerate}
+\begin{enumerate}\itemsep=0pt\parsep=0pt
     \item \textbf{Static Demand Proxy}: Resident population mapped to stops is used as a proxy for demand, which does not capture actual origin--destination (O--D) passenger matrices. A more advanced approach would ingest real ticketing (smart card) data to weight nodes by observed passenger volumes.
     \item \textbf{Local-Optimum Bias}: The greedy tramway optimizer grows lines step-by-step from seed nodes and can be trapped in local optima. Metaheuristics such as evolutionary algorithms or simulated annealing could yield better global designs.
     \item \textbf{No Explicit Transfer Friction}: Bus--tram interchanges within the $30\text{ m}$ snapping radius are merged into single nodes, so line changes incur no waiting or inconvenience penalty in the model. In reality, transfers impose both waiting times (dependent on heterogeneous line headways) and a cognitive cost; a multilayer formulation with explicit transfer edges would capture this friction.
@@ -460,11 +460,11 @@ Several limitations of the present pipeline should be acknowledged:
 
 Despite these limitations, the study demonstrates the value of Network Science for evaluating urban transport interventions, suggesting that the Bologna tramway can substantially improve city-wide mobility, particularly if radial lines are complemented by an orbital bypass corridor.
 
-\begin{multicols}{2}[\section*{\refname}]
+\begin{multicols}{2}[\vspace{-0.5em}\section*{\refname}\vspace{-0.3em}]
 \makeatletter
 \renewcommand{\section}[2]{}
 \makeatother
-\footnotesize
+\scriptsize\raggedright
 \bibliographystyle{plain}
 \bibliography{references}
 \end{multicols}
