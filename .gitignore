@@ -332,8 +332,8 @@ pythontex-files-*/
 *.pk
 .vscode/
 cache/
+build/
 *.zip
 *.DS_Store
-!latex/build/NetworkAnalysisReport.pdf
 scratch/
 NAteching.md
