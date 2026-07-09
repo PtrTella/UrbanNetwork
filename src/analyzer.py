@@ -1,6 +1,4 @@
-import sys
 from pathlib import Path
-sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 import networkx as nx
 import pandas as pd
@@ -188,11 +186,15 @@ def compute_small_worldness(G, er_runs=5):
 
 
 if __name__ == "__main__":
+    import sys
+    _ROOT = Path(__file__).resolve().parent.parent
+    if str(_ROOT) not in sys.path:
+        sys.path.insert(0, str(_ROOT))
     from src.graph import load_cached_graph
     from pathlib import Path
 
     BASE_DIR = Path(__file__).resolve().parent.parent
-    OUTPUT_DIR = BASE_DIR / "data_output" / "bologna"
+    OUTPUT_DIR = BASE_DIR / "data" / "out"
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
     print("Running Network Analysis...")
@@ -204,7 +206,7 @@ if __name__ == "__main__":
     # Senza questo passo, rilanciare questo modulo dopo la pipeline sovrascriverebbe
     # centrality_results.csv / macroscopic_results.csv con valori non caricati.
     from src.demographic import calculate_demographics_weight
-    RAW_DIR = BASE_DIR / "dataset" / "bologna" / "raw"
+    RAW_DIR = BASE_DIR / "data" / "raw"
     calculate_demographics_weight(G_bus, RAW_DIR)
     calculate_demographics_weight(G_fused, RAW_DIR)
 

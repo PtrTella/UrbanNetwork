@@ -1,4 +1,31 @@
 # src/config.py
+from pathlib import Path
+
+
+class ProjectPaths:
+    """Percorsi radice del progetto — ogni modulo costruisce i propri path da qui.
+
+    Struttura:
+        <root>/
+          data/raw/         ← dati grezzi (GTFS, CSV comunali, OSM)
+          data/processed/   ← CSV pre-processati (stazioni, connessioni)
+          data/out/         ← output analisi (CSV metriche, grafi .pkl)
+            graphs/         ← grafi pickled
+          latex/figures/    ← immagini generate per il report LaTeX
+    """
+
+    BASE: Path = Path(__file__).resolve().parent.parent
+    RAW: Path = BASE / "data" / "raw"
+    PROCESSED: Path = BASE / "data" / "processed"
+    OUT: Path = BASE / "data" / "out"
+    GRAPHS: Path = OUT / "graphs"
+    FIGURES: Path = BASE / "latex" / "figures"
+
+    @classmethod
+    def ensure_dirs(cls) -> None:
+        """Crea le directory di output se non esistono."""
+        for d in (cls.PROCESSED, cls.OUT, cls.GRAPHS, cls.FIGURES):
+            d.mkdir(parents=True, exist_ok=True)
 
 
 class TransitConfig:

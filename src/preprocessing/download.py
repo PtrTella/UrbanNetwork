@@ -1,10 +1,12 @@
 import requests
 import os
+from pathlib import Path
 import pandas as pd
 
 # 1. Setup delle directory
-RAW_DIR = "dataset/bologna/raw"
-PROCESSED_DIR = "dataset/bologna/processed"
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+RAW_DIR = BASE_DIR / "data" / "raw"
+PROCESSED_DIR = BASE_DIR / "data" / "processed"
 os.makedirs(RAW_DIR, exist_ok=True)
 os.makedirs(PROCESSED_DIR, exist_ok=True)
 
@@ -70,14 +72,12 @@ def download_osm_tram_stops(output_path):
             tags = el.get("tags", {})
             name = tags.get("name", "")
             if name:  # Salviamo solo i nodi che hanno un nome
-                rows.append(
-                    {
-                        "osm_id": el["id"],
-                        "stop_name": name,
-                        "lat": el["lat"],
-                        "lon": el["lon"],
-                    }
-                )
+                rows.append({
+                    "osm_id": el["id"],
+                    "stop_name": name,
+                    "lat": el["lat"],
+                    "lon": el["lon"],
+                })
 
         df = pd.DataFrame(rows)
         df.to_csv(output_path, index=False)

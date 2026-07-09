@@ -1,17 +1,17 @@
 # src/scenarios.py
 import pandas as pd
 from pathlib import Path
-from src.graph import haversine
-from src.config import TransitConfig
+from .graph import haversine
+from .config import TransitConfig
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-PROCESSED_DIR = BASE_DIR / "dataset" / "bologna" / "processed"
+PROCESSED_DIR = BASE_DIR / "data" / "processed"
 
 
 def inject_hypothetical_tram(G_base, route_to_upgrade="32"):
     G_hypo = G_base.copy()
     df_bus_edges = pd.read_csv(PROCESSED_DIR / "bologna_connections.csv")
-    
+
     # Se l'upgrade riguarda la linea 32 o 33, aggiorniamo entrambe le circolari (oraria/antioraria)
     if str(route_to_upgrade) in ["32", "33"]:
         routes_to_upgrade = ["32", "33"]
@@ -34,7 +34,9 @@ def inject_hypothetical_tram(G_base, route_to_upgrade="32"):
             )
 
             # TRASFORMAZIONE IN TRAM: Viaggia alla velocità del tram costante senza subire il traffico dei viali!
-            tram_time_sec = dist_m / TransitConfig.TRAM_SPEED + TransitConfig.TRAM_BASE_DWELL
+            tram_time_sec = (
+                dist_m / TransitConfig.TRAM_SPEED + TransitConfig.TRAM_BASE_DWELL
+            )
             G_hypo.add_edge(
                 u, v, weight=tram_time_sec, type="tram", route="TRAM_CIRCOLARE_FUTURA"
             )

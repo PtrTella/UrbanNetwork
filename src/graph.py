@@ -1,16 +1,14 @@
 # src/graph.py
-import sys
 from pathlib import Path
-sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 import pandas as pd
 import networkx as nx
 import numpy as np
 
-from src.config import TransitConfig  # <-- Importiamo la configurazione
+from .config import TransitConfig, ProjectPaths  # <-- Importiamo la configurazione
 
-BASE_DIR = Path(__file__).resolve().parent.parent
-PROCESSED_DIR = BASE_DIR / "dataset" / "bologna" / "processed"
+BASE_DIR = ProjectPaths.BASE
+PROCESSED_DIR = ProjectPaths.PROCESSED
 
 
 def haversine(lat1, lon1, lat2, lon2):
@@ -148,12 +146,12 @@ def load_bologna_graph(scenario="bus_only", integration_mode="fused"):
 
 def load_cached_graph(name, scenario=None, integration_mode="fused"):
     """
-    Tenta di caricare un grafo salvato in formato pickle da data_output/bologna/graphs/.
+    Tenta di caricare un grafo salvato in formato pickle da data/out/graphs/.
     Se non esiste, lo calcola al volo e lo salva.
     """
     import pickle
 
-    cache_path = BASE_DIR / "data_output" / "bologna" / "graphs" / f"{name}.pkl"
+    cache_path = BASE_DIR / "data" / "out" / "graphs" / f"{name}.pkl"
     if cache_path.exists():
         try:
             with open(cache_path, "rb") as f:
@@ -171,18 +169,18 @@ def load_cached_graph(name, scenario=None, integration_mode="fused"):
     elif name == "G_multiplex":
         G = load_bologna_graph(scenario="tram", integration_mode="multiplex")
     elif name == "G_futuro":
-        from src.scenarios import inject_hypothetical_tram
+        from .scenarios import inject_hypothetical_tram
         G_f = load_cached_graph("G_fused")
         G = inject_hypothetical_tram(G_f, route_to_upgrade="32")
     elif name == "G_opt_tram":
-        from src.tram_optimizer import optimize_tram_layout
+        from .tram_optimizer import optimize_tram_layout
         G_b = load_cached_graph("G_bus")
-        from src.demographic import calculate_demographics_weight
+        from .demographic import calculate_demographics_weight
         # Le utilità dell'ottimizzatore vanno calcolate sui pesi caricati (dwell demografici),
         # ma la cache deve contenere SOLO i pesi base BPR: altrimenti la pipeline
         # riapplicherebbe i dwell una seconda volta (doppio conteggio) solo su questo grafo.
         G_work = G_b.copy()
-        calculate_demographics_weight(G_work, BASE_DIR / "dataset" / "bologna" / "raw")
+        calculate_demographics_weight(G_work, BASE_DIR / "data" / "raw")
         opt_edges, opt_length = optimize_tram_layout(G_work)
         G = G_b.copy()
         for u, v in opt_edges:
@@ -323,10 +321,14 @@ def update_dynamic_dwell_times(G):
 
 
 if __name__ == "__main__":
+    import sys
+    _ROOT = Path(__file__).resolve().parent.parent
+    if str(_ROOT) not in sys.path:
+        sys.path.insert(0, str(_ROOT))
     import pickle
     from src.scenarios import inject_hypothetical_tram
 
-    OUTPUT_DIR = BASE_DIR / "data_output" / "bologna" / "graphs"
+    OUTPUT_DIR = BASE_DIR / "data" / "out" / "graphs"
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
     print("Loading and saving all graphs to graphs/ directory...")

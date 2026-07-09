@@ -1,5 +1,4 @@
 # src/plottings.py
-import sys
 from pathlib import Path
 from collections import defaultdict
 import pandas as pd
@@ -8,15 +7,15 @@ import seaborn as sns
 import networkx as nx
 import contextily as ctx
 
-sys.path.append(str(Path(__file__).resolve().parent.parent))
-from src.config import TransitConfig
+from .config import TransitConfig, ProjectPaths
 
-# Configuration
-BASE_DIR = Path(__file__).resolve().parent.parent
-PROCESSED_DIR = BASE_DIR / "dataset" / "bologna" / "processed"
-RAW_DIR = BASE_DIR / "dataset" / "bologna" / "raw"
-OUTPUT_DIR = BASE_DIR / "latex" / "figures" / "bologna"
-OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+# Aliases locali (per leggibilità nelle funzioni)
+_P = ProjectPaths
+PROCESSED_DIR = _P.PROCESSED
+RAW_DIR = _P.RAW
+OUT_DIR = _P.OUT
+OUTPUT_DIR = _P.FIGURES
+_P.ensure_dirs()
 
 
 def build_bottlenecks_legend(top_5_bus, top_5_tram):
@@ -189,6 +188,7 @@ def plot_resilience_curves():
     ax2.set_ylim([0, 1.05])
     ax2.set_xlim([0, 50])
     ax2.legend()
+    # \includegraphics[width=\textwidth,height=4.4cm,keepaspectratio]{figures/bologna_resilience_curves.png}
 
     plt.tight_layout()
     output_path = OUTPUT_DIR / "bologna_resilience_curves.png"
@@ -198,9 +198,9 @@ def plot_resilience_curves():
 
 
 def plot_centrality_analysis(df_cent_bus=None, df_cent_tram=None):
-    from src.graph import load_cached_graph
-    from src.analyzer import compute_centralities
-    from src.demographic import calculate_demographics_weight
+    from .graph import load_cached_graph
+    from .analyzer import compute_centralities
+    from .demographic import calculate_demographics_weight
 
     # In modalità standalone ricalcoliamo le centralità sugli stessi tempi di viaggio
     # CARICATI (dwell demografici applicati) usati dalla pipeline e dal report.
@@ -329,6 +329,7 @@ def plot_centrality_analysis(df_cent_bus=None, df_cent_tram=None):
     )
     ax.legend(loc="upper left")
     plt.tight_layout()
+    # \includegraphics[width=\textwidth,height=3.6cm,keepaspectratio]{figures/bologna_centrality_scatter.png}
     output_path_scatter = OUTPUT_DIR / "bologna_centrality_scatter.png"
     plt.savefig(output_path_scatter, dpi=300, bbox_inches="tight")
     plt.close()
@@ -366,6 +367,7 @@ def plot_centrality_analysis(df_cent_bus=None, df_cent_tram=None):
     )
     ax.legend()
     plt.tight_layout()
+    # \includegraphics[width=\textwidth,height=3.6cm,keepaspectratio]{figures/bologna_betweenness_hist.png}
     output_path_hist = OUTPUT_DIR / "bologna_betweenness_hist.png"
     plt.savefig(output_path_hist, dpi=300, bbox_inches="tight")
     plt.close()
@@ -453,6 +455,7 @@ def plot_static_network(G):
         )
 
     finalize_map(fig, ax, "Topological Map of Bologna Integrated Network (Bus & Tram)")
+    # \includegraphics[width=\textwidth,height=4.8cm,keepaspectratio]{figures/bologna_static_network.png}
     plt.tight_layout()
     output_path = OUTPUT_DIR / "bologna_static_network.png"
     plt.savefig(output_path, dpi=300, bbox_inches="tight")
@@ -490,6 +493,7 @@ def plot_optimized_layout(G_planned, G_opt):
         y=0.98,
     )
     plt.tight_layout()
+    # \includegraphics[width=0.75\textwidth,height=6cm,keepaspectratio]{figures/bologna_optimized_layout.png}
     output_path = OUTPUT_DIR / "bologna_optimized_layout.png"
     plt.savefig(output_path, dpi=300, bbox_inches="tight")
     plt.close()
@@ -498,7 +502,7 @@ def plot_optimized_layout(G_planned, G_opt):
 
 def plot_demographic_pressure_maps():
     """Generates the demographic pressure KDE density map (light theme)."""
-    csv_tram = BASE_DIR / "data_output" / "bologna" / "demographic_tram_results.csv"
+    csv_tram = OUT_DIR / "demographic_tram_results.csv"
     if not csv_tram.exists():
         print(" Demographic results not found.")
         return
@@ -531,6 +535,7 @@ def plot_demographic_pressure_maps():
     )
 
     finalize_map(fig, ax, "Exogenous Stress: Demographic Pressure Density (Municipal Open Data)")
+    # \includegraphics[width=\textwidth,height=4.8cm,keepaspectratio]{figures/bologna_demographic_pressure_map.png}
     plt.tight_layout()
     output_path = OUTPUT_DIR / "bologna_demographic_pressure_map.png"
     plt.savefig(output_path, dpi=300, bbox_inches="tight")
@@ -539,7 +544,7 @@ def plot_demographic_pressure_maps():
 
 
 def plot_communities_map():
-    csv_comm = BASE_DIR / "data_output" / "bologna" / "communities_bus.csv"
+    csv_comm = OUT_DIR / "communities_bus.csv"
     if not csv_comm.exists():
         print(" communities_bus.csv not found.")
         return
@@ -562,6 +567,7 @@ def plot_communities_map():
     )
 
     finalize_map(fig, ax, "Act 1: P-Space Sociological Communities (Louvain)")
+    # \includegraphics[width=\textwidth,height=3.6cm,keepaspectratio]{figures/bologna_communities_map.png}
     plt.tight_layout()
     output_path = OUTPUT_DIR / "bologna_communities_map.png"
     plt.savefig(output_path, dpi=300, bbox_inches="tight")
@@ -570,9 +576,9 @@ def plot_communities_map():
 
 
 def plot_bottlenecks_map(df_bus=None, df_tram=None):
-    from src.graph import load_cached_graph
-    from src.analyzer import compute_centralities
-    from src.demographic import calculate_demographics_weight
+    from .graph import load_cached_graph
+    from .analyzer import compute_centralities
+    from .demographic import calculate_demographics_weight
 
     # Se i dataframe non vengono passati dalla pipeline, ricostruiamo le centralità
     # sugli stessi tempi di viaggio CARICATI (dwell demografici applicati) usati
@@ -706,6 +712,7 @@ def plot_bottlenecks_map(df_bus=None, df_tram=None):
         ax,
         "Act 2: Physical Bottlenecks Comparison (L-Space Betweenness Centrality)",
     )
+    # \includegraphics[width=\textwidth,height=3.6cm,keepaspectratio]{figures/bologna_bottlenecks_map.png}
     plt.tight_layout()
     output_path = OUTPUT_DIR / "bologna_bottlenecks_map.png"
     plt.savefig(output_path, dpi=300, bbox_inches="tight")
@@ -714,9 +721,9 @@ def plot_bottlenecks_map(df_bus=None, df_tram=None):
 
 
 def plot_comparative_resilience():
-    from src.graph import load_cached_graph
-    from src.simulator import simulate_removal, compute_weighted_global_efficiency
-    from src.demographic import calculate_demographics_weight
+    from .graph import load_cached_graph
+    from .simulator import simulate_removal, compute_weighted_global_efficiency
+    from .demographic import calculate_demographics_weight
     import numpy as np
 
     G_bus = load_cached_graph("G_bus")
@@ -778,6 +785,7 @@ def plot_comparative_resilience():
     ax.set_ylim([0, 1.05])
     ax.set_xlim([0, 40])
     ax.legend()
+    # \includegraphics[width=\textwidth,height=4.4cm,keepaspectratio]{figures/bologna_resilience_comparison.png}
 
     plt.tight_layout()
     out_path = OUTPUT_DIR / "bologna_resilience_comparison.png"
@@ -787,7 +795,7 @@ def plot_comparative_resilience():
 
 
 def plot_tram_impact_map():
-    from src.graph import load_cached_graph
+    from .graph import load_cached_graph
 
     G_fused = load_cached_graph("G_fused")
     if not G_fused:
@@ -892,6 +900,7 @@ def plot_forced_injection_shock(
     )
     ax.set_ylim([0, max_time + 5])
     ax.legend()
+    # \includegraphics[width=\textwidth,height=4.2cm,keepaspectratio]{figures/bologna_forced_injection_shock.png}
 
     plt.tight_layout()
     out_path = OUTPUT_DIR / "bologna_forced_injection_shock.png"
@@ -901,6 +910,13 @@ def plot_forced_injection_shock(
 
 
 if __name__ == "__main__":
+    # Quando eseguito direttamente (python src/plottings.py oppure python -m src.plottings)
+    # garantiamo che la root del progetto sia in sys.path per i relative import.
+    import sys
+    _ROOT = Path(__file__).resolve().parent.parent
+    if str(_ROOT) not in sys.path:
+        sys.path.insert(0, str(_ROOT))
+
     from src.graph import load_cached_graph
     from src.analyzer import compute_centralities
 

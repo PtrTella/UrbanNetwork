@@ -92,10 +92,7 @@ We simulated a massive commuter shock (up to 100,000 incoming passengers) at *St
 ├── run_analysis_bologna.py       # Main pipeline script (Act 1 to Act 4)
 ├── requirements.txt              # Python dependencies
 ├── src/
-│   ├── preprocessing/
-│   │   ├── download.py           # Fetch GTFS, OSM tram stops, and municipal open data
-│   │   ├── bus.py                # Build bus nodes/edges; join traffic sensors & accidents
-│   │   └── tram.py               # Geocode and consolidate tram stops from structured JSON
+│   ├── config.py                 # Root paths (ProjectPaths) & model hyperparameters (TransitConfig)
 │   ├── graph.py                  # Graph building, L-space & P-space parsers, pickle cache
 │   ├── scenarios.py              # Circular-tram (Lines 32/33) hypothetical injection
 │   ├── analyzer.py               # Centralities, small-worldness, assortativity, communities
@@ -104,16 +101,15 @@ We simulated a massive commuter shock (up to 100,000 incoming passengers) at *St
 │   ├── tram_optimizer.py         # Greenfield TNDP greedy optimization
 │   ├── plottings.py              # Report figures (static maps & comparative plots)
 │   ├── visualize.py              # Interactive Folium HTML map
-│   ├── generate_comparisons.py   # Legacy/standalone plot helpers
-│   └── config.py                 # Hyperparameters, capacities, and physical constants
-├── dataset/
-│   └── bologna/
-│       ├── raw/                  # Raw GTFS, municipal demographics, traffic, accidents, OSM
-│       └── processed/            # Processed CSV nodes and edges
-├── data_output/
-│   └── bologna/
-│       ├── graphs/               # Cached graph pickles (base BPR weights only)
-│       └── *.csv                 # Exported metrics (centrality, macro, scenarios, …)
+│   └── preprocessing/
+│       ├── download.py           # Fetch GTFS, OSM tram stops, and municipal open data
+│       ├── bus.py                # Build bus nodes/edges; join traffic sensors & accidents
+│       └── tram.py               # Geocode and consolidate tram stops from structured JSON
+├── data/
+│   ├── raw/                      # Raw GTFS, municipal demographics, traffic, accidents, OSM
+│   ├── processed/                # Processed CSV nodes and edges (stations, connections)
+│   └── out/                      # Exported metrics (centrality, macro, scenarios, …)
+│       └── graphs/               # Cached graph pickles (base BPR weights only)
 └── latex/
     ├── NetworkAnalysisReport.tex # Main academic LaTeX paper
     ├── references.bib            # BibTeX academic references
@@ -125,32 +121,42 @@ We simulated a massive commuter shock (up to 100,000 incoming passengers) at *St
 ## How to Run
 
 ### 1. Requirements
-Ensure you have Python 3.9+ installed. We recommend using a virtual environment:
+Ensure you have Python 3.9+ and [`uv`](https://github.com/astral-sh/uv) installed:
 
 ```bash
-# Create and activate virtual environment
-python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+uv sync          # installs all dependencies from requirements.txt into .venv
+```
 
-# Install dependencies
+Or with plain pip:
+```bash
+python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 ```
-All dependencies are pinned in `requirements.txt` (core: `networkx`, `pandas`, `numpy`; geospatial: `geopandas`, `geopy`; clustering: `scikit-learn`; visualization: `matplotlib`, `seaborn`, `contextily`, `folium`).
 
 ### 2. Execution
 Run the complete analysis pipeline (centrality calculations, null model comparisons, resilience percolations, future scenario tests, and plot exports):
 
 ```bash
-python run_analysis_bologna.py
+uv run python run_analysis_bologna.py
 ```
 
-All plots are generated and saved directly to the `data_output/` and `latex/figures/bologna/` directories.
+All plots are saved to `latex/figures/`. CSV outputs go to `data/out/`.
 
+### 3. Individual modules (standalone)
+Each module in `src/` can also be run independently:
 
-### 3. Interactive Map (optional)
+```bash
+uv run python -m src.analyzer       # re-compute centralities & save CSVs
+uv run python -m src.plottings      # regenerate all figures
+uv run python -m src.demographic    # re-run demographic pressure analysis
+uv run python -m src.graph          # rebuild and re-cache graph pickles
+```
+
+### 4. Interactive Map (optional)
 For a browsable, layer-toggle map of all bus and tram lines:
 
 ```bash
-python -m src.visualize
+uv run python -m src.visualize
 ```
-Output: `data_output/bologna/bologna_interactive_map.html` (open in any browser).
+Output: `Bologna Map.html` (open in any browser).
+

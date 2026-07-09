@@ -9,8 +9,8 @@ from geopy.exc import GeocoderTimedOut
 
 # Configurazione Percorsi
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
-RAW_DIR = BASE_DIR / "dataset" / "bologna" / "raw"
-PROCESSED_DIR = BASE_DIR / "dataset" / "bologna" / "processed"
+RAW_DIR = BASE_DIR / "data" / "raw"
+PROCESSED_DIR = BASE_DIR / "data" / "processed"
 
 # Usiamo il JSON strutturato con le tratte divise in segmenti
 INPUT_JSON = RAW_DIR / "tram_structured.json"
@@ -59,9 +59,7 @@ def consolidate_bidirectional_stops(df_nodes, df_edges):
     Fonde le fermate doppie/bidirezionali. Versione semplificata:
     raggruppa per nome e prende banalmente il primo record utile per ID e Coordinate.
     """
-    print(
-        f"\n Consolidamento. Nodi iniziali: {len(df_nodes)} | Archi: {len(df_edges)}"
-    )
+    print(f"\n Consolidamento. Nodi iniziali: {len(df_nodes)} | Archi: {len(df_edges)}")
 
     # Prendi la prima occorrenza per ogni stazione (metodo ultra-semplificato)
     df_merged_nodes = df_nodes.groupby("stop_name", as_index=False).first()
@@ -161,15 +159,13 @@ def process_tram_network():
                 lat, lon = 44.4949, 11.3426
                 print(f"   [Fallito] '{name_upper}' -> Assegnato Centro di Bologna.")
 
-        tram_nodes_csv.append(
-            {
-                "stop_id": json_id,
-                "stop_name": name_upper,
-                "stop_lat": lat,
-                "stop_lon": lon,
-                "node_type": stop.get("node_type", "fermata"),
-            }
-        )
+        tram_nodes_csv.append({
+            "stop_id": json_id,
+            "stop_name": name_upper,
+            "stop_lat": lat,
+            "stop_lon": lon,
+            "node_type": stop.get("node_type", "fermata"),
+        })
 
     df_tram_nodes = pd.DataFrame(tram_nodes_csv)
 
@@ -178,13 +174,11 @@ def process_tram_network():
     for route_id, segments in tram_data.get("routes", {}).items():
         for path in segments:
             for u, v in zip(path[:-1], path[1:]):
-                edges_data.append(
-                    {
-                        "stop_id": u,
-                        "next_stop_id": v,
-                        "route_id": route_id,
-                    }
-                )
+                edges_data.append({
+                    "stop_id": u,
+                    "next_stop_id": v,
+                    "route_id": route_id,
+                })
     df_tram_edges = pd.DataFrame(edges_data)
 
     # Consolidamento Nodi

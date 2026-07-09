@@ -6,10 +6,11 @@ from pathlib import Path
 # Configurazione Percorsi
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 sys.path.append(str(BASE_DIR))
-from src.config import TransitConfig
-RAW_DIR = BASE_DIR / "dataset" / "bologna" / "raw"
+from src.config import TransitConfig  # noqa: E402
+
+RAW_DIR = BASE_DIR / "data" / "raw"
 GTFS_DIR = RAW_DIR / "gommagtfsbo"
-PROCESSED_DIR = BASE_DIR / "dataset" / "bologna" / "processed"
+PROCESSED_DIR = BASE_DIR / "data" / "processed"
 PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
 
 # =========================================================
@@ -161,7 +162,8 @@ def process_bus_network():
         #    - Il flusso medio nell'ora di punta (Volume V)
         #    - Il massimo assoluto mai registrato (Capacità C)
         df_spire_agg = (
-            df_spire.groupby(["longitudine", "latitudine"])
+            df_spire
+            .groupby(["longitudine", "latitudine"])
             .agg(
                 flusso_medio_picco=("picco_orario_giorno", "mean"),
                 capacita_massima_storica=("picco_orario_giorno", "max"),
@@ -218,7 +220,9 @@ def process_bus_network():
             df_stops["nearest_traffic_flow"].fillna(0).round(2)
         )
         df_stops["road_capacity"] = (
-            df_stops["road_capacity"].fillna(TransitConfig.DEFAULT_ROAD_CAPACITY).round(2)
+            df_stops["road_capacity"]
+            .fillna(TransitConfig.DEFAULT_ROAD_CAPACITY)
+            .round(2)
         )  # Fallback se isolata
 
     except Exception as e:

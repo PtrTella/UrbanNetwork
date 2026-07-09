@@ -1,12 +1,8 @@
-import sys
-from pathlib import Path
-sys.path.append(str(Path(__file__).resolve().parent.parent))
-
 import networkx as nx
 import numpy as np
 
 # IMPORTIAMO LA VERA EFFICIENZA TEMPORALE
-from src.analyzer import compute_weighted_global_efficiency
+from .analyzer import compute_weighted_global_efficiency
 
 
 def simulate_removal(
@@ -185,11 +181,10 @@ def simulate_targeted_hub_attack(graphs_dict, top_node_data=None, num_steps=5):
     """
     # Copiamo i grafi per non alterare gli originali
     graph_copies = {name: G.copy() for name, G in graphs_dict.items()}
-    
+
     # Calcoliamo l'efficienza base per ciascun grafo
     base_efficiencies = {
-        name: compute_weighted_global_efficiency(G) 
-        for name, G in graphs_dict.items()
+        name: compute_weighted_global_efficiency(G) for name, G in graphs_dict.items()
     }
 
     # Intestazione della tabella dinamica
@@ -204,13 +199,13 @@ def simulate_targeted_hub_attack(graphs_dict, top_node_data=None, num_steps=5):
     for step in range(1, num_steps + 1):
         drops_str_list = []
         step_results = {"step": step}
-        
+
         for name, G_copy in graph_copies.items():
             if len(G_copy) == 0:
                 step_results[f"drop_{name.lower()}"] = 100.0
                 drops_str_list.append(f"-100.00%{'':<14}")
                 continue
-                
+
             # Ricalcola la betweenness centrality pesata sui tempi per trovare il collo di bottiglia corrente
             bet = nx.betweenness_centrality(G_copy, weight="weight")
             if bet:
@@ -219,21 +214,23 @@ def simulate_targeted_hub_attack(graphs_dict, top_node_data=None, num_steps=5):
             else:
                 top_node = list(G_copy.nodes)[0]
                 top_node_name = str(top_node)
-                
+
             # Rimuove il nodo
             G_copy.remove_node(top_node)
-            
+
             # Calcola il crollo percentuale dell'efficienza
             eff_base = base_efficiencies[name]
             eff_current = compute_weighted_global_efficiency(G_copy)
             drop = ((eff_base - eff_current) / eff_base * 100) if eff_base > 0 else 0.0
-            
+
             step_results[f"removed_{name.lower()}"] = top_node_name
             step_results[f"drop_{name.lower()}"] = drop
-            
-            name_short = top_node_name[:12] + ".." if len(top_node_name) > 12 else top_node_name
+
+            name_short = (
+                top_node_name[:12] + ".." if len(top_node_name) > 12 else top_node_name
+            )
             drops_str_list.append(f"-{drop:.2f}% ({name_short})")
-            
+
         drops_str = " | ".join(f"{s:<22}" for s in drops_str_list)
         print(f"Step {step:<17} | {drops_str}")
         results.append(step_results)
@@ -241,44 +238,57 @@ def simulate_targeted_hub_attack(graphs_dict, top_node_data=None, num_steps=5):
     print("-" * (25 + len(headers) * 25))
     return results
 
-def simulate_hub_injection(G, injection_steps, target_hubs=["STAZIONE CENTRALE", "AUTOSTAZIONE"]):
+
+def simulate_hub_injection(
+    G, injection_steps, target_hubs=["STAZIONE CENTRALE", "AUTOSTAZIONE"]
+):
     """
     Simula una iniezione massiccia di passeggeri (pendolari) su determinati hub.
     Valuta come questo impatta il tempo medio di viaggio (dwell time) per chi parte dagli hub.
     """
     import networkx as nx
     import numpy as np
-    from src.config import TransitConfig
-    
+    from .config import TransitConfig
+
     # Trova i nodi target nel grafo
-    target_nodes = [n for n, data in G.nodes(data=True) if any(hub in data.get("name", "").upper() for hub in target_hubs)]
-    
+    target_nodes = [
+        n
+        for n, data in G.nodes(data=True)
+        if any(hub in data.get("name", "").upper() for hub in target_hubs)
+    ]
+
     travel_times = []
-    
+
     for injected_pop in injection_steps:
         # Crea una copia per non sporcare i pesi
         G_temp = G.copy()
-        
+
         # Applica l'aumento di peso su tutti gli archi incidenti ai nodi target
         for u, v, data in G_temp.edges(data=True):
             if u in target_nodes or v in target_nodes:
                 if data.get("type") in ["bus", "tram"]:
-                    cap_factor = TransitConfig.BUS_CAPACITY_FACTOR if data["type"] == "bus" else TransitConfig.TRAM_CAPACITY_FACTOR
+                    cap_factor = (
+                        TransitConfig.BUS_CAPACITY_FACTOR
+                        if data["type"] == "bus"
+                        else TransitConfig.TRAM_CAPACITY_FACTOR
+                    )
                     # Dwell time aggiuntivo causato dalla folla
-                    extra_dwell = (injected_pop * TransitConfig.DWELL_TIME_PER_CAPITA) / cap_factor
+                    extra_dwell = (
+                        injected_pop * TransitConfig.DWELL_TIME_PER_CAPITA
+                    ) / cap_factor
                     data["weight"] += extra_dwell
-                    
+
         # Calcola la media dei tempi di viaggio a partire dai nodi target
         times = []
         for u in target_nodes:
-            if u not in G_temp: continue
+            if u not in G_temp:
+                continue
             lengths = nx.single_source_dijkstra_path_length(G_temp, u, weight="weight")
-            for v, l in lengths.items():
+            for v, l in lengths.items():  # noqa: E741
                 if v not in target_nodes and l > 0:
                     times.append(l)
-                    
+
         avg_time = np.mean(times) if times else 0.0
         travel_times.append(avg_time)
-        
-    return travel_times
 
+    return travel_times

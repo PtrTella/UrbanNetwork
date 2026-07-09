@@ -1,17 +1,14 @@
 # src/tram_optimizer.py
-import sys
 from pathlib import Path
-
-sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 import pandas as pd
 import networkx as nx
-from src.config import TransitConfig
-from src.graph import load_cached_graph
-from src.analyzer import compute_weighted_global_efficiency
+from .config import TransitConfig
+from .graph import load_cached_graph
+from .analyzer import compute_weighted_global_efficiency
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-OUTPUT_DIR = BASE_DIR / "data_output" / "bologna"
+OUTPUT_DIR = BASE_DIR / "data" / "out"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 
@@ -185,7 +182,7 @@ def evaluate_networks():
     G_planned = load_cached_graph("G_fused")
 
     # Assicurati che G_bus e G_planned abbiano le popolazioni (se non presenti, carica da demographic)
-    from src.demographic import calculate_demographics_weight
+    from .demographic import calculate_demographics_weight
 
     if (
         "population_served" not in nx.get_node_attributes(G_bus, "population_served")
@@ -194,7 +191,7 @@ def evaluate_networks():
         print(
             " Popolazione non trovata o pari a zero in G_bus. Esecuzione pesatura demografica..."
         )
-        calculate_demographics_weight(G_bus, BASE_DIR / "dataset" / "bologna" / "raw")
+        calculate_demographics_weight(G_bus, BASE_DIR / "data" / "raw")
 
     if (
         "population_served"
@@ -204,9 +201,7 @@ def evaluate_networks():
         print(
             " Popolazione non trovata o pari a zero in G_planned (TPER). Esecuzione pesatura demografica..."
         )
-        calculate_demographics_weight(
-            G_planned, BASE_DIR / "dataset" / "bologna" / "raw"
-        )
+        calculate_demographics_weight(G_planned, BASE_DIR / "data" / "raw")
 
     # 2. Esegui l'ottimizzatore
     opt_edges, opt_length = optimize_tram_layout(G_bus)
@@ -227,7 +222,7 @@ def evaluate_networks():
         G_opt_clean.nodes[v]["type"] = "intersezione_bus_tram"
 
     G_opt = G_opt_clean.copy()
-    calculate_demographics_weight(G_opt, BASE_DIR / "dataset" / "bologna" / "raw")
+    calculate_demographics_weight(G_opt, BASE_DIR / "data" / "raw")
 
     # 4. Calcolo Metriche
     print("\n -> Calcolo efficienza delle 3 reti...")

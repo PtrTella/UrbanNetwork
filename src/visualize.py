@@ -4,8 +4,8 @@ from pathlib import Path
 
 # Configurazione Percorsi
 BASE_DIR = Path(__file__).resolve().parent.parent
-PROCESSED_DIR = BASE_DIR / "dataset" / "bologna" / "processed"
-OUTPUT_MAP = BASE_DIR / "data_output" / "bologna" / "bologna_interactive_map.html"
+PROCESSED_DIR = BASE_DIR / "data" / "processed"
+OUTPUT_MAP = BASE_DIR / "Bologna Map.html"
 
 
 def get_color_for_route(route_id):

@@ -1,12 +1,14 @@
 # src/demographic.py
-import sys
 from pathlib import Path
-sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 import pandas as pd
 import numpy as np
-from src.config import TransitConfig
-from src.graph import haversine, update_dynamic_dwell_times
+from .config import TransitConfig, ProjectPaths
+from .graph import haversine, update_dynamic_dwell_times
+
+BASE_DIR = ProjectPaths.BASE
+RAW_DIR = ProjectPaths.RAW
+OUT_DIR = ProjectPaths.OUT
 
 
 def calculate_demographics_weight(G_full, raw_dir_path):
@@ -130,13 +132,14 @@ def calculate_demographics_weight(G_full, raw_dir_path):
     update_dynamic_dwell_times(G_full)
 
 if __name__ == "__main__":
+    import sys
+    _ROOT = ProjectPaths.BASE
+    if str(_ROOT) not in sys.path:
+        sys.path.insert(0, str(_ROOT))
     from src.graph import load_cached_graph
-    from pathlib import Path
 
-    BASE_DIR = Path(__file__).resolve().parent.parent
-    RAW_DIR = BASE_DIR / "dataset" / "bologna" / "raw"
-    OUTPUT_DIR = BASE_DIR / "data_output" / "bologna"
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    ProjectPaths.ensure_dirs()
+    OUTPUT_DIR = ProjectPaths.OUT
 
     print(" Running Demographic Pressure Analysis...")
     G_bus = load_cached_graph("G_bus")
